@@ -1,5 +1,5 @@
 {
-	"name": "guildies-gateway",
+	"name": "guildie-gateway",
 	"private": true,
 	"type": "module",
 	"scripts": {

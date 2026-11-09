@@ -10,8 +10,8 @@ every worktree, every branch preview and cloud dev share one client.
 
 | Tier | Serves | Gateway | Battle.net client |
 |---|---|---|---|
-| Dev | local worktrees, cloud dev, branch previews | `https://gateway-dev.guildie.club` | `guildies-dev` |
-| Prod | guildie.club, prod Convex | `https://gateway.guildie.club` | `guildies` |
+| Dev | local worktrees, cloud dev, branch previews | `https://gateway-dev.guildie.club` | `guildie-dev` |
+| Prod | guildie.club, prod Convex | `https://gateway.guildie.club` | `guildie` |
 
 Each client registers two redirect URLs, and they never change:
 
@@ -72,7 +72,7 @@ in the password manager. Pipe secrets in so they stay out of shell history.
 | Variable | Cloud dev | Prod |
 |---|---|---|
 | `AUTH_PRIVATE_KEY`, `AUTH_JWKS` | dev key pair | its own key pair |
-| `BATTLENET_CLIENT_ID`, `BATTLENET_CLIENT_SECRET` | `guildies-dev` | `guildies` |
+| `BATTLENET_CLIENT_ID`, `BATTLENET_CLIENT_SECRET` | `guildie-dev` | `guildie` |
 | `AUTH_GATEWAY_SECRET` | dev routing secret | prod routing secret |
 | `AUTH_BATTLENET_CALLBACK_URL` | `https://gateway-dev.guildie.club/oauth/battlenet/callback` | `https://gateway.guildie.club/oauth/battlenet/callback` |
 | `AUTH_CLAIM_CALLBACK_URL` | `https://gateway-dev.guildie.club/oauth/claim/callback` | `https://gateway.guildie.club/oauth/claim/callback` |
@@ -114,4 +114,4 @@ gateway accepts any `*.convex.site` and loopback (`http://127.0.0.1:*`,
 `http://localhost:*`), since the browser follows the redirect. The prod
 gateway only forwards to the prod deployment: set `ALLOWED_TARGETS` in
 `workers/gateway/wrangler.jsonc` once it exists. `https://<gateway>/` answers
-"guildies sign-in gateway." when it's up.
+"guildie sign-in gateway." when it's up.

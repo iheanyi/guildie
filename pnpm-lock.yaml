@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@convex-dev/auth':
-    hash: 89022ce5fff3bbf8fcd20ad659ca92fbe22896debc5531148f08a01242e44e0e
+    hash: db7451216ad6a578232815c2bfe33455da91b18b25fbbd3e521ccdb2ed21e3e2
     path: patches/@convex-dev__auth.patch
 
 importers:
@@ -18,7 +18,7 @@ importers:
         version: 1.9.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@convex-dev/auth':
         specifier: 2.0.0-beta.0
-        version: 2.0.0-beta.0(patch_hash=89022ce5fff3bbf8fcd20ad659ca92fbe22896debc5531148f08a01242e44e0e)(convex@1.49.0(react@19.3.1))(prettier@3.9.10)(react@19.3.1)(typescript@7.0.2)(zod@4.6.7)
+        version: 2.0.0-beta.0(patch_hash=db7451216ad6a578232815c2bfe33455da91b18b25fbbd3e521ccdb2ed21e3e2)(convex@1.49.0(react@19.3.1))(prettier@3.9.10)(react@19.3.1)(typescript@7.0.2)(zod@4.6.7)
       '@convex-dev/react-query':
         specifier: ^0.1.0
         version: 0.1.0(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(convex@1.49.0(react@19.3.1))
@@ -3074,7 +3074,7 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20261109.1':
     optional: true
 
-  '@convex-dev/auth@2.0.0-beta.0(patch_hash=89022ce5fff3bbf8fcd20ad659ca92fbe22896debc5531148f08a01242e44e0e)(convex@1.49.0(react@19.3.1))(prettier@3.9.10)(react@19.3.1)(typescript@7.0.2)(zod@4.6.7)':
+  '@convex-dev/auth@2.0.0-beta.0(patch_hash=db7451216ad6a578232815c2bfe33455da91b18b25fbbd3e521ccdb2ed21e3e2)(convex@1.49.0(react@19.3.1))(prettier@3.9.10)(react@19.3.1)(typescript@7.0.2)(zod@4.6.7)':
     dependencies:
       '@babel/code-frame': 7.29.7
       '@convex-dev/batch-worker': 0.3.6(convex@1.49.0(react@19.3.1))(prettier@3.9.10)(react@19.3.1)(typescript@7.0.2)(zod@4.6.7)

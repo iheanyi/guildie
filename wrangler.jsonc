@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "guildies",
+	"name": "guildie",
 	"account_id": "fc87b44f5832b25053fec2efb19fc208",
 	"compatibility_date": "2026-10-01",
 	"compatibility_flags": ["nodejs_compat"],

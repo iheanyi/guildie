@@ -13,7 +13,7 @@ export const Route = createFileRoute("/claim/callback")({
 		state: typeof search.state === "string" ? search.state : undefined,
 		error: typeof search.error === "string" ? search.error : undefined,
 	}),
-	head: () => ({ meta: [{ title: "Claiming characters · guildies" }] }),
+	head: () => ({ meta: [{ title: "Claiming characters · guildie" }] }),
 	component: ClaimCallback,
 });
 

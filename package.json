@@ -1,5 +1,5 @@
 {
-  "name": "guildies",
+  "name": "guildie",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "check": "tsc --noEmit && pnpm --dir workers/gateway check",
     "test:gateway": "pnpm --dir workers/gateway test",
     "seed": "CONVEX_AGENT_MODE=anonymous convex run dev:seed",
-    "push:cloud-dev": ". scripts/deployments.sh && CONVEX_DEPLOYMENT=dev:$cloud_dev convex dev --once",
+    "push:cloud-dev": "sh scripts/push-cloud-dev.sh",
     "release": "sh scripts/cloudflare-deploy.sh",
     "release:preview": "sh scripts/preview-deploy.sh",
     "cf-typegen": "wrangler types"

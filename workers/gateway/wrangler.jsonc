@@ -2,7 +2,7 @@
 // Secrets (per env): wrangler secret put ROUTING_SECRET -c wrangler.jsonc --env <dev|prod>
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "guildies-gateway",
+	"name": "guildie-gateway",
 	// The account that owns guildie.club ("Nate").
 	"account_id": "fc87b44f5832b25053fec2efb19fc208",
 	"main": "src/index.ts",
@@ -14,7 +14,7 @@
 	"vars": { "ALLOWED_TARGETS": "http://127.0.0.1:*,http://localhost:*" },
 	"env": {
 		"dev": {
-			"name": "guildies-gateway-dev",
+			"name": "guildie-gateway-dev",
 			"routes": [{ "pattern": "gateway-dev.guildie.club", "zone_name": "guildie.club", "custom_domain": true }],
 			// Local worktrees (the browser follows the redirect, so loopback works),
 			// cloud dev and branch previews.
@@ -22,7 +22,7 @@
 			"ratelimits": [{ "name": "CALLBACK_LIMITER", "namespace_id": "2201", "simple": { "limit": 30, "period": 60 } }]
 		},
 		"prod": {
-			"name": "guildies-gateway",
+			"name": "guildie-gateway",
 			"routes": [{ "pattern": "gateway.guildie.club", "zone_name": "guildie.club", "custom_domain": true }],
 			// Only the prod deployment (scintillating-gnat-539).
 			"vars": { "ALLOWED_TARGETS": "https://scintillating-gnat-539.convex.site" },

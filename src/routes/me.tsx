@@ -15,7 +15,7 @@ export const Route = createFileRoute("/me")({
 	beforeLoad: ({ context }) => {
 		if (!context.token) throw redirect({ to: "/sign-in" });
 	},
-	head: () => ({ meta: [{ title: "Your account · guildies" }] }),
+	head: () => ({ meta: [{ title: "Your account · guildie" }] }),
 	component: Me,
 });
 

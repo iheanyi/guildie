@@ -5,19 +5,19 @@ served through [Portless](https://github.com/vercel-labs/portless):
 
 | Checkout | App | Convex backend |
 |---|---|---|
-| main (`~/Code/guildies`) | `https://guildies.localhost:1355` | `127.0.0.1:3270` / `3271` |
-| any other worktree | `https://<folder>.guildies.localhost:1355` | a pair in `20000`–`31999`, stable per worktree |
+| main (`~/Code/guildie`) | `https://guildie.localhost:1355` | `127.0.0.1:3270` / `3271` |
+| any other worktree | `https://<folder>.guildie.localhost:1355` | a pair in `20000`–`31999`, stable per worktree |
 
 `<folder>` is the worktree's folder name, lowercased, with a leading
-`guildies-` dropped. Each checkout keeps its own data in
+`guildie-` dropped. Each checkout keeps its own data in
 `.convex/local/default/`, so worktrees never share a database or fight over
 which code is deployed. Run as many as you like at once.
 
 ## A new worktree
 
 ```sh
-git worktree add ../guildies-roster-notes -b roster-notes
-cd ../guildies-roster-notes && pnpm dev
+git worktree add ../guildie-roster-notes -b roster-notes
+cd ../guildie-roster-notes && pnpm dev
 ```
 
 On the first run `scripts/dev.sh` installs dependencies and creates the local

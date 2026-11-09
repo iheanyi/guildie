@@ -1,4 +1,4 @@
-# guildies
+# guildie
 
 A home base for World of Warcraft guilds: who's in the guild, their level,
 class, race, rank, gear and professions. Built for **WoW: Forever** first,
@@ -19,7 +19,7 @@ it's headed (Discord, guild chat, an in-game addon).
 
 ```sh
 pnpm install
-pnpm dev        # https://guildies.localhost:1355 (worktrees get their own URL)
+pnpm dev        # https://guildie.localhost:1355 (worktrees get their own URL)
 ```
 
 Each checkout (main or a git worktree) gets its own local Convex backend,

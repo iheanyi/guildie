@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # `pnpm dev`: this checkout's own local Convex backend, plus the app through
-# Portless at https://guildies.localhost:1355 (main checkout) or
-# https://<worktree>.guildies.localhost:1355 (any other worktree). Each
+# Portless at https://guildie.localhost:1355 (main checkout) or
+# https://<worktree>.guildie.localhost:1355 (any other worktree). Each
 # checkout has its own URL, ports and data, so several can run at once. See
 # docs/local-dev.md.
 set -eu
@@ -11,12 +11,12 @@ main="$(git worktree list --porcelain | head -1 | cut -d' ' -f2-)"
 cd "$root"
 
 if [ "$root" = "$main" ]; then
-	name=guildies
+	name=guildie
 	# Clear of Onda (3210) and Sportsball (3250).
 	cloud=3270
 else
-	label="$(basename "$root" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g; s/--*/-/g; s/^-//; s/-$//; s/^guildies-//')"
-	name="$label.guildies"
+	label="$(basename "$root" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g; s/--*/-/g; s/^-//; s/-$//; s/^guildie-//')"
+	name="$label.guildie"
 	# Stable per worktree, in a band clear of Portless (4000-4999) and the
 	# OS's ephemeral ports.
 	cloud=$((20000 + $(printf '%s' "$root" | cksum | cut -d' ' -f1) % 6000 * 2))

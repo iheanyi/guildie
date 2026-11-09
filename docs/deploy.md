@@ -1,6 +1,6 @@
 # Deploying
 
-Cloudflare Workers Builds deploys every push to `natedunn/guildies`. `main`
+Cloudflare Workers Builds deploys every push to `natedunn/guildie`. `main`
 runs `scripts/cloudflare-deploy.sh`. Every other branch runs
 `scripts/preview-build.sh` and then `wrangler preview`. Same setup as Onda
 and Sportsball.
@@ -37,19 +37,19 @@ The branch name becomes one DNS label: lowercased, anything outside
 Step by step, with commands and checks: [docs/setup.md](setup.md). In short:
 
 1. **Domain**: add `guildie.club` to the Cloudflare account "Nate".
-2. **Convex project** `guildies` (team `nate-dunn`) with a cloud dev and a
+2. **Convex project** `guildie` (team `nate-dunn`) with a cloud dev and a
    prod deployment. Put cloud dev's name and the project id in
    `scripts/deployments.sh`; put prod's URL in the prod gateway's
    `ALLOWED_TARGETS`.
-3. **Battle.net clients**: `guildies-dev` and `guildies`, with the redirect
+3. **Battle.net clients**: `guildie-dev` and `guildie`, with the redirect
    URLs in docs/auth-environments.md.
 4. **Gateways**: routing secrets and deploys (docs/auth-environments.md).
 5. **Cloud dev settings**: everything in the "Cloud dev" column of
    docs/auth-environments.md. Then `pnpm push:cloud-dev`.
 6. **Prod settings**: the "Prod" column.
 7. **Preview defaults**: `sh scripts/preview-defaults.sh`.
-8. **Workers Builds** (Workers & Pages → `guildies` → Settings → Builds):
-   - Git repository `natedunn/guildies`, production branch `main`
+8. **Workers Builds** (Workers & Pages → `guildie` → Settings → Builds):
+   - Git repository `natedunn/guildie`, production branch `main`
    - Build command: *(empty)*
    - Deploy command: `sh scripts/cloudflare-deploy.sh`
    - Preview command:

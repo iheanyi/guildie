@@ -14,7 +14,7 @@ name="$(WORKERS_CI_BRANCH="$1" sh "$(dirname "$0")/preview-name.sh")"
 : "${CLOUDFLARE_API_TOKEN:?CLOUDFLARE_API_TOKEN is not set}"
 : "${CONVEX_MANAGEMENT_TOKEN:?CONVEX_MANAGEMENT_TOKEN is not set}"
 
-previews=https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/workers/guildies/previews
+previews=https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/workers/guildie/previews
 convex=https://api.convex.dev/v1
 . "$(dirname "$0")/deployments.sh"
 [ -n "$convex_project" ] || { echo "preview-delete: set convex_project in scripts/deployments.sh" >&2; exit 1; }

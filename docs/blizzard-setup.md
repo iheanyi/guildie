@@ -15,25 +15,25 @@ Scopes aren't approved in the portal. Any client can request `openid` and
 ## 1. Create the dev client
 
 Make two clients, dev now and prod when we deploy: separate rate limits,
-separate secrets, and a production consent screen that says "guildies".
+separate secrets, and a production consent screen that says "guildie".
 
 1. Go to <https://develop.battle.net> and log in with your Battle.net account.
    If it asks you to add an authenticator or verify your email, do that first.
 2. Open **API Access**, then **Create Client**.
 3. Fill it in:
-   - **Client name**: `guildies-dev`
+   - **Client name**: `guildie-dev`
    - **Redirect URLs**, both of these (the dev gateway; it forwards to every
      worktree, preview and cloud dev, docs/auth-environments.md):
      - `https://gateway-dev.guildie.club/oauth/battlenet/callback` (sign-in)
      - `https://gateway-dev.guildie.club/oauth/claim/callback` (claiming characters)
-   - **Service URL**: `https://github.com/natedunn/guildies`
+   - **Service URL**: `https://github.com/natedunn/guildie`
    - **Intended use**: "Guild roster directory for World of Warcraft: Forever.
      Reads public guild rosters and character profiles; players sign in to
      link their own characters."
 4. Save. Copy the **Client ID** and **Client Secret**. The secret is shown
    once; if you lose it, generate a new one.
 
-The prod client (`guildies`) is the same with `gateway.guildie.club` in both
+The prod client (`guildie`) is the same with `gateway.guildie.club` in both
 URLs.
 
 ## 2. Give them to Convex

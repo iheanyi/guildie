@@ -1,4 +1,4 @@
-# Setting up guildies from scratch
+# Setting up guildie from scratch
 
 From this repo to: sign-in working in every local worktree, a preview
 deployment per branch, and production on guildie.club. Do the parts in order.
@@ -9,9 +9,9 @@ Background on why it's built this way: docs/auth-environments.md.
 ## Before you start
 
 - `guildie.club` is active on the Cloudflare account **Nate** (it is).
-- The repo's latest code is pushed to `natedunn/guildies`.
+- The repo's latest code is pushed to `natedunn/guildie`.
 - You're in the repo on `main`, `pnpm install` is done.
-- In your password manager, create one item called **guildies**. Every secret
+- In your password manager, create one item called **guildie**. Every secret
   below gets saved there as a field, under the exact field name given.
 
 Commands run from the repo root unless a step says otherwise.
@@ -22,22 +22,22 @@ Commands run from the repo root unless a step says otherwise.
 
 Ten secrets, plus two deployment names you just write down (they're not
 variables and aren't set anywhere as such). You get each one in the part
-listed, save it in the **guildies** password-manager item under the **Field
+listed, save it in the **guildie** password-manager item under the **Field
 name**, and use it in each place listed under **Goes to**.
 
 | Field name | What it is | Made in | Goes to |
 |---|---|---|---|
 | Convex dev deployment name *(a note, not a variable)* | Like `happy-otter-123` | Part 1 | `cloud_dev=` in `scripts/deployments.sh`; `D=` in Part 4 |
 | Convex prod deployment name *(a note, not a variable)* | Like `brave-lynx-456` | Part 1 | `ALLOWED_TARGETS` in `workers/gateway/wrangler.jsonc` as `https://<name>.convex.site`; `P=` in Part 5 |
-| `CONVEX_PROD_DEPLOY_KEY` | Convex deploy key for prod | Part 1 | Cloudflare `guildies` Worker → Build → Production → secret `CONVEX_DEPLOY_KEY` |
-| `CONVEX_PREVIEW_DEPLOY_KEY` | Convex deploy key for previews (starts with `preview:`) | Part 1 | Cloudflare `guildies` Worker → Build → Previews Base → secret `CONVEX_DEPLOY_KEY` |
+| `CONVEX_PROD_DEPLOY_KEY` | Convex deploy key for prod | Part 1 | Cloudflare `guildie` Worker → Build → Production → secret `CONVEX_DEPLOY_KEY` |
+| `CONVEX_PREVIEW_DEPLOY_KEY` | Convex deploy key for previews (starts with `preview:`) | Part 1 | Cloudflare `guildie` Worker → Build → Previews Base → secret `CONVEX_DEPLOY_KEY` |
 | `CONVEX_MANAGEMENT_TOKEN` | Convex team access token | Part 1 | GitHub repo secret `CONVEX_MANAGEMENT_TOKEN` |
-| `BATTLENET_DEV_CLIENT_ID` | Client ID of Battle.net client `guildies-dev` | Part 2 | Convex **cloud dev** env `BATTLENET_CLIENT_ID` |
-| `BATTLENET_DEV_CLIENT_SECRET` | Client secret of `guildies-dev` | Part 2 | Convex **cloud dev** env `BATTLENET_CLIENT_SECRET` |
-| `BATTLENET_PROD_CLIENT_ID` | Client ID of Battle.net client `guildies` | Part 2 | Convex **prod** env `BATTLENET_CLIENT_ID` |
-| `BATTLENET_PROD_CLIENT_SECRET` | Client secret of `guildies` | Part 2 | Convex **prod** env `BATTLENET_CLIENT_SECRET` |
-| `GATEWAY_DEV_ROUTING_SECRET` | Random string you generate | Part 3 | Worker `guildies-gateway-dev` secret `ROUTING_SECRET` **and** Convex **cloud dev** env `AUTH_GATEWAY_SECRET` (same value in both) |
-| `GATEWAY_PROD_ROUTING_SECRET` | Random string you generate | Part 3 | Worker `guildies-gateway` secret `ROUTING_SECRET` **and** Convex **prod** env `AUTH_GATEWAY_SECRET` (same value in both) |
+| `BATTLENET_DEV_CLIENT_ID` | Client ID of Battle.net client `guildie-dev` | Part 2 | Convex **cloud dev** env `BATTLENET_CLIENT_ID` |
+| `BATTLENET_DEV_CLIENT_SECRET` | Client secret of `guildie-dev` | Part 2 | Convex **cloud dev** env `BATTLENET_CLIENT_SECRET` |
+| `BATTLENET_PROD_CLIENT_ID` | Client ID of Battle.net client `guildie` | Part 2 | Convex **prod** env `BATTLENET_CLIENT_ID` |
+| `BATTLENET_PROD_CLIENT_SECRET` | Client secret of `guildie` | Part 2 | Convex **prod** env `BATTLENET_CLIENT_SECRET` |
+| `GATEWAY_DEV_ROUTING_SECRET` | Random string you generate | Part 3 | Worker `guildie-gateway-dev` secret `ROUTING_SECRET` **and** Convex **cloud dev** env `AUTH_GATEWAY_SECRET` (same value in both) |
+| `GATEWAY_PROD_ROUTING_SECRET` | Random string you generate | Part 3 | Worker `guildie-gateway` secret `ROUTING_SECRET` **and** Convex **prod** env `AUTH_GATEWAY_SECRET` (same value in both) |
 | `CLOUDFLARE_PREVIEW_CLEANUP_TOKEN` | Cloudflare API token | Part 8 | GitHub repo secret `CLOUDFLARE_API_TOKEN` |
 
 Not in the password manager: the auth signing keys (`AUTH_PRIVATE_KEY`,
@@ -50,12 +50,12 @@ needs to read them back.
 
 1. Open <https://dashboard.convex.dev>. Pick team **nate-dunn**. Click
    **Create Project**.
-   - **Project name:** `guildies`
+   - **Project name:** `guildie`
 2. The project opens on your **development** deployment. Its name is in the
    deployment picker at the top and in the URL (like `happy-otter-123`).
-   Write it in the **guildies** item as **Convex dev deployment name**.
+   Write it in the **guildie** item as **Convex dev deployment name**.
 3. In the deployment picker, choose **Production**. Write its name in the
-   **guildies** item as **Convex prod deployment name**.
+   **guildie** item as **Convex prod deployment name**.
 4. Still on **Production**: **Settings → URL & Deploy Key → Generate
    Production Deploy Key**.
    - **Name** (if it asks): `workers-builds-prod`
@@ -66,18 +66,18 @@ needs to read them back.
    - Copy the key (it starts with `preview:`). Save as
      `CONVEX_PREVIEW_DEPLOY_KEY`.
 6. **Team Settings → Access Tokens → Create Token**.
-   - **Name:** `guildies-preview-cleanup`
+   - **Name:** `guildie-preview-cleanup`
    - Copy the token. Save as `CONVEX_MANAGEMENT_TOKEN`.
 7. Get the project's numeric id:
 
    ```sh
    T=$(pbpaste)   # right after copying CONVEX_MANAGEMENT_TOKEN
    curl -s -H "Authorization: Bearer $T" \
-     https://api.convex.dev/v1/teams/55291/list_projects | jq -c '.[] | {id, slug}' | grep guildies
+     https://api.convex.dev/v1/teams/55291/list_projects | jq -c '.[] | {id, slug}' | grep guildie
    ```
 
    (`55291` is the numeric id of team `nate-dunn`.) The `id` on the line it
-   prints is the number. The slug may have a suffix like `guildies-1a2b3`;
+   prints is the number. The slug may have a suffix like `guildie-1a2b3`;
    that's fine.
 8. Edit `scripts/deployments.sh`:
 
@@ -110,10 +110,10 @@ You make two clients. They differ only in name and redirect URLs.
 
    | Field | Value |
    |---|---|
-   | Client Name | `guildies-dev` |
+   | Client Name | `guildie-dev` |
    | Redirect URLs | `https://gateway-dev.guildie.club/oauth/battlenet/callback` |
    | (click **+** / add another) | `https://gateway-dev.guildie.club/oauth/claim/callback` |
-   | Service URL | `https://github.com/natedunn/guildies` |
+   | Service URL | `https://github.com/natedunn/guildie` |
    | Intended Use | `Guild roster directory for World of Warcraft: Forever. Reads public guild rosters and character profiles. Players sign in with Battle.net to link their own characters.` |
 
    Leave anything else (like "I do not have a service URL") unchecked. Click
@@ -126,10 +126,10 @@ You make two clients. They differ only in name and redirect URLs.
 
    | Field | Value |
    |---|---|
-   | Client Name | `guildies` |
+   | Client Name | `guildie` |
    | Redirect URLs | `https://gateway.guildie.club/oauth/battlenet/callback` |
    | (add another) | `https://gateway.guildie.club/oauth/claim/callback` |
-   | Service URL | `https://github.com/natedunn/guildies` |
+   | Service URL | `https://github.com/natedunn/guildie` |
    | Intended Use | same text as above |
 
    **Save**. Copy:
@@ -139,7 +139,7 @@ You make two clients. They differ only in name and redirect URLs.
 The URLs must match character for character: `https`, no trailing slash.
 There are no scopes or permissions to request here.
 
-**Check:** **API Access** lists `guildies-dev` and `guildies`, each with
+**Check:** **API Access** lists `guildie-dev` and `guildie`, each with
 exactly the two redirect URLs above.
 
 ---
@@ -147,8 +147,8 @@ exactly the two redirect URLs above.
 ## Part 3: Gateway Workers
 
 Two tiny Workers that receive Battle.net's redirects and forward them to the
-right deployment: `guildies-gateway-dev` (on `gateway-dev.guildie.club`) and
-`guildies-gateway` (on `gateway.guildie.club`).
+right deployment: `guildie-gateway-dev` (on `gateway-dev.guildie.club`) and
+`guildie-gateway` (on `gateway.guildie.club`).
 
 1. Generate the two routing secrets. Run this twice; save the first output as
    `GATEWAY_DEV_ROUTING_SECRET` and the second as
@@ -177,7 +177,7 @@ right deployment: `guildies-gateway-dev` (on `gateway-dev.guildie.club`) and
 
 4. Dev gateway. Copy `GATEWAY_DEV_ROUTING_SECRET`, then run the first
    command and paste it at the prompt. If wrangler asks whether to create the
-   Worker `guildies-gateway-dev`, answer **yes**.
+   Worker `guildie-gateway-dev`, answer **yes**.
 
    ```sh
    pnpm wrangler secret put ROUTING_SECRET -c wrangler.jsonc --env dev
@@ -185,7 +185,7 @@ right deployment: `guildies-gateway-dev` (on `gateway-dev.guildie.club`) and
    ```
 
 5. Prod gateway. Copy `GATEWAY_PROD_ROUTING_SECRET`, then the same, with
-   `prod` (create Worker `guildies-gateway`: **yes**):
+   `prod` (create Worker `guildie-gateway`: **yes**):
 
    ```sh
    pnpm wrangler secret put ROUTING_SECRET -c wrangler.jsonc --env prod
@@ -196,7 +196,7 @@ right deployment: `guildies-gateway-dev` (on `gateway-dev.guildie.club`) and
 Each deploy creates its own DNS record and certificate on `guildie.club`.
 
 **Check** (allow a minute or two for the certificates): both print
-`guildies sign-in gateway.`
+`guildie sign-in gateway.`
 
 ```sh
 curl https://gateway-dev.guildie.club/
@@ -243,7 +243,7 @@ D=<dev deployment name>
    | nothing | `npx convex env set --deployment $D AUTH_BATTLENET_CALLBACK_URL https://gateway-dev.guildie.club/oauth/battlenet/callback` |
    | nothing | `npx convex env set --deployment $D AUTH_CLAIM_CALLBACK_URL https://gateway-dev.guildie.club/oauth/claim/callback` |
    | nothing | `npx convex env set --deployment $D AUTH_DEV_GUEST true` |
-   | nothing | `npx convex env set --deployment $D SITE_URL https://guildies.localhost:1355` |
+   | nothing | `npx convex env set --deployment $D SITE_URL https://guildie.localhost:1355` |
 
 3. Check cloud dev now has exactly these nine variables:
 
@@ -290,7 +290,7 @@ D=<dev deployment name>
    ```
 
 **Check:**
-- <https://guildies.localhost:1355> shows your guild.
+- <https://guildie.localhost:1355> shows your guild.
 - **Sign in → Continue with Battle.net** takes you to Battle.net and back,
   signed in, with your BattleTag in the header.
 - On your account page, **Claim my characters** lists your Forever
@@ -298,11 +298,11 @@ D=<dev deployment name>
 - A second worktree signs in too, at its own URL:
 
   ```sh
-  git worktree add ../guildies-test -b test
-  cd ../guildies-test && pnpm dev     # https://test.guildies.localhost:1355
+  git worktree add ../guildie-test -b test
+  cd ../guildie-test && pnpm dev     # https://test.guildie.localhost:1355
   ```
 
-  Remove it afterwards: `git worktree remove ../guildies-test && git branch -D test`.
+  Remove it afterwards: `git worktree remove ../guildie-test && git branch -D test`.
 
 ---
 
@@ -364,13 +364,13 @@ git push
 
 1. Cloudflare dashboard, account **Nate** → **Workers & Pages** → **Create**
    → **Import a repository**. (Workers, not Pages.)
-2. **GitHub** → choose `natedunn/guildies`. If GitHub asks, give the
+2. **GitHub** → choose `natedunn/guildie`. If GitHub asks, give the
    Cloudflare app access to that repo.
 3. On the setup screen:
 
    | Field | Value |
    |---|---|
-   | Project name | `guildies` (must match `name` in `wrangler.jsonc`) |
+   | Project name | `guildie` (must match `name` in `wrangler.jsonc`) |
    | Production branch | `main` |
    | Build command | *(leave empty)* |
    | Deploy command | `sh scripts/cloudflare-deploy.sh` |
@@ -384,7 +384,7 @@ git push
 
    Click **Deploy**. The first build deploys Convex prod and the Worker, and
    creates the domains `guildie.club` and `preview.guildie.club`.
-4. Open the `guildies` Worker → **Settings → Build**:
+4. Open the `guildie` Worker → **Settings → Build**:
    - **Branch control**: turn on builds for non-production branches. If it
      offers **Switch to Worker Previews**, accept. (Worker Previews run with
      their own settings; the older kind ran with production's.)
@@ -431,7 +431,7 @@ branch's Worker Preview and Convex preview.
 
    | Field | Value |
    |---|---|
-   | Token name | `guildies-preview-cleanup` |
+   | Token name | `guildie-preview-cleanup` |
    | Permissions | **Account** · **Workers Scripts** · **Edit** |
    | Account Resources | **Include** · **Nate** |
    | Everything else | leave as is |
@@ -442,9 +442,9 @@ branch's Worker Preview and Convex preview.
 
    | Copy | Run |
    |---|---|
-   | nothing | `gh secret set CLOUDFLARE_ACCOUNT_ID -R natedunn/guildies -b fc87b44f5832b25053fec2efb19fc208` |
-   | `CLOUDFLARE_PREVIEW_CLEANUP_TOKEN` | `pbpaste \| gh secret set CLOUDFLARE_API_TOKEN -R natedunn/guildies` |
-   | `CONVEX_MANAGEMENT_TOKEN` | `pbpaste \| gh secret set CONVEX_MANAGEMENT_TOKEN -R natedunn/guildies` |
+   | nothing | `gh secret set CLOUDFLARE_ACCOUNT_ID -R natedunn/guildie -b fc87b44f5832b25053fec2efb19fc208` |
+   | `CLOUDFLARE_PREVIEW_CLEANUP_TOKEN` | `pbpaste \| gh secret set CLOUDFLARE_API_TOKEN -R natedunn/guildie` |
+   | `CONVEX_MANAGEMENT_TOKEN` | `pbpaste \| gh secret set CONVEX_MANAGEMENT_TOKEN -R natedunn/guildie` |
 
 **Check:** delete the test branch:
 

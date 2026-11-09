@@ -42,8 +42,8 @@ test("allowlist matches origins only", () => {
 	assert.ok(!isAllowedTarget("https://grandiose-yak-969.convex.site/", patterns));
 	assert.ok(!isAllowedTarget("https://user@grandiose-yak-969.convex.site", patterns));
 	assert.ok(!isAllowedTarget("http://127.0.0.1.evil.com:3211", patterns));
-	assert.ok(isAllowedTarget("https://guildies-prod.convex.site", "https://guildies-prod.convex.site"));
-	assert.ok(!isAllowedTarget("https://other.convex.site", "https://guildies-prod.convex.site"));
+	assert.ok(isAllowedTarget("https://guildie-prod.convex.site", "https://guildie-prod.convex.site"));
+	assert.ok(!isAllowedTarget("https://other.convex.site", "https://guildie-prod.convex.site"));
 	assert.ok(!isAllowedTarget("https://x.convex.site", ""));
 });
 
@@ -70,7 +70,7 @@ test("refuses bad requests", async () => {
 	assert.equal((await call(`/oauth/twitter/callback?state=${PREFIX}${STATE}`)).status, 404);
 	assert.equal((await call(`/oauth/battlenet/callback`, { method: "POST" })).status, 405);
 	assert.equal((await call(`/elsewhere`)).status, 404);
-	const prodOnly = { ...env, ALLOWED_TARGETS: "https://guildies-prod.convex.site" };
+	const prodOnly = { ...env, ALLOWED_TARGETS: "https://guildie-prod.convex.site" };
 	assert.equal((await call(`/oauth/battlenet/callback?code=abc&state=${PREFIX}${STATE}`, {}, prodOnly)).status, 400);
 });
 

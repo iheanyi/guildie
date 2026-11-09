@@ -5,7 +5,7 @@
 import { execFileSync } from "node:child_process";
 import { generateKeyPairSync, randomUUID } from "node:crypto";
 
-const siteUrl = process.argv[2] ?? "https://guildies.localhost:1355";
+const siteUrl = process.argv[2] ?? "https://guildie.localhost:1355";
 const convex = (...args) => execFileSync("npx", ["convex", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 const get = (name) => {
 	try {

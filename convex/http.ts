@@ -15,7 +15,7 @@ http.route({
 		const url = new URL(request.url);
 		const state = url.searchParams.get("state");
 		const origin = state && (await ctx.runQuery(internal.claims.originFor, { stateHash: await sha256(state) }));
-		if (!origin) return new Response("This link expired. Go back to guildies and start again.", { status: 400 });
+		if (!origin) return new Response("This link expired. Go back to guildie and start again.", { status: 400 });
 		const next = new URL(`${origin}/claim/callback`);
 		for (const key of ["code", "state", "error"]) {
 			const value = url.searchParams.get(key);
