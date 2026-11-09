@@ -10,10 +10,10 @@ import { FLAVORS, type Flavor, type NamespaceKind, type Region } from "./shared/
 // rosters and character profiles.
 
 function clientCredentials() {
-	const id = process.env.BATTLENET_CLIENT_ID;
-	const secret = process.env.BATTLENET_CLIENT_SECRET;
+	const id = process.env.AUTH_BATTLENET_CLIENT_ID;
+	const secret = process.env.AUTH_BATTLENET_CLIENT_SECRET;
 	if (!id || !secret || id === "unset") {
-		throw new Error("BATTLENET_CLIENT_ID / BATTLENET_CLIENT_SECRET are not set (docs/blizzard-setup.md)");
+		throw new Error("AUTH_BATTLENET_CLIENT_ID / AUTH_BATTLENET_CLIENT_SECRET are not set (docs/blizzard-setup.md)");
 	}
 	return { id, secret, basic: `Basic ${btoa(`${id}:${secret}`)}` };
 }

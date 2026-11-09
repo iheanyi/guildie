@@ -12,7 +12,8 @@ would help which members.
 - [x] Claim your characters (Battle.net `wow.profile`)
 - [x] Per-guild visibility: public or members only (owner's choice)
 - [ ] Verify against the live Forever API with real keys
-- [ ] Deploy (Cloudflare Workers, like our other apps) with production keys
+- [x] Worktrees, Worker previews and an OAuth gateway, like Onda and Sportsball
+- [ ] One-time setup: domain, Convex project, gateways, Workers Builds (docs/deploy.md)
 
 ## Next
 

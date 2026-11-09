@@ -1,4 +1,5 @@
 import { realpathSync } from "node:fs";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -24,8 +25,5 @@ export default defineConfig({
 	// Its CommonJS dependencies still need pre-bundling.
 	optimizeDeps: authDeps,
 	environments: { ssr: { optimizeDeps: authDeps } },
-	// Bundle it for SSR too, so the provider (via the alias) and the method hooks
-	// share one module instance instead of Node loading a second copy.
-	ssr: { noExternal: ["@convex-dev/auth"] },
-	plugins: [tailwindcss(), tanstackStart(), react()],
+	plugins: [cloudflare({ viteEnvironment: { name: "ssr" } }), tailwindcss(), tanstackStart(), react()],
 });

@@ -63,13 +63,13 @@ function SignIn() {
 	);
 }
 
-/** Dev only; the backend refuses unless AUTH_DEV_GUEST=true. */
+/** Local backends only; the backend refuses anywhere else. */
 function GuestSignIn() {
 	const { signIn } = useSignInAnonymously({ signInAnonymously: api.auth.signInAsGuest });
 	const router = useRouter();
 	return (
 		<div className="mt-12 border-t pt-4 text-sm">
-			<p className="text-muted-foreground">Dev deployment: guest accounts are on.</p>
+			<p className="text-muted-foreground">Local backend: guest accounts are on.</p>
 			<Button
 				variant="outline"
 				className="mt-2"

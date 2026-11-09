@@ -1,0 +1,32 @@
+// OAuth callback gateway. One Worker per tier; see docs/auth-environments.md.
+// Secrets (per env): wrangler secret put ROUTING_SECRET -c wrangler.jsonc --env <dev|prod>
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "guildies-gateway",
+	// The account that owns guildie.club ("Nate").
+	"account_id": "fc87b44f5832b25053fec2efb19fc208",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-01",
+	"workers_dev": false,
+	"preview_urls": false,
+	"observability": { "enabled": true },
+	// Local `wrangler dev` only.
+	"vars": { "ALLOWED_TARGETS": "http://127.0.0.1:*,http://localhost:*" },
+	"env": {
+		"dev": {
+			"name": "guildies-gateway-dev",
+			"routes": [{ "pattern": "gateway-dev.guildie.club", "zone_name": "guildie.club", "custom_domain": true }],
+			// Local worktrees (the browser follows the redirect, so loopback works),
+			// cloud dev and branch previews.
+			"vars": { "ALLOWED_TARGETS": "https://*.convex.site,http://127.0.0.1:*,http://localhost:*" },
+			"ratelimits": [{ "name": "CALLBACK_LIMITER", "namespace_id": "2201", "simple": { "limit": 30, "period": 60 } }]
+		},
+		"prod": {
+			"name": "guildies-gateway",
+			"routes": [{ "pattern": "gateway.guildie.club", "zone_name": "guildie.club", "custom_domain": true }],
+			// Only the prod deployment. Set this to its URL once it exists.
+			"vars": { "ALLOWED_TARGETS": "https://PROD-DEPLOYMENT.convex.site" },
+			"ratelimits": [{ "name": "CALLBACK_LIMITER", "namespace_id": "2202", "simple": { "limit": 30, "period": 60 } }]
+		}
+	}
+}

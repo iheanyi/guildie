@@ -12,17 +12,20 @@ Scopes aren't approved in the portal. Any client can request `openid` and
 `wow.profile`; the player agrees on Battle.net's consent screen. Public data
 (guilds, rosters, profiles) needs no scope at all.
 
-## 1. Create the client
+## 1. Create the dev client
+
+Make two clients, dev now and prod when we deploy: separate rate limits,
+separate secrets, and a production consent screen that says "guildies".
 
 1. Go to <https://develop.battle.net> and log in with your Battle.net account.
    If it asks you to add an authenticator or verify your email, do that first.
 2. Open **API Access**, then **Create Client**.
 3. Fill it in:
-   - **Client name**: `guildies-dev` (make a separate one for production later).
-   - **Redirect URLs**, both of these:
-     - `http://127.0.0.1:3211/oauth/battlenet/callback` (sign-in; the local
-       Convex backend's HTTP address)
-     - `http://localhost:3000/claim/callback` (claiming characters; the app)
+   - **Client name**: `guildies-dev`
+   - **Redirect URLs**, both of these (the dev gateway; it forwards to every
+     worktree, preview and cloud dev, docs/auth-environments.md):
+     - `https://gateway-dev.guildie.club/oauth/battlenet/callback` (sign-in)
+     - `https://gateway-dev.guildie.club/oauth/claim/callback` (claiming characters)
    - **Service URL**: `https://github.com/natedunn/guildies`
    - **Intended use**: "Guild roster directory for World of Warcraft: Forever.
      Reads public guild rosters and character profiles; players sign in to
@@ -30,21 +33,32 @@ Scopes aren't approved in the portal. Any client can request `openid` and
 4. Save. Copy the **Client ID** and **Client Secret**. The secret is shown
    once; if you lose it, generate a new one.
 
-If the portal rejects the `127.0.0.1` URL, tell us: the fallback is a cloud
-Convex dev deployment, whose callback is
-`https://<deployment>.convex.site/oauth/battlenet/callback`.
+The prod client (`guildies`) is the same with `gateway.guildie.club` in both
+URLs.
 
 ## 2. Give them to Convex
 
-With `pnpm dev` running, in another terminal:
+Once cloud dev exists, set them there (with the gateway settings in
+docs/auth-environments.md) and every new worktree and preview copies them:
+
+```sh
+pbpaste | npx convex env set --deployment <cloud dev> BATTLENET_CLIENT_ID
+pbpaste | npx convex env set --deployment <cloud dev> BATTLENET_CLIENT_SECRET
+```
+
+Until then, set them on your checkout's local backend (in the checkout, with
+`pnpm dev` running):
 
 ```sh
 export CONVEX_AGENT_MODE=anonymous
-npx convex env set BATTLENET_CLIENT_ID <client id>
-npx convex env set BATTLENET_CLIENT_SECRET <client secret>
+pbpaste | npx convex env set BATTLENET_CLIENT_ID
+pbpaste | npx convex env set BATTLENET_CLIENT_SECRET
 ```
 
-They live on the Convex deployment only, never in the repo or `.env.local`.
+That's enough for the roster sync and `dev:probe`. Sign-in and claiming also
+need the dev gateway deployed, since the client only knows its URLs.
+
+They live on Convex deployments only, never in the repo or `.env.local`.
 
 ## 3. Check them
 
@@ -67,10 +81,3 @@ page, and claim your characters from your account page.
 about 4 requests per level 10+ member, once an hour, so a 500-member guild
 uses about 2,000 an hour. Several large guilds on one client would need a
 longer refresh interval.
-
-## Production
-
-Create a second client (`guildies`) with the production callback URLs:
-`https://<prod deployment>.convex.site/oauth/battlenet/callback` and
-`https://<app domain>/claim/callback`. Set `SITE_URL` on that deployment to
-the app's origin.

@@ -1,11 +1,11 @@
 // Gives a fresh local Convex backend the settings it needs to start:
-// auth signing keys, dev guest sign-in, SITE_URL, and placeholder Battle.net
+// auth signing keys, SITE_URL, and placeholder Battle.net
 // credentials (replace them: docs/blizzard-setup.md). Idempotent.
 //   usage: node scripts/dev-env.mjs <site url>
 import { execFileSync } from "node:child_process";
 import { generateKeyPairSync, randomUUID } from "node:crypto";
 
-const siteUrl = process.argv[2] ?? "http://localhost:3000";
+const siteUrl = process.argv[2] ?? "https://guildies.localhost:1355";
 const convex = (...args) => execFileSync("npx", ["convex", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 const get = (name) => {
 	try {
@@ -26,8 +26,7 @@ if (!get("AUTH_PRIVATE_KEY") || !get("AUTH_JWKS")) {
 	set("AUTH_PRIVATE_KEY", Buffer.from(pem).toString("base64"));
 	set("AUTH_JWKS", JSON.stringify({ keys: [{ ...jwk, kid: randomUUID(), alg: "RS256", use: "sig" }] }));
 }
-for (const name of ["BATTLENET_CLIENT_ID", "BATTLENET_CLIENT_SECRET"]) {
+for (const name of ["AUTH_BATTLENET_CLIENT_ID", "AUTH_BATTLENET_CLIENT_SECRET"]) {
 	if (!get(name)) set(name, "unset");
 }
-if (get("AUTH_DEV_GUEST") !== "true") set("AUTH_DEV_GUEST", "true");
 if (get("SITE_URL") !== siteUrl) set("SITE_URL", siteUrl);

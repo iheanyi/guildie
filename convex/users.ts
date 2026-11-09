@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { vBattlenetProfile } from "./authBattlenet";
+import { isLocalBackend } from "./origins";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 
@@ -46,14 +47,14 @@ export const createFromGuest = internalMutation({
 	},
 	returns: v.id("users"),
 	handler: async (ctx) => {
-		if (process.env.AUTH_DEV_GUEST !== "true") throw new ConvexError("Guest sign-in is disabled");
+		if (!isLocalBackend()) throw new ConvexError("Guest sign-in is disabled");
 		return await ctx.db.insert("users", { name: "Guest" });
 	},
 });
 
 export const guestEnabled = query({
 	args: {},
-	handler: async () => process.env.AUTH_DEV_GUEST === "true",
+	handler: async () => isLocalBackend(),
 });
 
 export const viewer = query({

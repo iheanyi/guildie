@@ -12,19 +12,26 @@ it's headed (Discord, guild chat, an in-game addon).
 - [TanStack Start](https://tanstack.com/start) (React, SSR)
 - [Convex](https://convex.dev) for the database, sync jobs and auth
 - [Convex Auth v2](https://auth-v2.previews.convex.dev) (beta) with Battle.net sign-in
+- Cloudflare Workers, with Worker Previews per branch
 - [shadcn/ui](https://ui.shadcn.com) on [Base UI](https://base-ui.com), Tailwind v4
 
 ## Run it
 
 ```sh
 pnpm install
-pnpm dev        # local Convex backend + app on http://localhost:3000
-pnpm seed       # a fake guild, so there's something to look at
+pnpm dev        # https://guildies.localhost:1355 (worktrees get their own URL)
 ```
 
-`pnpm dev` runs Convex locally (no account needed) and gives it dev settings,
-including a guest sign-in. To use real data, create a Blizzard API client and
-set its keys: [docs/blizzard-setup.md](docs/blizzard-setup.md).
+Each checkout (main or a git worktree) gets its own local Convex backend,
+data and URL through Portless, so several can run at once:
+[docs/local-dev.md](docs/local-dev.md). A fresh checkout starts with a fake
+guild and a guest sign-in. For real data, create a Blizzard API client:
+[docs/blizzard-setup.md](docs/blizzard-setup.md).
+
+Sign-in works the same in every worktree, branch preview and production
+through a small OAuth gateway Worker: [docs/auth-environments.md](docs/auth-environments.md).
+Deploys and branch previews run on Cloudflare Workers: [docs/deploy.md](docs/deploy.md).
+Setting it all up from scratch: [docs/setup.md](docs/setup.md).
 
 ## How data flows
 

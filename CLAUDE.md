@@ -3,6 +3,9 @@
 WoW guild directory. See README.md and docs/.
 
 - pnpm. Tabs, double quotes, semicolons.
+- `pnpm dev` per checkout (Portless URL, own Convex backend): docs/local-dev.md.
+  Deploys and previews: docs/deploy.md. OAuth gateway and env per tier:
+  docs/auth-environments.md.
 - Convex: plain `query`/`mutation`/`action` with `v` validators. Blizzard API
   calls only in actions (`convex/blizzard.ts`, `convex/sync.ts`).
 - Auth: `@convex-dev/auth@2.0.0-beta.0`. Users via `getAuthUserId` /

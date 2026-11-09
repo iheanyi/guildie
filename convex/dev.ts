@@ -1,13 +1,15 @@
 import { ConvexError, v } from "convex/values";
+import { internal } from "./_generated/api";
 import { internalAction, internalMutation } from "./_generated/server";
 import { appToken, blizzardGet } from "./blizzard";
+import { isLocalBackend } from "./origins";
 import { vRegion } from "./schema";
 import { CLASSES, FLAVORS, guildSlug, SLOT_ORDER } from "./shared/wow";
 
 // Dev helpers.
 //
 // `pnpm seed`: a fake guild so the directory can be built and reviewed before
-// Blizzard keys exist. Dev deployments only (AUTH_DEV_GUEST=true).
+// Blizzard keys exist. Local backends only.
 
 const FIRST = ["Aldric", "Brenna", "Corwin", "Dagny", "Edris", "Fenna", "Garrick", "Hesper", "Ivo", "Jorun", "Kael", "Liesel", "Maren", "Nils", "Orla", "Pell", "Quill", "Rowan", "Sable", "Tamsin", "Ulric", "Vesna", "Wren", "Yarrow"];
 const LAST = ["Ashdown", "Brightwater", "Coldbrook", "Duskmantle", "Emberfall", "Fairwind", "Greyhollow", "Hearthstone", "Ironvale", "Larkspur", "Moonbrook", "Oakheart"];
@@ -18,7 +20,7 @@ const ALLIANCE_RACES = [1, 3, 4, 7];
 export const seed = internalMutation({
 	args: {},
 	handler: async (ctx) => {
-		if (process.env.AUTH_DEV_GUEST !== "true") throw new ConvexError("Dev deployments only");
+		if (!isLocalBackend()) throw new ConvexError("Local backends only");
 		const slug = "the-long-watch";
 		const existing = await ctx.db
 			.query("guilds")
@@ -119,5 +121,34 @@ export const probe = internalAction({
 		}
 		result.sampleCharacter = sample.character.slug;
 		return result;
+	},
+});
+
+/**
+ * `npx convex run --deployment <name> dev:addGuild '{"name": "Your Guild", "region": "us"}'`
+ * Adds a guild without a signed-in user (no owner) and syncs it. For seeding
+ * cloud dev, which local worktrees import guilds from.
+ */
+export const addGuild = internalMutation({
+	args: { name: v.string(), region: v.optional(vRegion) },
+	handler: async (ctx, args) => {
+		const region = args.region ?? "us";
+		const slug = guildSlug(args.name);
+		const existing = await ctx.db
+			.query("guilds")
+			.withIndex("by_key", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", slug))
+			.unique();
+		const guildId =
+			existing?._id ??
+			(await ctx.db.insert("guilds", {
+				flavor: "forever",
+				region,
+				slug,
+				name: args.name.trim(),
+				visibility: "public",
+				memberCount: 0,
+			}));
+		await ctx.scheduler.runAfter(0, internal.sync.syncGuild, { guildId });
+		return `/g/${region}/${slug}`;
 	},
 });

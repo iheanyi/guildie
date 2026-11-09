@@ -102,6 +102,10 @@ export default defineSchema({
 		userId: v.id("users"),
 		stateHash: v.string(),
 		region: vRegion,
+		/** The app origin that started the flow; the callback returns there. */
+		origin: v.string(),
+		/** The redirect_uri sent to Battle.net (the gateway's or ours), reused for the code exchange. */
+		callbackUrl: v.string(),
 		expiresAt: v.number(),
 	}).index("by_stateHash", ["stateHash"]),
 

@@ -2,7 +2,8 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { action, internalMutation, mutation } from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation } from "./_generated/server";
+import { routingPrefix } from "./authGateway";
 import { allowedRedirectOrigins } from "./origins";
 import { BATTLENET_AUTHORIZE } from "./authBattlenet";
 import { exchangeToken } from "./blizzard";
@@ -14,9 +15,13 @@ import { FLAVORS, type Region } from "./shared/wow";
 // wow.profile scope. We read the account's character list once, keep the
 // names, and drop the Blizzard token.
 //
-// The provider redirects back to the app (/claim/callback), not to Convex, and
-// completing requires being signed in as the person who started the flow, so a
-// claim link can't be used to attach someone else's characters to your account.
+// Battle.net redirects to <CONVEX_SITE_URL>/oauth/claim/callback, or to the
+// gateway's /oauth/claim/callback when sign-in goes through the gateway
+// (AUTH_BATTLENET_CALLBACK_URL set; docs/auth-environments.md). That endpoint (convex/http.ts) bounces the
+// browser to the app, and the app completes the claim. Completing requires
+// the same browser (state in sessionStorage) and being signed in as the
+// person who started, so a claim link can't attach someone else's characters
+// to your account.
 
 const REQUEST_TTL_MS = 10 * 60_000;
 
@@ -25,36 +30,66 @@ function randomToken() {
 	return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-async function sha256(value: string) {
+export async function sha256(value: string) {
 	const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
 	return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function callbackUrl(origin: string) {
-	if (!allowedRedirectOrigins.includes(origin)) throw new ConvexError("Unknown origin");
-	return `${origin}/claim/callback`;
+/**
+ * Where Battle.net sends the browser. Behind the gateway it's the gateway's
+ * claim callback, next to its sign-in one; otherwise ours.
+ */
+function claimCallbackUrl() {
+	const site = process.env.CONVEX_SITE_URL;
+	if (!site) throw new Error("CONVEX_SITE_URL is not set");
+	const signIn = process.env.AUTH_BATTLENET_CALLBACK_URL;
+	if (!signIn) return `${site}/oauth/claim/callback`;
+	const claim = signIn.replace(/\/oauth\/battlenet\/callback$/, "/oauth/claim/callback");
+	if (claim === signIn) throw new Error("AUTH_BATTLENET_CALLBACK_URL must end in /oauth/battlenet/callback");
+	return claim;
 }
 
 export const start = mutation({
 	args: { region: vRegion, origin: v.string() },
 	handler: async (ctx, { region, origin }) => {
 		const userId = await requireUserId(ctx);
-		const clientId = process.env.BATTLENET_CLIENT_ID;
+		const clientId = process.env.AUTH_BATTLENET_CLIENT_ID;
 		if (!clientId || clientId === "unset") throw new ConvexError("Battle.net isn't configured on this deployment");
+		if (!allowedRedirectOrigins.includes(origin)) throw new ConvexError("Unknown origin");
 		const state = randomToken();
+		const callbackUrl = claimCallbackUrl();
 		await ctx.db.insert("claimRequests", {
 			userId,
 			stateHash: await sha256(state),
 			region,
+			origin,
+			callbackUrl,
 			expiresAt: Date.now() + REQUEST_TTL_MS,
 		});
+		// Behind the gateway, the deployment signs its address into the state
+		// Battle.net echoes back (convex/authGateway.ts).
+		const secret = process.env.AUTH_GATEWAY_SECRET;
+		const site = process.env.CONVEX_SITE_URL!;
+		const sentState = secret ? `${await routingPrefix(secret, "claim", site)}${state}` : state;
 		const url = new URL(BATTLENET_AUTHORIZE);
 		url.searchParams.set("client_id", clientId);
 		url.searchParams.set("response_type", "code");
 		url.searchParams.set("scope", "wow.profile");
-		url.searchParams.set("state", state);
-		url.searchParams.set("redirect_uri", callbackUrl(origin));
+		url.searchParams.set("state", sentState);
+		url.searchParams.set("redirect_uri", callbackUrl);
 		return { url: url.toString(), state };
+	},
+});
+
+/** The app origin a pending request returns to (convex/http.ts). */
+export const originFor = internalQuery({
+	args: { stateHash: v.string() },
+	handler: async (ctx, { stateHash }) => {
+		const request = await ctx.db
+			.query("claimRequests")
+			.withIndex("by_stateHash", (q) => q.eq("stateHash", stateHash))
+			.unique();
+		return request && request.expiresAt > Date.now() ? request.origin : null;
 	},
 });
 
@@ -70,7 +105,7 @@ export const consume = internalMutation({
 		if (!request) return null;
 		await ctx.db.delete(request._id);
 		if (request.userId !== userId || request.expiresAt < Date.now()) return null;
-		return { userId: request.userId, region: request.region };
+		return { userId: request.userId, region: request.region, callbackUrl: request.callbackUrl };
 	},
 });
 
@@ -129,12 +164,12 @@ function slugOf(c: { name: string; surname?: string; character?: { href?: string
 }
 
 export const complete = action({
-	args: { code: v.string(), state: v.string(), origin: v.string() },
-	handler: async (ctx, { code, state, origin }): Promise<{ total: number; inGuilds: number }> => {
+	args: { code: v.string(), state: v.string() },
+	handler: async (ctx, { code, state }): Promise<{ total: number; inGuilds: number }> => {
 		const request = await ctx.runMutation(internal.claims.consume, { stateHash: await sha256(state) });
 		if (!request) throw new ConvexError("This claim link expired or isn't yours. Start again.");
 		const { access_token } = await exchangeToken(
-			new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: callbackUrl(origin) }),
+			new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: request.callbackUrl }),
 		);
 		const region = request.region as Region;
 		const url = new URL(`https://${region}.api.blizzard.com/profile/user/wow`);

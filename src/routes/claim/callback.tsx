@@ -36,7 +36,7 @@ function ClaimCallback() {
 		if (!code || !state || state !== expected) {
 			return setResult({ status: "error", message: "This claim didn't start in this browser. Start again." });
 		}
-		complete({ code, state, origin: window.location.origin })
+		complete({ code, state })
 			.then((r) => setResult({ status: "done", ...r }))
 			.catch((err) =>
 				setResult({

@@ -2,8 +2,13 @@ node_modules
 dist
 .output
 .tanstack
+.wrangler
+# Local Convex backends (one per checkout, scripts/dev.sh)
 .convex
+.env
 .env*.local
-.env.local
+.dev.vars
 *.tsbuildinfo
 .DS_Store
+.claude/settings.local.json
+CLAUDE.local.md

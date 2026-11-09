@@ -10,11 +10,14 @@
 
 import type * as auth from "../auth.js";
 import type * as authBattlenet from "../authBattlenet.js";
+import type * as authGateway from "../authGateway.js";
 import type * as blizzard from "../blizzard.js";
+import type * as buildSite from "../buildSite.js";
 import type * as claims from "../claims.js";
 import type * as crons from "../crons.js";
 import type * as dev from "../dev.js";
 import type * as guilds from "../guilds.js";
+import type * as http from "../http.js";
 import type * as origins from "../origins.js";
 import type * as shared_wow from "../shared/wow.js";
 import type * as sync from "../sync.js";
@@ -29,11 +32,14 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   authBattlenet: typeof authBattlenet;
+  authGateway: typeof authGateway;
   blizzard: typeof blizzard;
+  buildSite: typeof buildSite;
   claims: typeof claims;
   crons: typeof crons;
   dev: typeof dev;
   guilds: typeof guilds;
+  http: typeof http;
   origins: typeof origins;
   "shared/wow": typeof shared_wow;
   sync: typeof sync;
