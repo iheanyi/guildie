@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"jsx": "react-jsx",
+		"strict": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"types": ["vite/client", "node"],
+		"paths": {
+			"@/*": ["./src/*"],
+			"@convex/*": ["./convex/*"],
+			// Convex Auth v2 doesn't export its React context yet; see src/lib/convex-auth-start.
+			"#convex-auth-react-internal": ["./node_modules/@convex-dev/auth/dist/react/client"]
+		}
+	},
+	"include": ["src", "convex", "vite.config.ts"]
+}
