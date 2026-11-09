@@ -24,8 +24,8 @@
 		"prod": {
 			"name": "guildies-gateway",
 			"routes": [{ "pattern": "gateway.guildie.club", "zone_name": "guildie.club", "custom_domain": true }],
-			// Only the prod deployment. Set this to its URL once it exists.
-			"vars": { "ALLOWED_TARGETS": "https://PROD-DEPLOYMENT.convex.site" },
+			// Only the prod deployment (scintillating-gnat-539).
+			"vars": { "ALLOWED_TARGETS": "https://scintillating-gnat-539.convex.site" },
 			"ratelimits": [{ "name": "CALLBACK_LIMITER", "namespace_id": "2202", "simple": { "limit": 30, "period": 60 } }]
 		}
 	}
