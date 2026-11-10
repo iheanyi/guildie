@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { CLASSES, className, raceName, type Region } from "@convex/shared/wow";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
+import { ArrowDown01Icon, ArrowUp01Icon, CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
@@ -166,8 +166,12 @@ function Roster({ members }: { members: Member[] }) {
 									<span className="text-muted-foreground">{m.surname}</span>
 								</Link>
 								{m.claimed && (
-									<span className="ml-2 text-xs text-muted-foreground" title="Claimed by a signed-in player">
-										claimed
+									<span
+										className="ml-1.5 inline-flex translate-y-[2px] text-muted-foreground/70"
+										title="Claimed on Guildie"
+										aria-label="Claimed on Guildie"
+									>
+										<HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} strokeWidth={1.75} />
 									</span>
 								)}
 							</TableCell>
