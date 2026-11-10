@@ -3,11 +3,12 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { appToken, blizzardGet } from "./blizzard";
+import { vTalentTree } from "./schema";
 import { FLAVORS } from "./shared/wow";
 
 // Roster sync (hourly cron + on demand) and per-character profile sync.
 // Blizzard allows 100 requests/s and 36,000/hour per client; a character
-// costs 4 requests, so profile syncs are staggered.
+// costs 5 requests, so profile syncs are staggered.
 
 const PROFILE_STAGGER_MS = 150;
 /** Re-fetch a character's profile at most this often. */
@@ -182,6 +183,35 @@ type ProfessionEntry = {
 };
 type Professions = { primaries?: ProfessionEntry[]; secondaries?: ProfessionEntry[] };
 type Media = { assets?: { key: string; value: string }[] };
+type Specializations = {
+	specialization_groups?: {
+		is_active?: boolean;
+		specializations?: {
+			specialization?: { id: number };
+			specialization_name?: string;
+			spent_points?: number;
+			talents?: { talent?: { name?: string }; talent_rank?: number }[];
+		}[];
+	}[];
+};
+
+/** The active talent group's trees with points, most points first. */
+function mapTalentTrees(data: Specializations | undefined) {
+	if (!data) return undefined;
+	const groups = data.specialization_groups ?? [];
+	const active = groups.find((g) => g.is_active) ?? groups[0];
+	return (active?.specializations ?? [])
+		.filter((s) => s.specialization && (s.spent_points ?? 0) > 0)
+		.map((s) => ({
+			id: s.specialization!.id,
+			name: s.specialization_name ?? `Tree ${s.specialization!.id}`,
+			points: s.spent_points ?? 0,
+			talents: (s.talents ?? [])
+				.filter((t) => t.talent?.name)
+				.map((t) => ({ name: t.talent!.name!, rank: t.talent_rank ?? 1 })),
+		}))
+		.sort((a, b) => b.points - a.points);
+}
 
 function mapProfessions(data: Professions | undefined) {
 	if (!data) return undefined;
@@ -226,9 +256,10 @@ export const syncCharacter = internalAction({
 			await ctx.runMutation(internal.sync.applyProfile, { characterId, missing: true });
 			return;
 		}
-		const [equipment, professions, media] = await Promise.all([
+		const [equipment, professions, specializations, media] = await Promise.all([
 			blizzardGet<Equipment>({ ...common, path: `${base}/equipment` }),
 			blizzardGet<Professions>({ ...common, path: `${base}/professions` }),
+			blizzardGet<Specializations>({ ...common, path: `${base}/specializations` }),
 			// Media can 404 for a day after a character first appears.
 			blizzardGet<Media>({ ...common, path: `${base}/character-media` }),
 		]);
@@ -248,6 +279,7 @@ export const syncCharacter = internalAction({
 					}))
 				: undefined,
 			professions: professions.ok ? mapProfessions(professions.data) : undefined,
+			talentTrees: specializations.ok ? mapTalentTrees(specializations.data) : undefined,
 			avatarUrl: media.ok ? media.data.assets?.find((a) => a.key === "avatar")?.value : undefined,
 		});
 	},
@@ -282,6 +314,7 @@ export const applyProfile = internalMutation({
 				}),
 			),
 		),
+		talentTrees: v.optional(v.array(vTalentTree)),
 		avatarUrl: v.optional(v.string()),
 	},
 	handler: async (ctx, { characterId, missing, ...data }) => {

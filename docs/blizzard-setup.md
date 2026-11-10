@@ -78,6 +78,6 @@ page, and claim your characters from your account page.
 ## Limits
 
 100 requests per second and 36,000 per hour per client. A full sync costs
-about 4 requests per level 10+ member, once an hour, so a 500-member guild
-uses about 2,000 an hour. Several large guilds on one client would need a
+about 5 requests per level 10+ member, once an hour, so a 500-member guild
+uses about 2,500 an hour. Several large guilds on one client would need a
 longer refresh interval.

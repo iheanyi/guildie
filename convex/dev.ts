@@ -16,6 +16,16 @@ const LAST = ["Ashdown", "Brightwater", "Coldbrook", "Duskmantle", "Emberfall", 
 const PROFESSIONS = ["Alchemy", "Blacksmithing", "Enchanting", "Engineering", "Herbalism", "Leatherworking", "Mining", "Skinning", "Tailoring"];
 const QUALITIES = ["COMMON", "UNCOMMON", "UNCOMMON", "RARE", "RARE", "EPIC"];
 const ALLIANCE_RACES = [1, 3, 4, 7];
+const TREES: Record<number, string[]> = {
+	1: ["Arms", "Fury", "Protection"],
+	2: ["Holy", "Protection", "Retribution"],
+	3: ["Beast Mastery", "Marksmanship", "Survival"],
+	4: ["Assassination", "Combat", "Subtlety"],
+	5: ["Discipline", "Holy", "Shadow Magic"],
+	8: ["Arcane", "Fire", "Frost"],
+	9: ["Affliction", "Demonology", "Destruction"],
+	11: ["Balance", "Feral Combat", "Restoration"],
+};
 
 export const seed = internalMutation({
 	args: {},
@@ -49,6 +59,20 @@ export const seed = internalMutation({
 			const professions = [pick(PROFESSIONS), pick(PROFESSIONS)]
 				.filter((p, j, all) => all.indexOf(p) === j)
 				.map((name, j) => ({ id: j + 1, name, skill: Math.min(300, level * 5), maxSkill: 300, secondary: false }));
+			const classId = pick(classIds);
+			const points = Math.max(0, level - 9);
+			const main = Math.min(points, 31);
+			const talentTrees = [
+				{ tree: 0, points: main },
+				{ tree: 1, points: points - main },
+			]
+				.filter((t) => t.points > 0)
+				.map((t) => ({
+					id: classId * 10 + t.tree,
+					name: TREES[classId][t.tree],
+					points: t.points,
+					talents: [{ name: `${TREES[classId][t.tree]} talent`, rank: Math.min(5, t.points) }],
+				}));
 			await ctx.db.insert("characters", {
 				guildId,
 				flavor: "forever",
@@ -57,7 +81,7 @@ export const seed = internalMutation({
 				name: first,
 				surname,
 				level,
-				classId: pick(classIds),
+				classId,
 				raceId: pick(ALLIANCE_RACES),
 				faction: "ALLIANCE",
 				rank: i === 0 ? 0 : i < 4 ? 1 : i < 12 ? 3 : 5,
@@ -67,6 +91,7 @@ export const seed = internalMutation({
 					lastLoginAt: Date.now() - Math.floor(rand() * 9 * 24 * 3600_000),
 					averageItemLevel: Math.round(level * 0.9 + rand() * 10),
 					professions,
+					talentTrees,
 					equipment: SLOT_ORDER.filter((s) => s !== "SHIRT" && s !== "TABARD").map((slot, j) => ({
 						slot,
 						itemId: 10000 + i * 100 + j,

@@ -95,7 +95,36 @@ function CharacterPage() {
 						)}
 					</section>
 					<section>
-						<h2 className="text-2xl">Professions</h2>
+						<h2 className="text-2xl">
+							Talents
+							{c.talentTrees?.length ? (
+								<span className="num ml-3 text-base text-muted-foreground">
+									{c.talentTrees.map((t) => t.points).join(" / ")}
+								</span>
+							) : null}
+						</h2>
+						{c.talentTrees?.length ? (
+							c.talentTrees.map((tree) => (
+								<div key={tree.id} className="mt-3">
+									<div className="flex justify-between border-b pb-1 text-sm font-medium">
+										<span>{tree.name}</span>
+										<span className="num">{tree.points}</span>
+									</div>
+									<ul className="text-sm">
+										{tree.talents.map((t) => (
+											<li key={t.name} className="flex justify-between border-b py-1">
+												<span>{t.name}</span>
+												<span className="num text-muted-foreground">{t.rank}</span>
+											</li>
+										))}
+									</ul>
+								</div>
+							))
+						) : (
+							<p className="mt-2 text-muted-foreground">No points spent yet.</p>
+						)}
+
+						<h2 className="mt-10 text-2xl">Professions</h2>
 						{c.professions?.length ? (
 							<ul className="mt-3 border-t text-sm">
 								{c.professions.map((p) => (

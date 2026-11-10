@@ -18,6 +18,14 @@ const vEquippedItem = v.object({
 	itemLevel: v.optional(v.number()),
 });
 
+/** A talent tree with points in it, from the active talent group. */
+export const vTalentTree = v.object({
+	id: v.number(),
+	name: v.string(),
+	points: v.number(),
+	talents: v.array(v.object({ name: v.string(), rank: v.number() })),
+});
+
 const vProfession = v.object({
 	id: v.number(),
 	name: v.string(),
@@ -72,6 +80,8 @@ export default defineSchema({
 		averageItemLevel: v.optional(v.number()),
 		equipment: v.optional(v.array(vEquippedItem)),
 		professions: v.optional(v.array(vProfession)),
+		/** Trees with points spent, most points first. */
+		talentTrees: v.optional(v.array(vTalentTree)),
 		avatarUrl: v.optional(v.string()),
 		profileSyncedAt: v.optional(v.number()),
 		/** 404 from the profile endpoint: under level 10 or not logged out yet. */

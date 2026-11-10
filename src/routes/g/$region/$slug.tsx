@@ -84,7 +84,8 @@ function Roster({ members }: { members: Member[] }) {
 				(!q ||
 					m.name.toLowerCase().includes(q) ||
 					m.surname?.toLowerCase().includes(q) ||
-					m.professions?.some((p) => p.name.toLowerCase().includes(q))) &&
+					m.professions?.some((p) => p.name.toLowerCase().includes(q)) ||
+					m.talentTrees?.some((t) => t.name.toLowerCase().includes(q))) &&
 				(classFilter === null || m.classId === classFilter) &&
 				(!maxOnly || m.level === 60),
 		);
@@ -138,7 +139,7 @@ function Roster({ members }: { members: Member[] }) {
 				<Input
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					placeholder="Search names or professions"
+					placeholder="Search names, talents or professions"
 					className="w-64"
 				/>
 				<label className="flex items-center gap-2 text-sm">
@@ -175,6 +176,7 @@ function Roster({ members }: { members: Member[] }) {
 						{header("name", "Name")}
 						{header("level", "Level", "right")}
 						{header("class", "Class")}
+						<TableHead>Talents</TableHead>
 						<TableHead>Race</TableHead>
 						{header("rank", "Rank")}
 						<TableHead>Professions</TableHead>
@@ -206,6 +208,14 @@ function Roster({ members }: { members: Member[] }) {
 							<TableCell>
 								<ClassText classId={m.classId}>{className(m.classId)}</ClassText>
 							</TableCell>
+							<TableCell className="num whitespace-nowrap">
+								{m.talentTrees?.map((t, i) => (
+									<span key={t.id} className={cn(i > 0 && "text-muted-foreground")}>
+										{i > 0 && " · "}
+										{t.name} {t.points}
+									</span>
+								))}
+							</TableCell>
 							<TableCell className="text-muted-foreground">{raceName(m.raceId)}</TableCell>
 							<TableCell className="text-muted-foreground">{rankLabel(m.rank)}</TableCell>
 							<TableCell className="num">
@@ -226,7 +236,7 @@ function Roster({ members }: { members: Member[] }) {
 			</Table>
 			{rows.length === 0 && <p className="mt-4 text-muted-foreground">Nobody matches.</p>}
 			<p className="mt-4 text-xs text-muted-foreground">
-				Professions, gear and last seen fill in once a character is level 10 and has logged out.
+				Talents, professions, gear and last seen fill in once a character is level 10 and has logged out.
 				Blizzard's API doesn't say who's online right now.
 			</p>
 		</section>

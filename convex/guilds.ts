@@ -86,6 +86,7 @@ export const get = query({
 				lastLoginAt: c.lastLoginAt,
 				averageItemLevel: c.averageItemLevel,
 				professions: c.professions,
+				talentTrees: c.talentTrees?.map(({ id, name, points }) => ({ id, name, points })),
 				avatarUrl: c.avatarUrl,
 				profileMissing: c.profileMissing,
 				claimed: claimed[i] !== null,
