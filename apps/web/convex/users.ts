@@ -4,7 +4,7 @@ import { vBattlenetProfile } from "./authBattlenet";
 import { guildsOf } from "./guilds";
 import { isLocalBackend } from "./origins";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
+import { internalMutation, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 
 export async function requireUserId(ctx: QueryCtx | MutationCtx) {
 	const userId = await getAuthUserId(ctx);
@@ -91,5 +91,14 @@ export const viewer = query({
 			faction: g.faction,
 		}));
 		return { ...user, characters, guilds };
+	},
+});
+
+/** Account page: show or hide my BattleTag from guildmates on rosters. */
+export const setHideBattletag = mutation({
+	args: { hide: v.boolean() },
+	handler: async (ctx, { hide }) => {
+		const userId = await requireUserId(ctx);
+		await ctx.db.patch(userId, { hideBattletag: hide || undefined });
 	},
 });

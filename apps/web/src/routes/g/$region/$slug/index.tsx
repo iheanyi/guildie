@@ -11,6 +11,7 @@ import { ClassText } from "@/components/class-name";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ago, rankLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -155,16 +156,24 @@ function Roster({ members }: { members: Member[] }) {
 					{rows.map((m) => (
 						<TableRow key={m._id}>
 							<TableCell>
-								<Link
-									to="/c/$region/$slug"
-									params={(p) => ({ region: p.region ?? "us", slug: m.slug })}
-									className="hover:underline underline-offset-4"
-								>
-									<ClassText classId={m.classId} className="font-medium">
-										{m.name}
-									</ClassText>{" "}
-									<span className="text-muted-foreground">{m.surname}</span>
-								</Link>
+								<Tooltip disabled={!m.battletag}>
+									<TooltipTrigger
+										render={
+											<Link
+												to="/c/$region/$slug"
+												params={(p) => ({ region: p.region ?? "us", slug: m.slug })}
+												className="hover:underline underline-offset-4"
+											/>
+										}
+									>
+										<ClassText classId={m.classId} className="font-medium">
+											{m.name}
+										</ClassText>{" "}
+										<span className="text-muted-foreground">{m.surname}</span>
+									</TooltipTrigger>
+									{/* Only guild members get BattleTags (guilds.get), and only from players who haven't hidden theirs. */}
+									<TooltipContent side="right">{m.battletag}</TooltipContent>
+								</Tooltip>
 								{m.claimed && (
 									<span
 										className="ml-1.5 inline-flex translate-y-[2px] text-muted-foreground/70"

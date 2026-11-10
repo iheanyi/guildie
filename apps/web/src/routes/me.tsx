@@ -10,6 +10,7 @@ import { ClassText } from "@/components/class-name";
 import { HelperTokens } from "@/components/helper-tokens";
 import { Page, PageHeader, SectionTitle } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useInDesktopApp } from "@/lib/desktop";
 import { isAuthReturn } from "@/lib/auth-return";
@@ -80,6 +81,11 @@ function Me() {
 			</section>
 
 			<section className="mt-10">
+				<SectionTitle>Privacy</SectionTitle>
+				<BattletagSetting hidden={!!viewer.hideBattletag} />
+			</section>
+
+			<section className="mt-10">
 				<SectionTitle>Desktop app</SectionTitle>
 				<HelperTokens />
 			</section>
@@ -125,5 +131,21 @@ function ClaimCharacters() {
 			</Button>
 			{error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 		</div>
+	);
+}
+
+/** Guildmates see your BattleTag when they hover your characters on the roster, unless you hide it. */
+function BattletagSetting({ hidden }: { hidden: boolean }) {
+	const setHide = useMutation(api.users.setHideBattletag);
+	return (
+		<label className="mt-2 flex items-start gap-3 text-[0.8125rem]">
+			<Switch className="mt-0.5" checked={hidden} onCheckedChange={(hide) => void setHide({ hide })} />
+			<span>
+				Hide my BattleTag from guildmates
+				<span className="block text-muted-foreground">
+					Members of your guilds see it when they hover your characters on the roster. Nobody else ever does.
+				</span>
+			</span>
+		</label>
 	);
 }

@@ -56,6 +56,8 @@ export default defineSchema({
 		/** Battle.net account id (the OIDC `sub`). */
 		battlenetId: v.optional(v.string()),
 		name: v.optional(v.string()),
+		/** Don't show my BattleTag to guildmates on the roster (Account page). */
+		hideBattletag: v.optional(v.boolean()),
 		/** Set when a person links Discord for notifications (not built yet). */
 		discordId: v.optional(v.string()),
 	}).index("by_battlenetId", ["battlenetId"]),

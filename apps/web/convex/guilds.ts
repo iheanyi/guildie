@@ -82,7 +82,8 @@ export const get = query({
 			.query("characters")
 			.withIndex("by_guild", (q) => q.eq("guildId", guild._id).eq("inRoster", true))
 			.collect();
-		// Mark which characters someone has claimed (without saying who: that's for a later privacy pass).
+		// Mark which characters someone has claimed. Members (never the public)
+		// also see the claimant's BattleTag, unless that player hid it.
 		const talents = await Promise.all(characters.map((c) => pickTalents(ctx, c)));
 		const claimed = await Promise.all(
 			characters.map((c) =>
@@ -92,6 +93,14 @@ export const get = query({
 					.first(),
 			),
 		);
+		const tags = new Map<Id<"users">, string | undefined>();
+		if (isMember) {
+			for (const claim of claimed) {
+				if (!claim || tags.has(claim.userId)) continue;
+				const user = await ctx.db.get(claim.userId);
+				tags.set(claim.userId, user && !user.hideBattletag ? user.battletag : undefined);
+			}
+		}
 		return {
 			guild,
 			hidden: false as const,
@@ -114,6 +123,7 @@ export const get = query({
 				avatarUrl: c.avatarUrl,
 				profileMissing: c.profileMissing,
 				claimed: claimed[i] !== null,
+				battletag: claimed[i] ? tags.get(claimed[i].userId) : undefined,
 			})),
 		};
 	},
