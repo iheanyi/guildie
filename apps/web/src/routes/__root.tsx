@@ -32,6 +32,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
+				{ name: "theme-color", content: "#1c150e" },
 			{ title: "Guildie" },
 			{ name: "description", content: "A home base for World of Warcraft guilds." },
 		],
@@ -46,7 +47,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
@@ -65,19 +66,23 @@ function RootComponent() {
 			<TooltipProvider>
 				<AuthSync />
 				<DesktopBridge />
-				<div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 sm:px-8">
+				<div className="app-shell">
 					<SiteHeader />
-					<main className="flex-1 pb-16">
-						<Outlet />
-					</main>
-					<footer className="flex gap-5 border-t py-4 text-sm text-muted-foreground">
-						<Link to="/data" className="hover:text-foreground">
-							Where the data comes from
-						</Link>
-						<a href="https://github.com/natedunn/guildie" className="hover:text-foreground">
-							Source
-						</a>
-					</footer>
+					<div className="app-scroll">
+						<main className="mx-auto w-full max-w-6xl flex-1 px-2.5 py-4 sm:px-6 sm:py-8">
+							<div className="frame px-4 sm:px-8 [&>*]:pt-6 [&>*]:pb-8 sm:[&>*]:pt-8 sm:[&>*]:pb-10">
+								<Outlet />
+							</div>
+						</main>
+						<footer className="mx-auto flex w-full max-w-6xl gap-5 px-4 pt-1 pb-6 text-sm text-muted-foreground sm:px-8">
+							<Link to="/data" className="hover:text-gold">
+								Where the data comes from
+							</Link>
+							<a href="https://github.com/natedunn/guildie" className="hover:text-gold">
+								Source
+							</a>
+						</footer>
+					</div>
 				</div>
 			</TooltipProvider>
 		</ConvexAuthStartProvider>

@@ -8,39 +8,48 @@ import { desktop } from "@/lib/desktop";
 export function SiteHeader() {
 	const { data: viewer } = useQuery(convexQuery(api.users.viewer, {}));
 	return (
-		<header className="flex items-baseline justify-between gap-4 border-b py-4">
-			<Link to="/" className="font-heading text-2xl font-semibold tracking-tight">
-				Guildie
-			</Link>
-			<nav className="flex items-baseline gap-5 text-sm">
-				{viewer ? (
-					<>
-						{viewer.guilds.length === 1 ? (
-							<Link
-								to="/g/$region/$slug"
-								params={{ region: viewer.guilds[0].region, slug: viewer.guilds[0].slug }}
-								className="hover:underline underline-offset-4"
-							>
-								{viewer.guilds[0].name}
-							</Link>
-						) : (
-							viewer.guilds.length > 1 && (
-								<Link to="/me" className="hover:underline underline-offset-4">
-									Your guilds
+		<header className="site-header">
+			<div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
+				<Link
+					to="/"
+					className="flex items-center gap-2 font-heading text-xl text-heading [text-shadow:0_1px_0_#000,0_0_10px_rgb(255_190_60/0.25)] hover:text-gold"
+				>
+					<svg viewBox="0 0 32 32" aria-hidden="true" className="size-5 drop-shadow-[0_1px_0_#000]">
+						<path d="M16 5l9 4v7c0 5.5-3.8 9.6-9 11-5.2-1.4-9-5.5-9-11V9z" fill="var(--red)" stroke="currentColor" strokeWidth="2" />
+						<path d="M16 11v10M11 16h10" stroke="currentColor" strokeWidth="2" />
+					</svg>
+					Guildie
+				</Link>
+				<nav className="flex items-center gap-5 text-sm">
+					{viewer ? (
+						<>
+							{viewer.guilds.length === 1 ? (
+								<Link
+									to="/g/$region/$slug"
+									params={{ region: viewer.guilds[0].region, slug: viewer.guilds[0].slug }}
+									className="text-gold hover:text-[#fff2b0]"
+								>
+									{viewer.guilds[0].name}
 								</Link>
-							)
-						)}
-						<Link to="/me" className="hover:underline underline-offset-4">
-							{viewer.battletag?.split("#")[0] ?? viewer.name ?? "You"}
+							) : (
+								viewer.guilds.length > 1 && (
+									<Link to="/me" className="text-gold hover:text-[#fff2b0]">
+										Your guilds
+									</Link>
+								)
+							)}
+							<Link to="/me" className="text-gold hover:text-[#fff2b0]">
+								{viewer.battletag?.split("#")[0] ?? viewer.name ?? "You"}
+							</Link>
+							<SignOut />
+						</>
+					) : (
+						<Link to="/sign-in" className="text-gold hover:text-[#fff2b0]">
+							Sign in
 						</Link>
-						<SignOut />
-					</>
-				) : (
-					<Link to="/sign-in" className="hover:underline underline-offset-4">
-						Sign in
-					</Link>
-				)}
-			</nav>
+					)}
+				</nav>
+			</div>
 		</header>
 	);
 }
@@ -51,7 +60,7 @@ function SignOut() {
 	return (
 		<button
 			type="button"
-			className="text-muted-foreground hover:text-foreground"
+			className="text-muted-foreground hover:text-gold"
 			onClick={async () => {
 				await signOut();
 				// Inside the desktop app, signing out here signs it out too.

@@ -36,9 +36,9 @@ function CharacterPage() {
 	return (
 		<div className="py-10">
 			<div className="flex items-center gap-4">
-				{c.avatarUrl && <img src={c.avatarUrl} alt="" className="size-16 rounded-sm border" />}
+				{c.avatarUrl && <img src={c.avatarUrl} alt="" className="size-16 rounded-[3px] border-2 border-bronze shadow-[0_0_0_1px_#000,inset_0_0_0_1px_#000]" />}
 				<div>
-					<h1 className="text-4xl">
+					<h1 className="text-3xl sm:text-4xl">
 						<ClassText classId={c.classId}>{c.name}</ClassText>{" "}
 						<span className="text-muted-foreground">{c.surname}</span>
 					</h1>
@@ -63,20 +63,23 @@ function CharacterPage() {
 					and log out.
 				</p>
 			) : (
-				<div className="mt-10 grid gap-12 md:grid-cols-[2fr_1fr]">
+				<div className="mt-8 grid gap-8 md:grid-cols-[2fr_1fr]">
 					<section>
-						<h2 className="text-2xl">
+						<h2 className="section-head text-2xl">
 							Equipment
 							{c.averageItemLevel !== undefined && (
-								<span className="num ml-3 text-base text-muted-foreground">item level {c.averageItemLevel}</span>
+								<span className="num font-sans text-base text-muted-foreground [text-shadow:none]">item level {c.averageItemLevel}</span>
 							)}
 						</h2>
 						{equipment.length === 0 ? (
 							<p className="mt-2 text-muted-foreground">Nothing yet.</p>
 						) : (
-							<dl className="mt-3 grid grid-cols-[8rem_1fr_auto] gap-x-4 border-t text-sm">
+							<dl className="inset mt-3 grid grid-cols-[6.5rem_1fr_auto] gap-x-4 text-sm sm:grid-cols-[8rem_1fr_auto]">
 								{equipment.map((item) => (
-									<div key={item.slot} className="col-span-3 grid grid-cols-subgrid border-b py-1.5">
+									<div
+										key={item.slot}
+										className={`item-row col-span-3 grid grid-cols-subgrid border-b border-white/5 px-2.5 py-1.5 last:border-0 hover:bg-[rgb(255_209_0/0.06)]${item.quality ? ` q-${item.quality}` : ""}`}
+									>
 										<dt className="text-muted-foreground">{slotLabel(item.slot)}</dt>
 										<dd>
 											<a
@@ -95,29 +98,29 @@ function CharacterPage() {
 						)}
 					</section>
 					<section>
-						<h2 className="text-2xl">
+						<h2 className="section-head text-2xl">
 							Talents
 							{c.talentTrees?.length ? (
-								<span className="num ml-3 text-base text-muted-foreground">
+								<span className="num font-sans text-base text-muted-foreground [text-shadow:none]">
 									{c.talentTrees.map((t) => t.points).join(" / ")}
 								</span>
 							) : null}
 						</h2>
-						<p className="mt-1 text-xs text-muted-foreground">
+						<p className="mt-1.5 text-xs text-muted-foreground">
 							{talentSource.kind === "addon"
 								? `From the Guildie addon, ${ago(talentSource.at) ?? "just now"}.`
 								: "From Blizzard, as of the last logout."}
 						</p>
 						{c.talentTrees?.length ? (
 							c.talentTrees.map((tree) => (
-								<div key={tree.id} className="mt-3">
-									<div className="flex justify-between border-b pb-1 text-sm font-medium">
+								<div key={tree.id} className="inset mt-3">
+									<div className="flex justify-between border-b border-bronze-dark bg-[var(--panel-raised)] px-2.5 py-1 font-heading text-gold">
 										<span>{tree.name}</span>
 										<span className="num">{tree.points}</span>
 									</div>
 									<ul className="text-sm">
 										{tree.talents.map((t) => (
-											<li key={t.id ?? t.name} className="flex justify-between border-b py-1">
+											<li key={t.id ?? t.name} className="flex justify-between border-b border-white/5 px-2.5 py-1 last:border-0">
 												<span>{t.name}</span>
 												<span className="num text-muted-foreground">{t.rank}</span>
 											</li>
@@ -129,11 +132,11 @@ function CharacterPage() {
 							<p className="mt-2 text-muted-foreground">No points spent yet.</p>
 						)}
 
-						<h2 className="mt-10 text-2xl">Professions</h2>
+						<h2 className="section-head mt-8 text-2xl">Professions</h2>
 						{c.professions?.length ? (
-							<ul className="mt-3 border-t text-sm">
+							<ul className="inset mt-3 text-sm">
 								{c.professions.map((p) => (
-									<li key={p.id} className="flex justify-between border-b py-1.5">
+									<li key={p.id} className="flex justify-between border-b border-white/5 px-2.5 py-1.5 last:border-0">
 										<span>{p.name}</span>
 										<span className="num text-muted-foreground">
 											{p.skill ?? "?"}

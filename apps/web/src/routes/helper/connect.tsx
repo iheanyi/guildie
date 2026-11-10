@@ -51,7 +51,7 @@ function Connect() {
 						addon data as {viewer.battletag ?? viewer.name}. Check the code matches the one the helper
 						shows.
 					</p>
-					<p className="num mt-6 font-mono text-3xl tracking-widest">{code}</p>
+					<p className="num inset mt-6 inline-block px-4 py-2 font-mono text-3xl tracking-widest text-gold">{code}</p>
 					<Button
 						size="lg"
 						className="mt-6"

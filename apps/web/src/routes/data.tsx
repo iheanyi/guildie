@@ -36,25 +36,27 @@ function DataNotes() {
 			<h1 className="text-4xl">Where the data comes from</h1>
 			<p className="mt-3 text-muted-foreground">Everything here is for WoW: Forever.</p>
 
-			<h2 className="mt-10 text-2xl">Sources</h2>
-			<dl className="mt-3 border-t text-sm">
-				{SOURCES.map(([name, text]) => (
-					<div key={name} className="grid gap-x-6 border-b py-2 sm:grid-cols-[14rem_1fr]">
-						<dt className="font-medium">{name}</dt>
-						<dd className="text-muted-foreground">{text}</dd>
-					</div>
-				))}
-			</dl>
+			<div className="parchment mt-8 px-4 py-5 sm:px-6">
+				<h2 className="text-2xl">Sources</h2>
+				<dl className="mt-3 border-t text-sm">
+					{SOURCES.map(([name, text]) => (
+						<div key={name} className="grid gap-x-6 border-b py-2 sm:grid-cols-[14rem_1fr]">
+							<dt className="font-semibold">{name}</dt>
+							<dd className="text-muted-foreground">{text}</dd>
+						</div>
+					))}
+				</dl>
 
-			<h2 className="mt-10 text-2xl">What we can't know (yet)</h2>
-			<dl className="mt-3 border-t text-sm">
-				{GAPS.map(([name, text]) => (
-					<div key={name} className="grid gap-x-6 border-b py-2 sm:grid-cols-[14rem_1fr]">
-						<dt className="font-medium">{name}</dt>
-						<dd className="text-muted-foreground">{text}</dd>
-					</div>
-				))}
-			</dl>
+				<h2 className="mt-8 text-2xl">What we can't know (yet)</h2>
+				<dl className="mt-3 border-t text-sm">
+					{GAPS.map(([name, text]) => (
+						<div key={name} className="grid gap-x-6 border-b py-2 sm:grid-cols-[14rem_1fr]">
+							<dt className="font-semibold">{name}</dt>
+							<dd className="text-muted-foreground">{text}</dd>
+						</div>
+					))}
+				</dl>
+			</div>
 		</div>
 	);
 }

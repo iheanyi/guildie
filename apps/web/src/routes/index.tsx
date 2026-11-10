@@ -51,9 +51,9 @@ function Home() {
 							<Link
 								to="/g/$region/$slug"
 								params={{ region: g.region, slug: g.slug }}
-								className="flex items-baseline justify-between gap-4 py-2.5 hover:bg-muted/60"
+								className="flex items-baseline justify-between gap-4 px-2 py-2.5 hover:bg-[rgb(255_209_0/0.07)]"
 							>
-								<span className="text-lg">{g.name}</span>
+								<span className="font-heading text-lg text-gold">{g.name}</span>
 								<span className="num text-sm text-muted-foreground">
 									{g.region.toUpperCase()} · {g.memberCount} members
 								</span>
@@ -105,7 +105,7 @@ function AddGuild() {
 					aria-label="Region"
 					value={region}
 					onChange={(e) => setRegion(e.target.value as Region)}
-					className="h-7 rounded-md border bg-transparent px-1.5 text-xs"
+					className="h-8 rounded-sm border px-1.5 text-sm"
 				>
 					{REGIONS.map((r) => (
 						<option key={r} value={r}>
