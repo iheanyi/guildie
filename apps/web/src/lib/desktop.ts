@@ -32,7 +32,19 @@ export type GuildieDesktop = {
 	chooseWowFolder?(): Promise<AddonInfo>;
 	uploadNow?(): Promise<void>;
 	restartToUpdate?(): Promise<void>;
+	/** Check for an app update now (app 0.3.5+). */
+	checkForUpdates?(): Promise<UpdateState>;
 };
+
+/** Where the app's self-update stands (apps/desktop/src/updater.ts). */
+export type UpdateState =
+	| { state: "off" }
+	| { state: "idle" }
+	| { state: "checking" }
+	| { state: "downloading"; version: string; percent?: number }
+	| { state: "ready"; version: string }
+	| { state: "current"; checkedAt: number }
+	| { state: "failed"; checkedAt: number; message: string };
 
 export type AddonInfo = {
 	appVersion: string;
@@ -59,6 +71,7 @@ export type DesktopStatus = {
 	lastUpload?: { at: number; characters: string[] };
 	addonVersion?: string;
 	updateReady?: string;
+	update?: UpdateState;
 };
 
 declare global {

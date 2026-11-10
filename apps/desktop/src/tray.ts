@@ -16,6 +16,8 @@ export type TrayActions = {
 	manageAddon: () => void;
 	/** Quit and install the downloaded app update. */
 	restartToUpdate: () => void;
+	/** Check for an app update now. */
+	checkForUpdates: () => void;
 	startWithSystem: { get: () => boolean; set: (on: boolean) => void } | undefined;
 	about: () => void;
 	signOut: () => void;
@@ -71,6 +73,7 @@ export function createTray(actions: TrayActions) {
 						]
 					: []),
 				{ type: "separator" },
+				updateItem(status, actions),
 				{ label: "About Guildie", click: actions.about },
 				{ label: "Sign out", visible: status.connected, click: actions.signOut },
 				{ label: "Quit", click: actions.quit },
@@ -78,4 +81,14 @@ export function createTray(actions: TrayActions) {
 		);
 	};
 	return { tray, update };
+}
+
+/** "Check for updates", or what's happening with one. */
+function updateItem(status: Status, actions: TrayActions): Electron.MenuItemConstructorOptions {
+	const u = status.update;
+	if (u?.state === "checking") return { label: "Checking for updates...", enabled: false };
+	if (u?.state === "downloading") return { label: `Downloading ${u.version}${u.percent !== undefined ? ` (${u.percent}%)` : ""}...`, enabled: false };
+	// Ready: "Restart to update" is already at the top of the menu.
+	if (u?.state === "ready") return { label: "Check for updates", visible: false };
+	return { label: "Check for updates", click: actions.checkForUpdates };
 }

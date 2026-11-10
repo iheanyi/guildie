@@ -37,6 +37,7 @@ if (isGuildieUrl(location.href)) {
 		chooseWowFolder: () => ipcRenderer.invoke("guildie:choose-wow"),
 		uploadNow: () => ipcRenderer.invoke("guildie:upload-now"),
 		restartToUpdate: () => ipcRenderer.invoke("guildie:restart-to-update"),
+		checkForUpdates: () => ipcRenderer.invoke("guildie:check-updates"),
 		onStatus: (callback: unknown) => {
 			if (typeof callback !== "function") throw new TypeError("onStatus needs a function");
 			// The page gets the status only, never Electron's event object.

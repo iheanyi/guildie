@@ -20,7 +20,7 @@ import { allowsSelfSigned, isGuildieUrl, originOf } from "./origins.ts";
 import { settings } from "./settings.ts";
 import { runSmokeTest } from "./smoke.ts";
 import { createTray } from "./tray.ts";
-import { canSelfUpdate, startUpdater, type Updater } from "./updater.ts";
+import { canSelfUpdate, startUpdater, type Updater, type UpdateState } from "./updater.ts";
 import { createWindow } from "./window.ts";
 
 declare const __VERSION__: string;
@@ -102,7 +102,7 @@ const startWithSystem =
 		: undefined;
 
 /** The sync status as the page sees it. */
-const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode, addonVersion, updateReady }: Status) => ({
+const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode, addonVersion, updateReady, update }: Status) => ({
 	connected,
 	account,
 	lastUpload,
@@ -112,6 +112,7 @@ const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, 
 	pairingCode,
 	addonVersion,
 	updateReady,
+	update,
 });
 
 /**
@@ -300,6 +301,9 @@ app.whenReady().then(async () => {
 		}),
 	);
 	ipcMain.handle("guildie:upload-now", pageOnly(() => connection.uploadNow()));
+	/** "Check for updates" (Settings → App and the tray). Resolves with where updating stands. */
+	const checkForUpdates = async (): Promise<UpdateState> => (updater ? await updater.check() : { state: "off" });
+	ipcMain.handle("guildie:check-updates", pageOnly(checkForUpdates));
 	ipcMain.handle(
 		"guildie:restart-to-update",
 		pageOnly(() => {
@@ -337,6 +341,14 @@ app.whenReady().then(async () => {
 		open: () => showWindow(),
 		manageAddon: () => showWindow(`${origin}/addon`),
 		reinstallAddon: () => manageAddon(undefined, true),
+		checkForUpdates: async () => {
+			const result = await checkForUpdates();
+			// From the tray there's no page to show it: say how it went.
+			if (result.state === "current") notify("Guildie is up to date", `You have the latest version, ${__VERSION__}.`);
+			else if (result.state === "off") notify("Guildie", "This copy of Guildie can't update itself. Install it from guildie.club to get updates.");
+			else if (result.state === "failed") notify("Guildie", "Couldn't check for updates. Try again later.");
+			else if (result.state === "downloading") notify("Guildie", `Downloading Guildie ${result.version}. It'll say when it's ready.`);
+		},
 		restartToUpdate: () => {
 			quitting = true;
 			updater?.restart();
@@ -366,9 +378,12 @@ app.whenReady().then(async () => {
 	// Before syncing starts, so guild data lands in an installed addon.
 	manageAddon();
 	if (canSelfUpdate()) {
-		updater = startUpdater(log, notify, () => connection.setExtras({ updateReady: updater?.ready }));
+		updater = startUpdater(log, notify, (state) =>
+			connection.setExtras({ updateReady: state.state === "ready" ? state.version : undefined, update: state }),
+		);
 	} else {
 		log("Updates: off (not the installed app)");
+		connection.setExtras({ update: { state: "off" } });
 	}
 
 	await connection.start();

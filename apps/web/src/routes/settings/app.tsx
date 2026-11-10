@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { markSeen } from "@/lib/release-notes";
 import { HelperTokens } from "@/components/helper-tokens";
 import { WhatsNew } from "@/components/whats-new";
 import { SectionTitle } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { desktop, RELEASES, useDesktopStatus, useInDesktopApp } from "@/lib/desktop";
+import { desktop, RELEASES, type UpdateState, useDesktopStatus, useInDesktopApp } from "@/lib/desktop";
+import { ago } from "@/lib/format";
 import { Row, Rows } from "./addon";
 
 // Settings → App: the Guildie app for Windows. In the app, its version and
@@ -41,6 +42,9 @@ function AppSettings() {
 function ThisApp() {
 	const status = useDesktopStatus();
 	const app = desktop();
+	const [checking, setChecking] = useState(false);
+	const update = status?.update;
+	const ready = update?.state === "ready" ? update.version : status?.updateReady;
 	return (
 		<section>
 			<SectionTitle>Guildie for Windows</SectionTitle>
@@ -49,20 +53,51 @@ function ThisApp() {
 					<span className="num">{app?.version ?? "Unknown"}</span>
 				</Row>
 				<Row label="Updates">
-					{status?.updateReady ? (
-						<span>Version {status.updateReady} is downloaded and ready</span>
-					) : (
-						<span className="text-muted-foreground">Downloaded automatically in the background, and installed when the app restarts</span>
-					)}
+					<UpdateLine update={update} ready={ready} />
 				</Row>
 			</Rows>
-			{status?.updateReady && app?.restartToUpdate && (
-				<Button className="mt-3" onClick={() => void app.restartToUpdate?.()}>
-					Restart to update
-				</Button>
-			)}
+			<div className="mt-3 flex gap-2">
+				{ready && app?.restartToUpdate ? (
+					<Button onClick={() => void app.restartToUpdate?.()}>Restart to update</Button>
+				) : app?.checkForUpdates && update?.state !== "off" ? (
+					<Button
+						variant="outline"
+						disabled={checking || update?.state === "checking" || update?.state === "downloading"}
+						onClick={async () => {
+							setChecking(true);
+							await app.checkForUpdates?.().catch(() => undefined);
+							setChecking(false);
+						}}
+					>
+						Check for updates
+					</Button>
+				) : null}
+			</div>
 		</section>
 	);
+}
+
+function UpdateLine({ update, ready }: { update?: UpdateState; ready?: string }) {
+	if (ready) return <span>Version {ready} is downloaded and ready</span>;
+	switch (update?.state) {
+		case "checking":
+			return <span>Checking…</span>;
+		case "downloading":
+			return (
+				<span>
+					Downloading {update.version}
+					{update.percent !== undefined ? ` (${update.percent}%)` : ""}…
+				</span>
+			);
+		case "current":
+			return <span>Up to date. Checked {ago(update.checkedAt)}</span>;
+		case "failed":
+			return <span className="text-muted-foreground">Couldn't check {ago(update.checkedAt)}. It tries again by itself.</span>;
+		case "off":
+			return <span className="text-muted-foreground">Off: this copy can't update itself. Install Guildie from the App tab on guildie.club.</span>;
+		default:
+			return <span className="text-muted-foreground">Checked automatically every few hours, and downloaded in the background</span>;
+	}
 }
 
 function GetTheApp() {

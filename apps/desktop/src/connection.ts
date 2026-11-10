@@ -8,6 +8,7 @@ import { hostname } from "node:os";
 import { Api, isTokenShaped, isWowFolder, type LastUpload, type Log, SyncEngine } from "@guildie/sync";
 import { net } from "electron";
 import { forgetToken, loadToken, saveToken, settings } from "./settings.ts";
+import type { UpdateState } from "./updater.ts";
 
 export type Status = {
 	connected: boolean;
@@ -21,6 +22,8 @@ export type Status = {
 	addonVersion?: string;
 	/** An app update downloaded and waiting for a restart (updater.ts). */
 	updateReady?: string;
+	/** Where updating stands (updater.ts UpdateState). */
+	update?: UpdateState;
 };
 
 const TICK_MS = 2_000;
@@ -36,6 +39,7 @@ export class Connection {
 	private pairingCode: string | undefined;
 	private addonVersion: string | undefined;
 	private updateReady: string | undefined;
+	private update: UpdateState | undefined;
 	private timer: NodeJS.Timeout | undefined;
 	private lastRetry = 0;
 	private readonly listeners = new Set<(status: Status) => void>();
@@ -74,11 +78,13 @@ export class Connection {
 			pairingCode: this.pairingCode,
 			addonVersion: this.addonVersion,
 			updateReady: this.updateReady,
+			update: this.update,
 		};
 	}
 
 	/** What main knows about the addon and app updates, shown with the sync status. */
-	setExtras(extras: { addonVersion?: string; updateReady?: string }) {
+	setExtras(extras: { addonVersion?: string; updateReady?: string; update?: UpdateState }) {
+		if ("update" in extras) this.update = extras.update;
 		if ("addonVersion" in extras) this.addonVersion = extras.addonVersion;
 		if ("updateReady" in extras) this.updateReady = extras.updateReady;
 		this.emit();

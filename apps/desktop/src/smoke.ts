@@ -67,7 +67,7 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		check("bridge exposed on the site", security.bridge === "object" && security.isDesktop === "true", security);
 		check(
 			"bridge has exactly the agreed functions",
-			security.keys === "addon,chooseWowFolder,getState,getStatus,isDesktop,onStatus,restartToUpdate,setToken,signIn,signOut,uploadNow,version",
+			security.keys === "addon,checkForUpdates,chooseWowFolder,getState,getStatus,isDesktop,onStatus,restartToUpdate,setToken,signIn,signOut,uploadNow,version",
 			security.keys,
 		);
 		check('html[data-desktop="true"]', security.dataset === "true");

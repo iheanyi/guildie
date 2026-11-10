@@ -20,14 +20,26 @@ export function canSelfUpdate() {
 	return existsSync(join(dirname(process.execPath), `Uninstall ${app.getName()}.exe`));
 }
 
+/** Where updating stands, for the tray and Settings → App. */
+export type UpdateState =
+	| { state: "off" }
+	| { state: "idle" }
+	| { state: "checking" }
+	| { state: "downloading"; version: string; percent?: number }
+	| { state: "ready"; version: string }
+	| { state: "current"; checkedAt: number }
+	| { state: "failed"; checkedAt: number; message: string };
+
 export type Updater = {
 	/** The version downloaded and waiting for a restart, if any. */
 	readonly ready: string | undefined;
-	check: () => void;
+	readonly state: UpdateState;
+	/** Check now (a manual check from the tray or Settings); resolves once the check itself is done. */
+	check: () => Promise<UpdateState>;
 	restart: () => void;
 };
 
-export function startUpdater(log: Log, notify: (title: string, body: string) => void, onChange: () => void): Updater {
+export function startUpdater(log: Log, notify: (title: string, body: string) => void, onChange: (state: UpdateState) => void): Updater {
 	autoUpdater.logger = {
 		info: (m: unknown) => log(`Update: ${String(m)}`),
 		warn: (m: unknown) => log(`Update: ${String(m)}`),
@@ -36,28 +48,61 @@ export function startUpdater(log: Log, notify: (title: string, body: string) => 
 	autoUpdater.autoDownload = true;
 	autoUpdater.autoInstallOnAppQuit = true;
 
-	let ready: string | undefined;
-	autoUpdater.on("update-available", (info) => log(`Update: ${info.version} available, downloading`));
-	autoUpdater.on("update-not-available", () => log("Update: up to date"));
+	let state: UpdateState = { state: "idle" };
+	let lastPercent = -1;
+	const set = (next: UpdateState) => {
+		state = next;
+		onChange(next);
+	};
+	autoUpdater.on("checking-for-update", () => {
+		if (state.state !== "downloading" && state.state !== "ready") set({ state: "checking" });
+	});
+	autoUpdater.on("update-available", (info) => {
+		log(`Update: ${info.version} available, downloading`);
+		set({ state: "downloading", version: info.version });
+	});
+	autoUpdater.on("download-progress", (p) => {
+		if (state.state !== "downloading") return;
+		// Whole percents only: the page and tray don't need every byte.
+		const percent = Math.floor(p.percent);
+		if (percent === lastPercent) return;
+		lastPercent = percent;
+		set({ ...state, percent });
+	});
+	autoUpdater.on("update-not-available", () => {
+		log("Update: up to date");
+		set({ state: "current", checkedAt: Date.now() });
+	});
 	autoUpdater.on("update-downloaded", (info) => {
-		if (ready === info.version) return;
-		ready = info.version;
-		onChange();
+		if (state.state === "ready" && state.version === info.version) return;
+		set({ state: "ready", version: info.version });
 		notify(`Guildie ${info.version} is ready`, "Choose Restart to update in the tray, or it installs when you quit Guildie.");
 	});
 	// Offline or GitHub down: try again at the next check, quietly.
-	autoUpdater.on("error", (e) => log(`Update failed: ${e.message}`));
+	autoUpdater.on("error", (e) => {
+		log(`Update failed: ${e.message}`);
+		if (state.state !== "ready") set({ state: "failed", checkedAt: Date.now(), message: e.message });
+	});
 
-	const check = () => {
-		if (ready) return;
-		autoUpdater.checkForUpdates().catch((e: Error) => log(`Update check failed: ${e.message}`));
+	const check = async (): Promise<UpdateState> => {
+		if (state.state === "ready" || state.state === "downloading" || state.state === "checking") return state;
+		try {
+			await autoUpdater.checkForUpdates();
+		} catch (e) {
+			log(`Update check failed: ${(e as Error).message}`);
+			set({ state: "failed", checkedAt: Date.now(), message: (e as Error).message });
+		}
+		return state;
 	};
-	check();
-	setInterval(check, CHECK_EVERY_MS).unref();
+	void check();
+	setInterval(() => void check(), CHECK_EVERY_MS).unref();
 
 	return {
 		get ready() {
-			return ready;
+			return state.state === "ready" ? state.version : undefined;
+		},
+		get state() {
+			return state;
 		},
 		check,
 		// Silent install, then start the new version.
