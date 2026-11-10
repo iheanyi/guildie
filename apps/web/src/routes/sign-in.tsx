@@ -146,6 +146,7 @@ function GuestSignIn() {
 /** The desktop app: sign in in the browser, and the app signs its window in when you approve it. */
 function DesktopSignIn() {
 	const [pending, setPending] = useState(false);
+	const pairingCode = usePairingCode();
 	return (
 		<Page width="narrow">
 			<PageHeader
@@ -161,8 +162,28 @@ function DesktopSignIn() {
 					setPending(false);
 				}}
 			>
-				{pending ? "Continue in your browser…" : "Sign in with your browser"}
+				{pending || pairingCode ? "Continue in your browser…" : "Sign in with your browser"}
 			</Button>
+			{pairingCode && (
+				<div className="mt-6">
+					<p className="text-[13px] text-muted-foreground">Check that your browser shows this code, then click Connect there.</p>
+					<p className="num mt-2 inline-block rounded-md border border-border bg-muted px-4 py-2 font-mono text-2xl tracking-[0.25em]">
+						{pairingCode}
+					</p>
+				</div>
+			)}
 		</Page>
 	);
+}
+
+/** The code the app is waiting on, while it signs in through the browser (from the tray too). */
+function usePairingCode() {
+	const [code, setCode] = useState<string | undefined>();
+	useEffect(() => {
+		const app = desktop();
+		if (!app?.getStatus || !app.onStatus) return;
+		void app.getStatus().then((s) => setCode(s.pairingCode));
+		return app.onStatus((s) => setCode(s.pairingCode));
+	}, []);
+	return code;
 }

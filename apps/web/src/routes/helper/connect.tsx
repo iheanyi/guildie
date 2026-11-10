@@ -8,13 +8,13 @@ import { useState } from "react";
 import { Page, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 
-// The desktop helper opens this page with its code; the signed-in player
-// approves it, and the helper picks up its token by itself.
+// The desktop app (or the older tray helper) opens this page with its code;
+// the signed-in player approves it, and the app picks up its token by itself.
 export const Route = createFileRoute("/helper/connect")({
 	validateSearch: (search: Record<string, unknown>) => ({
 		code: typeof search.code === "string" ? search.code.toUpperCase() : "",
 	}),
-	head: () => ({ meta: [{ title: "Connect the helper · Guildie" }] }),
+	head: () => ({ meta: [{ title: "Connect the Guildie app · Guildie" }] }),
 	component: Connect,
 });
 
@@ -41,16 +41,15 @@ function Connect() {
 				</p>
 			) : !pairing ? null : pairing.state === "unknown" ? (
 				<p className="text-muted-foreground">
-					This code expired or doesn't exist. Choose "Connect" in the helper again.
+					This code expired or doesn't exist. Sign in from the Guildie app again.
 				</p>
 			) : pairing.state === "approved" ? (
-				<p>Connected. You can close this tab; the helper takes it from here.</p>
+				<p>Connected. You can close this tab; the Guildie app takes it from here.</p>
 			) : (
 				<>
 					<p className="text-muted-foreground">
-						The helper on <span className="text-foreground">{pairing.label}</span> wants to upload your
-						addon data as {viewer.battletag ?? viewer.name}. Check the code matches the one the helper
-						shows.
+						<span className="text-foreground">{pairing.label}</span> wants to sign in and upload your addon
+						data as {viewer.battletag ?? viewer.name}. Check this code matches the one the app shows.
 					</p>
 					<p className="num mt-5 inline-block rounded-md border border-border bg-muted px-4 py-2 font-mono text-2xl tracking-[0.25em]">{code}</p>
 					<Button

@@ -19,6 +19,18 @@ export type GuildieDesktop = {
 	 * (/desktop/session). Missing in app builds before 0.2.
 	 */
 	signIn?(): Promise<void>;
+	/** Sync status, and its changes (app 0.2+). */
+	getStatus?(): Promise<DesktopStatus>;
+	onStatus?(callback: (status: DesktopStatus) => void): () => void;
+};
+
+export type DesktopStatus = {
+	connected: boolean;
+	account?: string;
+	wowFolder?: string;
+	guildDataAt?: number;
+	/** While signing in: the code the browser's Connect page should show. */
+	pairingCode?: string;
 };
 
 declare global {

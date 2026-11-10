@@ -178,6 +178,12 @@ export default defineSchema({
 		wantsSession: v.optional(v.boolean()),
 		/** Set when approved (if wanted): a one-time code for desktopSessionCodes. */
 		sessionCode: v.optional(v.string()),
+		/**
+		 * When the app picked up its token. The token and session code are
+		 * cleared then, but the row stays until it expires so the Connect page
+		 * still says "Connected" instead of "expired".
+		 */
+		collectedAt: v.optional(v.number()),
 	}).index("by_code", ["code"]),
 
 	/**

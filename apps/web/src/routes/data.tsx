@@ -14,7 +14,7 @@ const SOURCES = [
 	["Your Battle.net account", "When you sign in: your BattleTag and your character list in every region, which ties you to your guild. We don't keep Battle.net's tokens."],
 	["Wowhead (Forever)", "Item links and tooltips."],
 	["Recipes and reagents", "Every Forever recipe and its reagents, and each member's known recipes, from Blizzard. The addon uses them to suggest who might want an item. Refreshed weekly (recipes) and hourly (members)."],
-	["The Guildie addon (optional)", "Players who install it and its desktop helper can show talent changes after a /reload, before Blizzard's data updates. Shown only while it's newer than Blizzard's."],
+	["The Guildie addon (optional)", "Players who install it with the Guildie app can show talent changes after a /reload, before Blizzard's data updates. Shown only while it's newer than Blizzard's."],
 ];
 
 const GAPS = [

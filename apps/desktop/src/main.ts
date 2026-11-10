@@ -96,12 +96,14 @@ const startWithSystem =
 		: undefined;
 
 /** The sync status as the page sees it. */
-const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder }: Status) => ({
+const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode }: Status) => ({
 	connected,
 	account,
 	lastUpload,
 	guildDataAt,
 	wowFolder,
+	// The code the browser's Connect page shows, so the window can show it too.
+	pairingCode,
 });
 
 app.whenReady().then(async () => {

@@ -222,7 +222,7 @@ async function insertToken(ctx: MutationCtx, userId: Doc<"users">["_id"], label:
 	await ctx.db.insert("helperTokens", {
 		userId,
 		tokenHash: await sha256(token),
-		label: label.trim().slice(0, 40) || "Helper",
+		label: label.trim().slice(0, 40) || "Guildie app",
 		createdAt: Date.now(),
 	});
 	return token;
@@ -247,12 +247,16 @@ export const startPairing = mutation({
 	/** `session`: the desktop app, which also wants its window signed in. */
 	args: { label: v.string(), session: v.optional(v.boolean()) },
 	handler: async (ctx, { label, session }) => {
+		// Tidy up pairings that have expired (a handful at most).
+		for (const old of await ctx.db.query("helperPairings").take(50)) {
+			if (old.expiresAt < Date.now()) await ctx.db.delete(old._id);
+		}
 		const pollSecret = newToken();
 		const code = pairingCode();
 		await ctx.db.insert("helperPairings", {
 			code,
 			pollSecretHash: await sha256(pollSecret),
-			label: label.trim().slice(0, 40) || "Helper",
+			label: label.trim().slice(0, 40) || "Guildie app",
 			expiresAt: Date.now() + PAIRING_TTL_MS,
 			wantsSession: session || undefined,
 		});
@@ -268,8 +272,10 @@ export const pairing = query({
 			.query("helperPairings")
 			.withIndex("by_code", (q) => q.eq("code", code.trim().toUpperCase()))
 			.unique();
-		if (!row || row.expiresAt < Date.now()) return { state: "unknown" as const };
-		return { state: row.token ? ("approved" as const) : ("pending" as const), label: row.label };
+		if (!row) return { state: "unknown" as const };
+		if (row.token || row.collectedAt) return { state: "approved" as const, label: row.label };
+		if (row.expiresAt < Date.now()) return { state: "unknown" as const };
+		return { state: "pending" as const, label: row.label };
 	},
 });
 
@@ -282,8 +288,8 @@ export const approvePairing = mutation({
 			.query("helperPairings")
 			.withIndex("by_code", (q) => q.eq("code", code.trim().toUpperCase()))
 			.unique();
-		if (!row || row.expiresAt < Date.now()) throw new ConvexError("That code expired. Start again from the helper.");
-		if (row.token) return;
+		if (row?.token || row?.collectedAt) return;
+		if (!row || row.expiresAt < Date.now()) throw new ConvexError("That code expired. Sign in from the Guildie app again.");
 		let sessionCode: string | undefined;
 		if (row.wantsSession) {
 			sessionCode = newToken();
@@ -310,8 +316,11 @@ export const pollPairing = mutation({
 			await ctx.db.delete(row._id);
 			return { status: "expired" as const };
 		}
+		if (row.collectedAt) return { status: "expired" as const };
 		if (!row.token) return { status: "pending" as const };
-		await ctx.db.delete(row._id);
+		// Hand over once; keep the row (without secrets) so the Connect page
+		// still shows "Connected". Expired rows go on the next startPairing.
+		await ctx.db.patch(row._id, { token: undefined, sessionCode: undefined, collectedAt: Date.now() });
 		return { status: "approved" as const, token: row.token, sessionCode: row.sessionCode };
 	},
 });
