@@ -105,7 +105,7 @@ function CharacterPage() {
 						</h2>
 						<p className="mt-1 text-xs text-muted-foreground">
 							{talentSource.kind === "addon"
-								? `From the guildie addon, ${ago(talentSource.at) ?? "just now"}.`
+								? `From the Guildie addon, ${ago(talentSource.at) ?? "just now"}.`
 								: "From Blizzard, as of the last logout."}
 						</p>
 						{c.talentTrees?.length ? (

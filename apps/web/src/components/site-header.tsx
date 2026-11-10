@@ -9,7 +9,7 @@ export function SiteHeader() {
 	return (
 		<header className="flex items-baseline justify-between gap-4 border-b py-4">
 			<Link to="/" className="font-heading text-2xl font-semibold tracking-tight">
-				guildie
+				Guildie
 			</Link>
 			<nav className="flex items-baseline gap-5 text-sm">
 				{viewer ? (

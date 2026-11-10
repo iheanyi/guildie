@@ -1,4 +1,4 @@
-// guildie helper: uploads what the guildie addon saves in game to guildie.club.
+// Guildie helper: uploads what the Guildie addon saves in game to guildie.club.
 //
 // The addon can't use the internet. The game writes its data to
 // WTF/Account/<account>/SavedVariables/Guildie.lua on logout and /reload; this
@@ -8,7 +8,7 @@
 // On Windows it lives in the notification area (tray), with no console window.
 // Elsewhere, or with --console, it runs in the terminal.
 //
-//   --api <url>     another guildie (a preview, or https://guildie.localhost:1355)
+//   --api <url>     another Guildie (a preview, or https://guildie.localhost:1355)
 //   --wow <folder>  your World of Warcraft folder, if it isn't found
 //   --console       run in the terminal, even on Windows
 
@@ -51,8 +51,8 @@ function alreadyRunning() {
 	return false;
 }
 if (alreadyRunning()) {
-	log("Another guildie helper is already running; exiting.");
-	if (!useTray) console.log("Another guildie helper is already running.");
+	log("Another Guildie helper is already running; exiting.");
+	if (!useTray) console.log("Another Guildie helper is already running.");
 	process.exit(0);
 }
 writeFileSync(lockPath, String(process.pid));
@@ -88,7 +88,7 @@ const ui = {
 		tray?.set("last", "disabled", text);
 	},
 	connected(account: string | null) {
-		tray?.set("connect", account ? "hidden" : "enabled", "Connect to guildie...");
+		tray?.set("connect", account ? "hidden" : "enabled", "Connect to Guildie...");
 		tray?.set("upload", account ? "enabled" : "hidden", "Upload now");
 		tray?.set("signout", account ? "enabled" : "hidden", `Sign out${account ? ` (${account})` : ""}`);
 	},
@@ -118,7 +118,7 @@ async function checkToken() {
 	saveConfig(config);
 	ui.status(`Connected as ${account}`);
 	ui.connected(account);
-	if (!me.characters.length) ui.notify("guildie", "No claimed characters yet. Claim them on your guildie account page.");
+	if (!me.characters.length) ui.notify("Guildie", "No claimed characters yet. Claim them on your Guildie account page.");
 	return true;
 }
 
@@ -128,7 +128,7 @@ async function connect() {
 	try {
 		const { code, pollSecret, expiresInSeconds, connectUrl } = await api.startPairing(hostname() || "Helper");
 		ui.status(`Waiting for you to approve ${code} in your browser`);
-		ui.notify("Connect guildie", `Approve the code ${code} in your browser.`);
+		ui.notify("Connect Guildie", `Approve the code ${code} in your browser.`);
 		if (!tray) console.log(`Open ${connectUrl} and approve the code ${code}.`);
 		openExternal(connectUrl);
 		const until = Date.now() + expiresInSeconds * 1000;
@@ -139,14 +139,14 @@ async function connect() {
 				api.token = result.token;
 				config.tokens[base] = { token: result.token };
 				saveConfig(config);
-				if (await checkToken()) ui.notify("guildie", `Connected as ${account}. Your addon data uploads when you log out of WoW.`);
+				if (await checkToken()) ui.notify("Guildie", `Connected as ${account}. Your addon data uploads when you log out of WoW.`);
 				return;
 			}
 			if (result.status === "expired") break;
 		}
 		ui.status("Not connected");
 		ui.connected(null);
-		ui.notify("guildie", 'Connecting timed out. Choose "Connect to guildie" to try again.');
+		ui.notify("Guildie", 'Connecting timed out. Choose "Connect to Guildie" to try again.');
 	} catch (e) {
 		ui.status(`Can't reach ${base}`);
 		log((e as Error).message);
@@ -178,7 +178,7 @@ const watcher = new Watcher(
 		const { ok, status, body } = await api.upload(payload);
 		if (status === 401) {
 			await signOut();
-			ui.notify("guildie", "This helper was disconnected. Connect again from the tray icon.");
+			ui.notify("Guildie", "This helper was disconnected. Connect again from the tray icon.");
 			return false;
 		}
 		if (!ok) {
@@ -192,7 +192,7 @@ const watcher = new Watcher(
 		const newlyUnmatched = (body.unmatched ?? []).filter((n) => !warnedUnmatched.has(n));
 		if (newlyUnmatched.length) {
 			newlyUnmatched.forEach((n) => warnedUnmatched.add(n));
-			ui.notify("guildie", `Not claimed on guildie yet: ${newlyUnmatched.join(", ")}. Claim them on your account page.`);
+			ui.notify("Guildie", `Not claimed on Guildie yet: ${newlyUnmatched.join(", ")}. Claim them on your account page.`);
 		}
 		return true;
 	},

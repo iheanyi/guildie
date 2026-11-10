@@ -1,6 +1,6 @@
-# guildie addon
+# Guildie addon
 
-Saves your character's talents (and level) for the guildie desktop helper
+Saves your character's talents (and level) for the Guildie desktop helper
 (`apps/helper`) to upload to guildie.club.
 
 Addons can't use the internet. The game writes the addon's data

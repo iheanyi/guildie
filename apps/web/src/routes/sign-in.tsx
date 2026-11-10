@@ -21,7 +21,7 @@ export const Route = createFileRoute("/sign-in")({
 			throw redirect({ to: "/me" });
 		}
 	},
-	head: () => ({ meta: [{ title: "Sign in · guildie" }] }),
+	head: () => ({ meta: [{ title: "Sign in · Guildie" }] }),
 	component: SignIn,
 });
 

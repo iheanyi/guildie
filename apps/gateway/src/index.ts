@@ -21,7 +21,7 @@ export default {
 		const url = new URL(request.url);
 		const match = CALLBACK.exec(url.pathname);
 		if (!match) {
-			return url.pathname === "/" ? text(200, "guildie sign-in gateway.") : text(404, "Not found.");
+			return url.pathname === "/" ? text(200, "Guildie sign-in gateway.") : text(404, "Not found.");
 		}
 		if (request.method !== "GET") return text(405, "Method not allowed.");
 		const provider = match[1];
@@ -36,7 +36,7 @@ export default {
 		const routing = state && (await verifyRouting(env.ROUTING_SECRET, provider, state));
 		if (!routing || !isAllowedTarget(routing.target, env.ALLOWED_TARGETS)) {
 			console.warn("gateway: rejected callback", { provider, hasState: !!state, routed: !!routing });
-			return text(400, "This sign-in link is invalid. Go back to guildie and try signing in again.");
+			return text(400, "This sign-in link is invalid. Go back to Guildie and try signing in again.");
 		}
 
 		const next = new URL(`${routing.target}/oauth/${provider}/callback`);

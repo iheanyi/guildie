@@ -1,4 +1,4 @@
-# guildie
+# Guildie
 
 WoW guild directory. See README.md and docs/.
 

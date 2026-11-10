@@ -1,4 +1,4 @@
-# Setting up guildie from scratch
+# Setting up Guildie from scratch
 
 For running your own copy (a fork, another guild). guildie.club itself is
 already set up this way; docs/deploy.md and docs/auth-environments.md describe

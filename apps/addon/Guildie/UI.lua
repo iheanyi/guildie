@@ -1,4 +1,4 @@
--- guildie's window and minimap button. The window shows what's saved for this
+-- Guildie's window and minimap button. The window shows what's saved for this
 -- character and when it reaches guildie.club; "Upload now" reloads the UI,
 -- which is when the game writes addon data to disk for the helper.
 
@@ -75,7 +75,7 @@ local function buildWindow()
 
     local title = window:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", window, "TOP", 0, -5)
-    title:SetText("guildie")
+    title:SetText("Guildie")
 
     local top = CreateFrame("Frame", nil, window)
     top:SetPoint("TOPLEFT", window, "TOPLEFT", 16, -32)
@@ -106,7 +106,7 @@ local function buildWindow()
         end)
 
     local foot = line(window, minimap, -10, "GameFontDisableSmall")
-    foot:SetText("Needs the guildie helper running on this computer. guildie.club")
+    foot:SetText("Needs the Guildie helper running on this computer. guildie.club")
 
     window:SetScript("OnShow", refresh)
 end
@@ -159,7 +159,7 @@ local function buildButton()
     button:SetScript("OnClick", function() ns.toggleWindow() end)
     button:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine("guildie")
+        GameTooltip:AddLine("Guildie")
         local me = ns.current()
         if me then GameTooltip:AddLine(string.format("%d talent points saved", ns.points(me)), 1, 1, 1) end
         if ns.dirty then GameTooltip:AddLine("Changed since your last upload", 0.85, 0.71, 0.35) end
@@ -212,6 +212,6 @@ events:SetScript("OnEvent", function(_, event, addon, action)
         if C_Timer and C_Timer.NewTicker then C_Timer.NewTicker(60, maybeReloadWhileAfk) end
     elseif addon == ADDON and action and tostring(action):find("ReloadUI") then
         settings().reloadWhenAfk = false
-        print(GOLD .. "guildie|r: the game doesn't let addons reload the UI on their own, so \"Upload while I'm AFK\" is off. Uploads still happen when you log out.")
+        print(GOLD .. "Guildie|r: the game doesn't let addons reload the UI on their own, so \"Upload while I'm AFK\" is off. Uploads still happen when you log out.")
     end
 end)

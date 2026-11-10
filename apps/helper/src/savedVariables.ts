@@ -1,4 +1,4 @@
-// Reads the payload the guildie addon (apps/addon) leaves in its
+// Reads the payload the Guildie addon (apps/addon) leaves in its
 // SavedVariables file: GuildieDB = { ..., ["payload"] = "<JSON>", ... }.
 
 /** The JSON string stored under ["payload"], unescaped from Lua; null if absent. */

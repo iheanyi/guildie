@@ -13,7 +13,7 @@ export const Route = createFileRoute("/helper/connect")({
 	validateSearch: (search: Record<string, unknown>) => ({
 		code: typeof search.code === "string" ? search.code.toUpperCase() : "",
 	}),
-	head: () => ({ meta: [{ title: "Connect the helper · guildie" }] }),
+	head: () => ({ meta: [{ title: "Connect the helper · Guildie" }] }),
 	component: Connect,
 });
 
@@ -26,7 +26,7 @@ function Connect() {
 
 	return (
 		<div className="max-w-xl py-10">
-			<h1 className="text-4xl">Connect the guildie helper</h1>
+			<h1 className="text-4xl">Connect the Guildie helper</h1>
 			{!viewer ? (
 				<p className="mt-3">
 					<Link

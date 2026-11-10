@@ -1,4 +1,4 @@
--- guildie: saves this character's current talents (and level) so the guildie
+-- guildie: saves this character's current talents (and level) so the Guildie
 -- desktop helper can upload them to guildie.club. Addons can't use the
 -- internet; the game writes GuildieDB to disk on /reload and on logout, and the
 -- helper watches that file. Source: https://github.com/natedunn/guildie

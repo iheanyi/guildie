@@ -1,6 +1,6 @@
 # Roadmap
 
-Where guildie is headed, roughly in order. The end goal: use what we know
+Where Guildie is headed, roughly in order. The end goal: use what we know
 about the guild to tell, in game, which crafted items, weapons and armor
 would help which members.
 

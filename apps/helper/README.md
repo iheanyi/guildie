@@ -1,6 +1,6 @@
-# guildie helper
+# Guildie helper
 
-Uploads what the guildie addon (`apps/addon`) saves in game to guildie.club,
+Uploads what the Guildie addon (`apps/addon`) saves in game to guildie.club,
 so your talents update as soon as you log out (or `/reload`), instead of
 whenever Blizzard's data catches up.
 
@@ -14,9 +14,9 @@ Run `guildie-helper.exe`. It sits in the notification area (tray), no window:
 
 - First run: it opens guildie.club in your browser with a code; sign in and
   click **Connect**. No token to copy.
-- Tray menu: who you're connected as, the last upload, **Open guildie**,
+- Tray menu: who you're connected as, the last upload, **Open Guildie**,
   **Upload now**, **Open log**, **Sign out** (disconnects this computer and
-  forgets it), **Quit**. Left-click opens guildie.
+  forgets it), **Quit**. Left-click opens Guildie.
 
 Settings and the log live in `%APPDATA%\guildie`. One helper runs at a time.
 

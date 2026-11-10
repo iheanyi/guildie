@@ -1,4 +1,4 @@
-// The guildie endpoints the helper uses (apps/web/src/routes/api/helper).
+// The Guildie endpoints the helper uses (apps/web/src/routes/api/helper).
 
 export type Me = { battletag: string | null; characters: string[] };
 export type UploadResult = { accepted?: string[]; unmatched?: string[]; error?: string };

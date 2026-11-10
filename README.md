@@ -1,4 +1,4 @@
-# guildie
+# Guildie
 
 A home base for World of Warcraft guilds: who's in the guild, their level,
 class, race, rank, gear and professions. Built for **WoW: Forever** first,

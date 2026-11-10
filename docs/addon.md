@@ -56,7 +56,7 @@ than the last time Blizzard's talents changed (`talentsChangedAt`, set by the
 hourly sync). So:
 
 - No addon: Blizzard's data, as today.
-- Respec, then `/reload`: the addon's (page says "From the guildie addon").
+- Respec, then `/reload`: the addon's (page says "From the Guildie addon").
 - Log out: Blizzard catches up to the same talents; if they differ, the newer
   one wins. A newer Blizzard change always takes over.
 

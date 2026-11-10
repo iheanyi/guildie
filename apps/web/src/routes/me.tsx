@@ -18,7 +18,7 @@ export const Route = createFileRoute("/me")({
 		// Not while a sign-in is finishing on this page (see isAuthReturn).
 		if (!context.token && !isAuthReturn(location.searchStr)) throw redirect({ to: "/sign-in" });
 	},
-	head: () => ({ meta: [{ title: "Your account · guildie" }] }),
+	head: () => ({ meta: [{ title: "Your account · Guildie" }] }),
 	component: Me,
 });
 

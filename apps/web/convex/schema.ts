@@ -154,7 +154,7 @@ export default defineSchema({
 
 	/**
 	 * The latest in-game snapshot per character, uploaded by the helper from
-	 * the guildie addon. Shown instead of Blizzard's data only while it's newer.
+	 * the Guildie addon. Shown instead of Blizzard's data only while it's newer.
 	 */
 	addonSnapshots: defineTable({
 		userId: v.id("users"),

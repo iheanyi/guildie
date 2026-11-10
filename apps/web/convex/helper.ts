@@ -6,7 +6,7 @@ import type { vTalentTree } from "./schema";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { requireUserId } from "./users";
 
-// The desktop helper (apps/helper) uploads what the guildie addon
+// The desktop helper (apps/helper) uploads what the Guildie addon
 // (apps/addon) saved in game. It authenticates with a token the player makes
 // on their account page; only the token's hash is stored. Uploads are only
 // accepted for characters the token's owner has claimed.

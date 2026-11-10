@@ -102,4 +102,4 @@ Pipe secrets in so they stay out of shell history.
   set both. Everyone on that deployment signs in again.
 - **Gateway code:** from `apps/gateway`, `pnpm test && pnpm check`, then
   `pnpm deploy:dev` / `pnpm deploy:prod`. `https://<gateway>/` answers
-  "guildie sign-in gateway." when it's up.
+  "Guildie sign-in gateway." when it's up.

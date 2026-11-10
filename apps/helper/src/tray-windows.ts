@@ -19,7 +19,7 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 $script:icon = New-Object System.Windows.Forms.NotifyIcon
 try { $script:icon.Icon = New-Object System.Drawing.Icon($IconPath) } catch { $script:icon.Icon = [System.Drawing.SystemIcons]::Application }
-$script:icon.Text = "guildie"
+$script:icon.Text = "Guildie"
 $script:menu = New-Object System.Windows.Forms.ContextMenuStrip
 $script:items = @{}
 
@@ -34,11 +34,11 @@ function Add-Item([string]$id, [string]$text, [bool]$enabled) {
 	$script:items[$id] = $item
 }
 
-Add-Item "status" "guildie" $false
+Add-Item "status" "Guildie" $false
 Add-Item "last" "No uploads yet" $false
 [void]$script:menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
-Add-Item "connect" "Connect to guildie..." $true
-Add-Item "open" "Open guildie" $true
+Add-Item "connect" "Connect to Guildie..." $true
+Add-Item "open" "Open Guildie" $true
 Add-Item "upload" "Upload now" $true
 Add-Item "log" "Open log" $true
 Add-Item "signout" "Sign out" $true
