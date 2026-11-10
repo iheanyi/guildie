@@ -44,13 +44,14 @@ if [ -z "$(npx convex env get AUTH_GATEWAY_SECRET 2>/dev/null)" ]; then
 	echo "dev-seed: copied dev settings from $cloud_dev"
 fi
 
-# Guilds and their rosters only: no users, claims or auth tables. Once per
+# Guilds, their rosters, the recipe catalog and talent tree names only: no
+# users, claims or auth tables. Once per
 # backend; delete .convex/local to start over.
 marker=.convex/local/guild-data-seeded
 if [ ! -f "$marker" ]; then
 	echo "dev-seed: importing guild data from $cloud_dev"
 	npx convex export --deployment "$cloud_dev" --path "$dir/snapshot.zip" > /dev/null
-	tables="guilds characters"
+	tables="guilds characters recipes talentTreeInfo"
 	# Every app table comes along so the snapshot's table numbers (which its
 	# ids encode) stay consistent, but only these keep their rows.
 	mkdir "$dir/data"
