@@ -17,6 +17,8 @@ import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
 import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
 import { Route as ClaimCallbackRouteImport } from './routes/claim/callback'
+import { Route as ApiHelperMeRouteImport } from './routes/api/helper/me'
+import { Route as ApiHelperSnapshotRouteImport } from './routes/api/helper/snapshot'
 import { Route as CRegionSlugRouteImport } from './routes/c/$region/$slug'
 import { Route as GRegionSlugRouteImport } from './routes/g/$region/$slug'
 
@@ -60,6 +62,16 @@ const ClaimCallbackRoute = ClaimCallbackRouteImport.update({
   path: '/claim/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHelperMeRoute = ApiHelperMeRouteImport.update({
+  id: '/api/helper/me',
+  path: '/api/helper/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHelperSnapshotRoute = ApiHelperSnapshotRouteImport.update({
+  id: '/api/helper/snapshot',
+  path: '/api/helper/snapshot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CRegionSlugRoute = CRegionSlugRouteImport.update({
   id: '/c/$region/$slug',
   path: '/c/$region/$slug',
@@ -80,6 +92,8 @@ export interface FileRoutesByFullPath {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
+  '/api/helper/me': typeof ApiHelperMeRoute
+  '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
   '/c/$region/$slug': typeof CRegionSlugRoute
   '/g/$region/$slug': typeof GRegionSlugRoute
 }
@@ -92,6 +106,8 @@ export interface FileRoutesByTo {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
+  '/api/helper/me': typeof ApiHelperMeRoute
+  '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
   '/c/$region/$slug': typeof CRegionSlugRoute
   '/g/$region/$slug': typeof GRegionSlugRoute
 }
@@ -105,6 +121,8 @@ export interface FileRoutesById {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
+  '/api/helper/me': typeof ApiHelperMeRoute
+  '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
   '/c/$region/$slug': typeof CRegionSlugRoute
   '/g/$region/$slug': typeof GRegionSlugRoute
 }
@@ -119,6 +137,8 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signout'
     | '/claim/callback'
+    | '/api/helper/me'
+    | '/api/helper/snapshot'
     | '/c/$region/$slug'
     | '/g/$region/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +151,8 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signout'
     | '/claim/callback'
+    | '/api/helper/me'
+    | '/api/helper/snapshot'
     | '/c/$region/$slug'
     | '/g/$region/$slug'
   id:
@@ -143,6 +165,8 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signout'
     | '/claim/callback'
+    | '/api/helper/me'
+    | '/api/helper/snapshot'
     | '/c/$region/$slug'
     | '/g/$region/$slug'
   fileRoutesById: FileRoutesById
@@ -156,6 +180,8 @@ export interface RootRouteChildren {
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignoutRoute: typeof AuthSignoutRoute
   ClaimCallbackRoute: typeof ClaimCallbackRoute
+  ApiHelperMeRoute: typeof ApiHelperMeRoute
+  ApiHelperSnapshotRoute: typeof ApiHelperSnapshotRoute
   CRegionSlugRoute: typeof CRegionSlugRoute
   GRegionSlugRoute: typeof GRegionSlugRoute
 }
@@ -218,6 +244,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClaimCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/helper/me': {
+      id: '/api/helper/me'
+      path: '/api/helper/me'
+      fullPath: '/api/helper/me'
+      preLoaderRoute: typeof ApiHelperMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/helper/snapshot': {
+      id: '/api/helper/snapshot'
+      path: '/api/helper/snapshot'
+      fullPath: '/api/helper/snapshot'
+      preLoaderRoute: typeof ApiHelperSnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/c/$region/$slug': {
       id: '/c/$region/$slug'
       path: '/c/$region/$slug'
@@ -244,6 +284,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthSigninRoute: AuthSigninRoute,
   AuthSignoutRoute: AuthSignoutRoute,
   ClaimCallbackRoute: ClaimCallbackRoute,
+  ApiHelperMeRoute: ApiHelperMeRoute,
+  ApiHelperSnapshotRoute: ApiHelperSnapshotRoute,
   CRegionSlugRoute: CRegionSlugRoute,
   GRegionSlugRoute: GRegionSlugRoute,
 }

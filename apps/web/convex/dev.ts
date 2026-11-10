@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation } from "./_generated/server";
 import { appToken, blizzardGet } from "./blizzard";
+import { sha256 } from "./claims";
 import { isLocalBackend } from "./origins";
 import { vRegion } from "./schema";
 import { CLASSES, FLAVORS, guildSlug, SLOT_ORDER } from "./shared/wow";
@@ -175,5 +176,38 @@ export const addGuild = internalMutation({
 			}));
 		await ctx.scheduler.runAfter(0, internal.sync.syncGuild, { guildId });
 		return `/g/${region}/${slug}`;
+	},
+});
+
+/**
+ * Local backends only: a test user who has claimed `slug` (already synced),
+ * with a helper token, for exercising the helper end to end.
+ *   npx convex run dev:helperTest '{"slug": "lich-braz", "region": "eu"}'
+ */
+export const helperTest = internalMutation({
+	args: { slug: v.string(), region: vRegion },
+	handler: async (ctx, { slug, region }) => {
+		if (!isLocalBackend()) throw new ConvexError("Local backends only");
+		const character = await ctx.db
+			.query("characters")
+			.withIndex("by_slug", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", slug))
+			.first();
+		if (!character) throw new ConvexError(`Sync ${slug} first (dev:addGuild)`);
+		const userId = await ctx.db.insert("users", { name: "Helper test" });
+		await ctx.db.insert("ownedCharacters", {
+			userId,
+			flavor: "forever",
+			region,
+			slug,
+			blizzardId: character.blizzardId,
+			name: character.name,
+			level: character.level,
+			classId: character.classId,
+			claimedAt: Date.now(),
+		});
+		const bytes = crypto.getRandomValues(new Uint8Array(24));
+		const token = `gld_${btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
+		await ctx.db.insert("helperTokens", { userId, tokenHash: await sha256(token), label: "dev test", createdAt: Date.now() });
+		return { token, blizzardId: character.blizzardId, talentTrees: character.talentTrees };
 	},
 });

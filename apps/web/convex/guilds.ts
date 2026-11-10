@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
 import { vRegion, vVisibility } from "./schema";
+import { pickTalents } from "./helper";
 import { requireUserId } from "./users";
 import { guildSlug } from "./shared/wow";
 
@@ -61,6 +62,7 @@ export const get = query({
 			.withIndex("by_guild", (q) => q.eq("guildId", guild._id).eq("inRoster", true))
 			.collect();
 		// Mark which characters someone has claimed (without saying who: that's for a later privacy pass).
+		const talents = await Promise.all(characters.map((c) => pickTalents(ctx, c)));
 		const claimed = await Promise.all(
 			characters.map((c) =>
 				ctx.db
@@ -86,7 +88,8 @@ export const get = query({
 				lastLoginAt: c.lastLoginAt,
 				averageItemLevel: c.averageItemLevel,
 				professions: c.professions,
-				talentTrees: c.talentTrees?.map(({ id, name, points }) => ({ id, name, points })),
+				talentTrees: talents[i].talentTrees?.map(({ id, name, points }) => ({ id, name, points })),
+				talentSource: talents[i].source,
 				avatarUrl: c.avatarUrl,
 				profileMissing: c.profileMissing,
 				claimed: claimed[i] !== null,
@@ -105,7 +108,12 @@ export const character = query({
 		if (!character) return null;
 		const guild = await ctx.db.get(character.guildId);
 		if (!guild || !(await access(ctx, guild)).canView) return null;
-		return { character, guild: { name: guild.name, slug: guild.slug, region: guild.region } };
+		const { talentTrees, source } = await pickTalents(ctx, character);
+		return {
+			character: { ...character, talentTrees },
+			talentSource: source,
+			guild: { name: guild.name, slug: guild.slug, region: guild.region },
+		};
 	},
 });
 

@@ -31,7 +31,7 @@ function CharacterPage() {
 		convexQuery(api.guilds.character, { region: params.region as Region, slug: params.slug }),
 	);
 	if (!data) return null;
-	const { character: c, guild } = data;
+	const { character: c, guild, talentSource } = data;
 	const equipment = [...(c.equipment ?? [])].sort((a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot));
 	return (
 		<div className="py-10">
@@ -103,6 +103,11 @@ function CharacterPage() {
 								</span>
 							) : null}
 						</h2>
+						<p className="mt-1 text-xs text-muted-foreground">
+							{talentSource.kind === "addon"
+								? `From the guildie addon, ${ago(talentSource.at) ?? "just now"}.`
+								: "From Blizzard, as of the last logout."}
+						</p>
 						{c.talentTrees?.length ? (
 							c.talentTrees.map((tree) => (
 								<div key={tree.id} className="mt-3">
@@ -112,7 +117,7 @@ function CharacterPage() {
 									</div>
 									<ul className="text-sm">
 										{tree.talents.map((t) => (
-											<li key={t.name} className="flex justify-between border-b py-1">
+											<li key={t.id ?? t.name} className="flex justify-between border-b py-1">
 												<span>{t.name}</span>
 												<span className="num text-muted-foreground">{t.rank}</span>
 											</li>

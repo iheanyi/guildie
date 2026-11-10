@@ -11,6 +11,7 @@ export const Route = createFileRoute("/data")({
 const SOURCES = [
 	["Blizzard's API, Forever namespaces", "Rosters, character profiles, gear, talents, professions and known recipes, item and recipe data, auction houses. Refreshed hourly."],
 	["Wowhead (Forever)", "Item links and tooltips."],
+	["The guildie addon (optional)", "Players who install it and its desktop helper can show talent changes after a /reload, before Blizzard's data updates. Shown only while it's newer than Blizzard's."],
 ];
 
 const GAPS = [

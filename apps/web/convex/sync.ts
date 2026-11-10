@@ -1,7 +1,8 @@
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { appToken, blizzardGet } from "./blizzard";
 import { vTalentTree } from "./schema";
 import { FLAVORS } from "./shared/wow";
@@ -19,6 +20,7 @@ type Roster = {
 	members: {
 		rank: number;
 		character: {
+			id?: number;
 			name: string;
 			surname?: string;
 			slug?: string;
@@ -59,6 +61,7 @@ export const syncGuild = internalAction({
 			}
 			const members = roster.data.members.map(({ rank, character: c }) => ({
 				slug: (c.slug ?? `${c.name}-${c.surname ?? ""}`).toLowerCase(),
+				blizzardId: c.id,
 				name: c.name,
 				surname: c.surname,
 				level: c.level,
@@ -95,6 +98,7 @@ export const recordError = internalMutation({
 
 const vMember = v.object({
 	slug: v.string(),
+	blizzardId: v.optional(v.number()),
 	name: v.string(),
 	surname: v.optional(v.string()),
 	level: v.number(),
@@ -190,7 +194,7 @@ type Specializations = {
 			specialization?: { id: number };
 			specialization_name?: string;
 			spent_points?: number;
-			talents?: { talent?: { name?: string }; talent_rank?: number }[];
+			talents?: { talent?: { id?: number; name?: string }; talent_rank?: number }[];
 		}[];
 	}[];
 };
@@ -208,7 +212,7 @@ function mapTalentTrees(data: Specializations | undefined) {
 			points: s.spent_points ?? 0,
 			talents: (s.talents ?? [])
 				.filter((t) => t.talent?.name)
-				.map((t) => ({ name: t.talent!.name!, rank: t.talent_rank ?? 1 })),
+				.map((t) => ({ id: t.talent!.id, name: t.talent!.name!, rank: t.talent_rank ?? 1 })),
 		}))
 		.sort((a, b) => b.points - a.points);
 }
@@ -320,14 +324,42 @@ export const applyProfile = internalMutation({
 	handler: async (ctx, { characterId, missing, ...data }) => {
 		const character = await ctx.db.get(characterId);
 		if (!character) return;
-		const patch: Partial<Doc<"characters">> = { profileSyncedAt: Date.now(), profileMissing: missing };
+		const now = Date.now();
+		const patch: Partial<Doc<"characters">> = { profileSyncedAt: now, profileMissing: missing };
+		// Remember when Blizzard's talents last changed, to compare with addon uploads.
+		if (data.talentTrees && JSON.stringify(data.talentTrees) !== JSON.stringify(character.talentTrees)) {
+			patch.talentsChangedAt = now;
+		}
 		// Only overwrite what this sync actually got.
 		for (const [key, value] of Object.entries(data)) {
 			if (value !== undefined) (patch as Record<string, unknown>)[key] = value;
 		}
 		await ctx.db.patch(characterId, patch);
+		if (data.talentTrees) await learnTreeInfo(ctx, data.talentTrees);
 	},
 });
+
+/** Record Blizzard's id and name for each tree seen, keyed by class and tree position. */
+async function learnTreeInfo(ctx: MutationCtx, trees: Infer<typeof vTalentTree>[]) {
+	for (const tree of trees) {
+		const known = tree.talents.map((t) => t.id !== undefined && TALENT_TREE_BY_ID.get(t.id)).find(Boolean);
+		if (!known) continue;
+		const existing = await ctx.db
+			.query("talentTreeInfo")
+			.withIndex("by_class_tree", (q) => q.eq("classToken", known.classToken).eq("treeIndex", known.treeIndex))
+			.unique();
+		if (!existing) {
+			await ctx.db.insert("talentTreeInfo", {
+				classToken: known.classToken,
+				treeIndex: known.treeIndex,
+				blizzardId: tree.id,
+				name: tree.name,
+			});
+		} else if (existing.name !== tree.name || existing.blizzardId !== tree.id) {
+			await ctx.db.patch(existing._id, { name: tree.name, blizzardId: tree.id });
+		}
+	}
+}
 
 /** Cron: refresh every guild's roster. */
 export const syncAll = internalAction({

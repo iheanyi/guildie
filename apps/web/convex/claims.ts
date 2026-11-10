@@ -111,6 +111,7 @@ export const consume = internalMutation({
 
 const vOwned = v.object({
 	slug: v.string(),
+	blizzardId: v.optional(v.number()),
 	name: v.string(),
 	level: v.optional(v.number()),
 	classId: v.optional(v.number()),
@@ -148,6 +149,7 @@ export const save = internalMutation({
 type AccountProfile = {
 	wow_accounts?: {
 		characters?: {
+			id?: number;
 			name: string;
 			surname?: string;
 			level?: number;
@@ -181,6 +183,7 @@ export const complete = action({
 		const profile: AccountProfile = res.status === 404 ? {} : await res.json();
 		const characters = (profile.wow_accounts ?? []).flatMap((a) => a.characters ?? []).map((c) => ({
 			slug: slugOf(c),
+			blizzardId: c.id,
 			name: c.name,
 			level: c.level,
 			classId: c.playable_class?.id,

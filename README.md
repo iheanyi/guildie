@@ -7,6 +7,17 @@ open source so any guild can run it or build on it.
 Status: proof of concept. See [docs/roadmap.md](docs/roadmap.md) for where
 it's headed (Discord, guild chat, an in-game addon).
 
+## Repo
+
+| Folder | What |
+|---|---|
+| `apps/web` | The app: TanStack Start + Convex, on Cloudflare Workers |
+| `apps/gateway` | OAuth callback gateway Worker |
+| `apps/addon` | In-game addon (proof of concept) |
+| `apps/helper` | Desktop helper that uploads the addon's data (proof of concept) |
+
+See [docs/addon.md](docs/addon.md) for the addon flow.
+
 ## Stack
 
 - [TanStack Start](https://tanstack.com/start) (React, SSR)

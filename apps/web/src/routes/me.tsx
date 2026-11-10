@@ -7,6 +7,7 @@ import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useState } from "react";
 import { ClassText } from "@/components/class-name";
+import { HelperTokens } from "@/components/helper-tokens";
 import { Button } from "@/components/ui/button";
 import { isAuthReturn } from "@/lib/auth-return";
 import { CLAIM_STATE_KEY } from "@/lib/claim";
@@ -49,6 +50,9 @@ function Me() {
 				</ul>
 			)}
 			<ClaimCharacters />
+
+			<h2 className="mt-12 text-2xl">Desktop helper</h2>
+			<HelperTokens />
 
 			<h2 className="mt-12 text-2xl">Discord</h2>
 			<p className="mt-1 text-muted-foreground">

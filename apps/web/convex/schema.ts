@@ -23,7 +23,8 @@ export const vTalentTree = v.object({
 	id: v.number(),
 	name: v.string(),
 	points: v.number(),
-	talents: v.array(v.object({ name: v.string(), rank: v.number() })),
+	/** `id` is the TraitDefinition ID (same in Blizzard's API and in game). */
+	talents: v.array(v.object({ id: v.optional(v.number()), name: v.string(), rank: v.number() })),
 });
 
 const vProfession = v.object({
@@ -67,6 +68,8 @@ export default defineSchema({
 		region: vRegion,
 		/** `{name}-{surname}`, lowercase; unique per flavor + region. */
 		slug: v.string(),
+		/** Blizzard's character id; also the number in the in-game GUID. */
+		blizzardId: v.optional(v.number()),
 		name: v.string(),
 		surname: v.optional(v.string()),
 		level: v.number(),
@@ -82,6 +85,8 @@ export default defineSchema({
 		professions: v.optional(v.array(vProfession)),
 		/** Trees with points spent, most points first. */
 		talentTrees: v.optional(v.array(vTalentTree)),
+		/** When we first saw Blizzard's current talentTrees (compared with addon uploads). */
+		talentsChangedAt: v.optional(v.number()),
 		avatarUrl: v.optional(v.string()),
 		profileSyncedAt: v.optional(v.number()),
 		/** 404 from the profile endpoint: under level 10 or not logged out yet. */
@@ -99,6 +104,7 @@ export default defineSchema({
 		flavor: vFlavor,
 		region: vRegion,
 		slug: v.string(),
+		blizzardId: v.optional(v.number()),
 		name: v.string(),
 		level: v.optional(v.number()),
 		classId: v.optional(v.number()),
@@ -118,6 +124,45 @@ export default defineSchema({
 		callbackUrl: v.string(),
 		expiresAt: v.number(),
 	}).index("by_stateHash", ["stateHash"]),
+
+	/** Tokens the desktop helper uploads addon data with (apps/helper). Only the hash is stored. */
+	helperTokens: defineTable({
+		userId: v.id("users"),
+		tokenHash: v.string(),
+		label: v.string(),
+		createdAt: v.number(),
+		lastUsedAt: v.optional(v.number()),
+	})
+		.index("by_tokenHash", ["tokenHash"])
+		.index("by_user", ["userId"]),
+
+	/**
+	 * The latest in-game snapshot per character, uploaded by the helper from
+	 * the guildie addon. Shown instead of Blizzard's data only while it's newer.
+	 */
+	addonSnapshots: defineTable({
+		userId: v.id("users"),
+		flavor: vFlavor,
+		region: vRegion,
+		slug: v.string(),
+		/** Game server time of the snapshot, ms. */
+		capturedAt: v.number(),
+		receivedAt: v.number(),
+		level: v.optional(v.number()),
+		talentTrees: v.array(vTalentTree),
+	}).index("by_slug", ["flavor", "region", "slug"]),
+
+	/**
+	 * Blizzard's id and name for each class's talent trees, learned from synced
+	 * characters (convex/shared/foreverTalents.ts maps talents to trees). Lets
+	 * addon uploads use the same tree names as Blizzard's data.
+	 */
+	talentTreeInfo: defineTable({
+		classToken: v.string(),
+		treeIndex: v.number(),
+		blizzardId: v.number(),
+		name: v.string(),
+	}).index("by_class_tree", ["classToken", "treeIndex"]),
 
 	/** Cached client-credentials tokens for the Blizzard API. */
 	apiTokens: defineTable({

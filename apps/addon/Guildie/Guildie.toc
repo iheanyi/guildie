@@ -1,0 +1,9 @@
+## Interface: 16001
+## Title: guildie
+## Notes: Saves your character's talents for the guildie desktop helper to upload to guildie.club.
+## Author: guildie
+## Version: 0.1.0
+## SavedVariables: GuildieDB
+## X-Website: https://guildie.club
+
+Guildie.lua
