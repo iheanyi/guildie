@@ -52,6 +52,16 @@ jobs:
       # Creates the release desktop-v<version> (a normal one, not a draft:
       # electron-builder.yml publish.releaseType) and uploads the installer,
       # its .blockmap and latest.yml.
+      # Make the release before electron-builder uploads: its parallel uploads
+      # each create one when none exists, which split 0.3.0 into two releases.
+      - name: Create the release
+        if: github.ref_type == 'tag'
+        run: |
+          version=$(node -p "require('./apps/desktop/package.json').version")
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$version" --notes "Guildie for Windows $version" --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and publish
         if: github.ref_type == 'tag'
         run: pnpm --filter @guildie/desktop release:win
