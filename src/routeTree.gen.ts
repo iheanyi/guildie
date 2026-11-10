@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DataRouteImport } from './routes/data'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
@@ -22,6 +23,11 @@ import { Route as GRegionSlugRouteImport } from './routes/g/$region/$slug'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataRoute = DataRouteImport.update({
+  id: '/data',
+  path: '/data',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeRoute = MeRouteImport.update({
@@ -67,6 +73,7 @@ const GRegionSlugRoute = GRegionSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/data': typeof DataRoute
   '/me': typeof MeRoute
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/data': typeof DataRoute
   '/me': typeof MeRoute
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/data': typeof DataRoute
   '/me': typeof MeRoute
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/data'
     | '/me'
     | '/sign-in'
     | '/auth/refresh'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/data'
     | '/me'
     | '/sign-in'
     | '/auth/refresh'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/data'
     | '/me'
     | '/sign-in'
     | '/auth/refresh'
@@ -137,6 +149,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DataRoute: typeof DataRoute
   MeRoute: typeof MeRoute
   SignInRoute: typeof SignInRoute
   AuthRefreshRoute: typeof AuthRefreshRoute
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data': {
+      id: '/data'
+      path: '/data'
+      fullPath: '/data'
+      preLoaderRoute: typeof DataRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/me': {
@@ -217,6 +237,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DataRoute: DataRoute,
   MeRoute: MeRoute,
   SignInRoute: SignInRoute,
   AuthRefreshRoute: AuthRefreshRoute,

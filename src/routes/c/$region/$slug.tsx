@@ -80,7 +80,7 @@ function CharacterPage() {
 										<dt className="text-muted-foreground">{slotLabel(item.slot)}</dt>
 										<dd>
 											<a
-												href={`https://www.wowhead.com/classic/item=${item.itemId}`}
+												href={`https://www.wowhead.com/forever/item=${item.itemId}`}
 												target="_blank"
 												rel="noreferrer"
 												className="hover:underline underline-offset-4"

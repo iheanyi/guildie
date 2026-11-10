@@ -1,7 +1,7 @@
 import { convexQuery, type ConvexQueryClient } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouter } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts, useRouter } from "@tanstack/react-router";
 import { type ConvexReactClient, useConvexAuth } from "convex/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { SiteHeader } from "@/components/site-header";
@@ -68,6 +68,14 @@ function RootComponent() {
 					<main className="flex-1 pb-16">
 						<Outlet />
 					</main>
+					<footer className="flex gap-5 border-t py-4 text-sm text-muted-foreground">
+						<Link to="/data" className="hover:text-foreground">
+							Where the data comes from
+						</Link>
+						<a href="https://github.com/natedunn/guildie" className="hover:text-foreground">
+							Source
+						</a>
+					</footer>
 				</div>
 			</TooltipProvider>
 		</ConvexAuthStartProvider>

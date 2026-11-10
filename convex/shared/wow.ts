@@ -30,6 +30,7 @@ export function guildSlug(name: string) {
 	return name.trim().toLowerCase().replace(/\s+/g, "-");
 }
 
+// From Blizzard's static-forever playable-class index (checked 2026-11-09).
 export const CLASSES: Record<number, { name: string; color: string }> = {
 	1: { name: "Warrior", color: "#C69B6D" },
 	2: { name: "Paladin", color: "#F48CBA" },
@@ -42,8 +43,8 @@ export const CLASSES: Record<number, { name: string; color: string }> = {
 	11: { name: "Druid", color: "#FF7C0A" },
 };
 
-// Forever added a race at launch; until its id is confirmed, unknown ids
-// render as "Race {id}". Check /data/wow/playable-race/index on static-forever.
+// From Blizzard's static-forever playable-race index (checked 2026-11-09).
+// Forever's Skyborne appear as two races.
 export const RACES: Record<number, string> = {
 	1: "Human",
 	2: "Orc",
@@ -53,6 +54,8 @@ export const RACES: Record<number, string> = {
 	6: "Tauren",
 	7: "Gnome",
 	8: "Troll",
+	95: "High Order Skyborne",
+	96: "Windshaper Skyborne",
 };
 
 export const className = (id: number) => CLASSES[id]?.name ?? `Class ${id}`;
