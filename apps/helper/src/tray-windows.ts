@@ -14,7 +14,6 @@ const SCRIPT = String.raw`
 param([string]$IconPath)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-try { [Console]::InputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
@@ -47,10 +46,25 @@ Add-Item "signout" "Sign out" $true
 Add-Item "quit" "Quit" $true
 
 $script:icon.ContextMenuStrip = $script:menu
-$script:icon.add_MouseClick({ param($s, $e) if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) { Emit "click open" } })
+$script:icon.add_MouseClick({
+	param($s, $e)
+	if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) { Emit "click open" }
+})
+# Right-click opens the menu (NotifyIcon does this itself; this is a fallback
+# for shells where it doesn't): ShowContextMenu is internal, so call it by reflection.
+$script:icon.add_MouseUp({
+	param($s, $e)
+	if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Right -and -not $script:menu.Visible) {
+		$m = [System.Windows.Forms.NotifyIcon].GetMethod("ShowContextMenu", [System.Reflection.BindingFlags]"Instance,NonPublic")
+		if ($m) { $m.Invoke($script:icon, $null) }
+	}
+})
 $script:icon.Visible = $true
 
-$script:reader = [Console]::In
+# Not [Console]::In: in Windows PowerShell its ReadLineAsync blocks, which
+# would freeze the tray (no menu on right-click). A StreamReader reads
+# stdin in the background instead.
+$script:reader = New-Object System.IO.StreamReader([Console]::OpenStandardInput(), (New-Object System.Text.UTF8Encoding($false)))
 $script:pending = $script:reader.ReadLineAsync()
 $timer = New-Object System.Windows.Forms.Timer
 $timer.Interval = 200
