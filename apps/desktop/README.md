@@ -121,7 +121,7 @@ preview opened from guildie.club) get `{ connected: false }`, and `setToken`
 and `signOut` reject.
 
 The title bar: the window buttons are drawn over the top right, 40px tall, on
-`TITLEBAR.color` (`#15110d` for now; it should match the site's `--titlebar`).
+`TITLEBAR.color` (`#1c150e` for now; it should match the site's `--titlebar`).
 The site should keep that strip clear with
 `env(titlebar-area-x)` / `env(titlebar-area-width)` / `env(titlebar-area-height)`
 and mark its header `-webkit-app-region: drag` (links and buttons `no-drag`).

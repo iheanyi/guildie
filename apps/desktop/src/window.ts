@@ -11,7 +11,7 @@ import { type Bounds, settings } from "./settings.ts";
  * apps/web/src/styles/app.css). The site leaves room for the buttons with
  * env(titlebar-area-x/width) and marks its header -webkit-app-region: drag.
  */
-export const TITLEBAR = { color: "#15110d", symbolColor: "#e9dfcc", height: 40 } as const;
+export const TITLEBAR = { color: "#1c150e", symbolColor: "#e9dfcc", height: 40 } as const;
 
 /** Make the header draggable until the site does it itself (any rule of the site's wins: :where() has no specificity). */
 const FALLBACK_DRAG_CSS = `
