@@ -12,6 +12,8 @@ into that version's section.
 
 ## Unreleased
 
+## 0.3.7
+
 ### Improvements
 
 - A subtle border of Guildie's own around the window on Windows 11, instead of none.
