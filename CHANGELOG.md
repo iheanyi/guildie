@@ -15,6 +15,8 @@ CI checks for it. A release turns `## Unreleased` into that version's section.
 
 ## Unreleased
 
+## 0.3.10
+
 ### Fixes
 
 - **Guildie:** Items in the Inventory tab missing their name and icon. Guildie now also fills in any it's missing once a day.
