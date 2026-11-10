@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/page-header";
 import { PageTab, PageTabs } from "@/components/page-tabs";
 import { isAuthReturn } from "@/lib/auth-return";
 
-// Settings: Account (you, your characters, privacy, sign out), Addon (the
+// Settings: Account (you, your characters, privacy, sign out), Guilds (yours;
+// owners choose who can see them), Addon (the
 // Guildie addon in WoW and its sync, through the app), App (the desktop app:
 // its version and updates, and the computers connected to your account).
 export const Route = createFileRoute("/settings")({
@@ -43,6 +44,7 @@ function SettingsLayout() {
 			>
 				<PageTabs className="mt-4">
 					<PageTab to="/settings">Account</PageTab>
+					<PageTab to="/settings/guilds">Guilds</PageTab>
 					<PageTab to="/settings/addon">Addon</PageTab>
 					<PageTab to="/settings/app">App</PageTab>
 				</PageTabs>

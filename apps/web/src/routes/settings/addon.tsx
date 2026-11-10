@@ -5,6 +5,7 @@ import { SectionTitle } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ago } from "@/lib/format";
+import { compareVersions } from "@/lib/versions";
 import { type AddonInfo, type DesktopStatus, desktop, RELEASES, useInDesktopApp } from "@/lib/desktop";
 
 // Settings → Addon: the Guildie addon, managed by the desktop app. Is it
@@ -105,7 +106,7 @@ function ManageAddon() {
 	const state = !info.wowFolder || !info.hasForever
 		? "no-wow"
 		: installed
-			? info.bundled && compare(installed.version!, info.bundled) < 0
+			? info.bundled && compareVersions(installed.version!, info.bundled) < 0
 				? "outdated"
 				: "installed"
 			: broken
@@ -268,15 +269,3 @@ export function Row({ label, children }: { label: string; children: ReactNode })
 
 /** "brenna-ironfoot" -> "Brenna" (as packages/sync's displayName). */
 const displayName = (slug: string) => (slug.split("-")[0] ?? slug).replace(/^./, (c) => c.toUpperCase());
-
-/** "0.10.0" vs "0.9.2", part by part (as the app compares them). */
-function compare(a: string, b: string) {
-	const parts = (v: string) => v.split(/[.-]/).map((p) => Number.parseInt(p, 10) || 0);
-	const pa = parts(a);
-	const pb = parts(b);
-	for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-		const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
-		if (diff) return Math.sign(diff);
-	}
-	return 0;
-}

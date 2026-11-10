@@ -7,10 +7,9 @@ import { vRegion, vVisibility } from "./schema";
 import { pickProfile } from "./helper";
 import { requireUserId } from "./users";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
-import { guildSlug } from "./shared/wow";
+import { guildSlug, MANUAL_SYNC_COOLDOWN_MS } from "./shared/wow";
 
 /** Manual "sync now" is allowed once per this window. */
-const MANUAL_SYNC_COOLDOWN_MS = 5 * 60_000;
 
 /** The guilds a user's claimed characters are in now (per the last roster syncs). */
 export async function guildsOf(ctx: QueryCtx, userId: Id<"users">) {
@@ -236,9 +235,13 @@ export const requestSync = mutation({
 		await requireUserId(ctx);
 		const guild = await ctx.db.get(guildId);
 		if (!guild) throw new ConvexError("No such guild");
-		if (guild.rosterSyncedAt && Date.now() - guild.rosterSyncedAt < MANUAL_SYNC_COOLDOWN_MS) {
+		const now = Date.now();
+		if (guild.rosterSyncedAt && now - guild.rosterSyncedAt < MANUAL_SYNC_COOLDOWN_MS) {
 			throw new ConvexError("Synced a few minutes ago. Try again later.");
 		}
+		// One at a time: a sync asked for in the last two minutes is still running.
+		if (guild.syncRequestedAt && guild.syncRequestedAt > (guild.rosterSyncedAt ?? 0) && now - guild.syncRequestedAt < 2 * 60_000) return;
+		await ctx.db.patch(guildId, { syncRequestedAt: now });
 		await ctx.scheduler.runAfter(0, internal.sync.syncGuild, { guildId });
 	},
 });

@@ -1,4 +1,5 @@
 import { className, raceName } from "@convex/shared/wow";
+import { CharacterAvatar, UNFETCHED_NOTE } from "@/components/character-avatar";
 import { createFileRoute, Link, notFound, Outlet } from "@tanstack/react-router";
 import { characterQuery, sourceNote, useCharacter } from "@/components/character-data";
 import { ClassText } from "@/components/class-name";
@@ -25,14 +26,12 @@ function CharacterLayout() {
 	// Last synced: an in-game sync by the Guildie app when any of it is newer, else Blizzard's last logout.
 	const seen = ago(data.synced?.at);
 	const inGame = data.synced?.kind === "app";
+	// Never published by Blizzard, and nothing from the game either.
+	const unfetched = !data.synced;
 	return (
 		<div className="w-full max-w-5xl py-5">
 			<header className="flex items-center gap-3">
-				{c.avatarUrl ? (
-					<img src={c.avatarUrl} alt="" className="size-12 shrink-0 rounded-md border border-border bg-muted object-cover" />
-				) : (
-					<span className="size-12 shrink-0 rounded-md border border-border bg-muted" />
-				)}
+				<CharacterAvatar url={c.avatarUrl} size={48} className="rounded-md" />
 				<div className="min-w-0 flex-1">
 					<h1 className="truncate text-lg font-semibold leading-tight">
 						<ClassText classId={c.classId}>{c.name}</ClassText>
@@ -64,21 +63,32 @@ function CharacterLayout() {
 				)}
 			</header>
 
-			<PageTabs className="mt-4">
-				<PageTab to="/c/$region/$slug" params={params}>
-					Gear
-				</PageTab>
-				<PageTab to="/c/$region/$slug/talents" params={params}>
-					Talents
-				</PageTab>
-				<PageTab to="/c/$region/$slug/professions" params={params}>
-					Professions
-				</PageTab>
-			</PageTabs>
+			{unfetched ? (
+				// Nothing to show yet: no tabs, no gear, just why.
+				<div className="mt-8 flex flex-col items-center rounded-md border border-border px-6 py-14 text-center select-none">
+					<CharacterAvatar size={64} className="rounded-full" />
+					<p className="mt-4 font-medium">No details yet</p>
+					<p className="mt-1 max-w-md text-[0.8125rem] text-muted-foreground">{UNFETCHED_NOTE}</p>
+				</div>
+			) : (
+				<>
+					<PageTabs className="mt-4">
+						<PageTab to="/c/$region/$slug" params={params}>
+							Gear
+						</PageTab>
+						<PageTab to="/c/$region/$slug/talents" params={params}>
+							Talents
+						</PageTab>
+						<PageTab to="/c/$region/$slug/professions" params={params}>
+							Professions
+						</PageTab>
+					</PageTabs>
 
-			<div className="pt-5">
-				<Outlet />
-			</div>
+					<div className="pt-5">
+						<Outlet />
+					</div>
+				</>
+			)}
 		</div>
 	);
 }

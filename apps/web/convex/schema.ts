@@ -82,6 +82,8 @@ export default defineSchema({
 		ownerId: v.optional(v.id("users")),
 		memberCount: v.number(),
 		rosterSyncedAt: v.optional(v.number()),
+		/** When someone pressed "Sync now"; syncing until rosterSyncedAt passes it. */
+		syncRequestedAt: v.optional(v.number()),
 		lastSyncError: v.optional(v.string()),
 	})
 		.index("by_key", ["flavor", "region", "slug"])

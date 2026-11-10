@@ -85,3 +85,8 @@ export const SLOT_ORDER = [
 	"OFF_HAND",
 	"RANGED",
 ];
+
+/** Rosters sync by themselves this often (convex/crons.ts). */
+export const AUTO_SYNC_INTERVAL_MS = 60 * 60_000;
+/** "Sync now" is allowed this long after the last sync, so it can't be spammed. */
+export const MANUAL_SYNC_COOLDOWN_MS = 10 * 60_000;

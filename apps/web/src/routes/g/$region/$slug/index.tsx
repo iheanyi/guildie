@@ -2,11 +2,12 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { CLASSES, className, raceName, type Region } from "@convex/shared/wow";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowDown01Icon, ArrowUp01Icon, CheckmarkBadge01Icon, GameController03Icon } from "@hugeicons/core-free-icons";
+import { ArrowDown01Icon, ArrowUp01Icon, CheckmarkBadge01Icon, GameController03Icon, HourglassIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { useMemo, useState } from "react";
+import { UNFETCHED_NOTE } from "@/components/character-avatar";
 import { ClassText } from "@/components/class-name";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -38,17 +39,26 @@ function Roster({ members }: { members: Member[] }) {
 	const [search, setSearch] = useState("");
 	const [classFilter, setClassFilter] = useState<number | null>(null);
 	const [maxOnly, setMaxOnly] = useState(false);
-	const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "rank", desc: false });
+	const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "level", desc: true });
 
 	const rows = useMemo(() => {
-		const q = search.trim().toLowerCase();
+		// Every word must match somewhere: "night elf druid", "tailoring 60".
+		const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+		const haystack = (m: Member) =>
+			[
+				m.name,
+				m.surname,
+				raceName(m.raceId),
+				className(m.classId),
+				...(m.professions ?? []).map((p) => p.name),
+				...(m.talentTrees ?? []).map((t) => t.name),
+			]
+				.filter(Boolean)
+				.join(" ")
+				.toLowerCase();
 		const filtered = members.filter(
 			(m) =>
-				(!q ||
-					m.name.toLowerCase().includes(q) ||
-					m.surname?.toLowerCase().includes(q) ||
-					m.professions?.some((p) => p.name.toLowerCase().includes(q)) ||
-					m.talentTrees?.some((t) => t.name.toLowerCase().includes(q))) &&
+				(words.length === 0 || ((text) => words.every((w) => text.includes(w)))(haystack(m))) &&
 				(classFilter === null || m.classId === classFilter) &&
 				(!maxOnly || m.level === 60),
 		);
@@ -111,7 +121,7 @@ function Roster({ members }: { members: Member[] }) {
 				<Input
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-					placeholder="Search names, talents or professions"
+					placeholder="Search"
 					className="w-64"
 				/>
 				<div className="flex flex-wrap gap-1">
@@ -156,7 +166,7 @@ function Roster({ members }: { members: Member[] }) {
 					{rows.map((m) => (
 						<TableRow key={m._id}>
 							<TableCell>
-								<Tooltip disabled={!m.battletag}>
+								<Tooltip disabled={!m.battletag && !!m.synced}>
 									<TooltipTrigger
 										render={
 											<Link
@@ -172,8 +182,16 @@ function Roster({ members }: { members: Member[] }) {
 										<span className="text-muted-foreground">{m.surname}</span>
 									</TooltipTrigger>
 									{/* Only guild members get BattleTags (guilds.get), and only from players who haven't hidden theirs. */}
-									<TooltipContent side="right">{m.battletag}</TooltipContent>
+									<TooltipContent side="right" className="block max-w-72 space-y-1">
+										{m.battletag && <p>{m.battletag}</p>}
+										{!m.synced && <p className={m.battletag ? "text-muted-foreground" : undefined}>{UNFETCHED_NOTE}</p>}
+									</TooltipContent>
 								</Tooltip>
+								{!m.synced && (
+									<span className="ml-1.5 inline-flex translate-y-[2px] text-muted-foreground/60" aria-label="Not published by Blizzard yet">
+										<HugeiconsIcon icon={HourglassIcon} size={13} strokeWidth={1.75} />
+									</span>
+								)}
 								{m.claimed && (
 									<span
 										className="ml-1.5 inline-flex translate-y-[2px] text-muted-foreground/70"

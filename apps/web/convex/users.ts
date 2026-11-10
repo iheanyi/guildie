@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { vBattlenetProfile } from "./authBattlenet";
 import { guildsOf } from "./guilds";
+import { pickProfile } from "./helper";
 import { isLocalBackend } from "./origins";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
@@ -88,11 +89,13 @@ export const viewer = query({
 					.query("characters")
 					.withIndex("by_slug", (q) => q.eq("flavor", c.flavor).eq("region", c.region).eq("slug", c.slug))
 					.first();
+				// The level as the rest of the site shows it: the game's when newer.
+				const level = row ? (await pickProfile(ctx, row)).level : c.level;
 				return {
 					...c,
 					surname: row?.surname,
 					avatarUrl: row?.avatarUrl,
-					level: row?.level ?? c.level,
+					level,
 					classId: row?.classId ?? c.classId,
 				};
 			}),
@@ -105,6 +108,9 @@ export const viewer = query({
 			slug: g.slug,
 			memberCount: g.memberCount,
 			faction: g.faction,
+			// Settings → Guilds: owners (the guild master's player) can change who sees it.
+			isOwner: g.ownerId === user._id,
+			visibility: g.visibility,
 		}));
 		return { ...user, characters, guilds };
 	},

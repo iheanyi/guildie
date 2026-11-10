@@ -24,6 +24,7 @@ import { Route as HelperConnectRouteImport } from './routes/helper/connect'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as SettingsAddonRouteImport } from './routes/settings/addon'
 import { Route as SettingsAppRouteImport } from './routes/settings/app'
+import { Route as SettingsGuildsRouteImport } from './routes/settings/guilds'
 import { Route as ApiHelperGuildDataRouteImport } from './routes/api/helper/guild-data'
 import { Route as ApiHelperMeRouteImport } from './routes/api/helper/me'
 import { Route as ApiHelperPairRouteImport } from './routes/api/helper/pair'
@@ -113,6 +114,11 @@ const SettingsAppRoute = SettingsAppRouteImport.update({
   path: '/app',
   getParentRoute: () => SettingsRoute,
 } as any)
+const SettingsGuildsRoute = SettingsGuildsRouteImport.update({
+  id: '/guilds',
+  path: '/guilds',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const ApiHelperGuildDataRoute = ApiHelperGuildDataRouteImport.update({
   id: '/api/helper/guild-data',
   path: '/api/helper/guild-data',
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/helper/connect': typeof HelperConnectRoute
   '/settings/addon': typeof SettingsAddonRoute
   '/settings/app': typeof SettingsAppRoute
+  '/settings/guilds': typeof SettingsGuildsRoute
   '/settings/': typeof SettingsIndexRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/helper/connect': typeof HelperConnectRoute
   '/settings/addon': typeof SettingsAddonRoute
   '/settings/app': typeof SettingsAppRoute
+  '/settings/guilds': typeof SettingsGuildsRoute
   '/settings': typeof SettingsIndexRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/helper/connect': typeof HelperConnectRoute
   '/settings/addon': typeof SettingsAddonRoute
   '/settings/app': typeof SettingsAppRoute
+  '/settings/guilds': typeof SettingsGuildsRoute
   '/settings/': typeof SettingsIndexRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/helper/connect'
     | '/settings/addon'
     | '/settings/app'
+    | '/settings/guilds'
     | '/settings/'
     | '/api/helper/guild-data'
     | '/api/helper/me'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/helper/connect'
     | '/settings/addon'
     | '/settings/app'
+    | '/settings/guilds'
     | '/settings'
     | '/api/helper/guild-data'
     | '/api/helper/me'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/helper/connect'
     | '/settings/addon'
     | '/settings/app'
+    | '/settings/guilds'
     | '/settings/'
     | '/api/helper/guild-data'
     | '/api/helper/me'
@@ -486,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsAppRouteImport
       parentRoute: typeof SettingsRoute
     }
+    '/settings/guilds': {
+      id: '/settings/guilds'
+      path: '/guilds'
+      fullPath: '/settings/guilds'
+      preLoaderRoute: typeof SettingsGuildsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/api/helper/guild-data': {
       id: '/api/helper/guild-data'
       path: '/api/helper/guild-data'
@@ -583,12 +602,14 @@ declare module '@tanstack/react-router' {
 interface SettingsRouteChildren {
   SettingsAddonRoute: typeof SettingsAddonRoute
   SettingsAppRoute: typeof SettingsAppRoute
+  SettingsGuildsRoute: typeof SettingsGuildsRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsAddonRoute: SettingsAddonRoute,
   SettingsAppRoute: SettingsAppRoute,
+  SettingsGuildsRoute: SettingsGuildsRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 

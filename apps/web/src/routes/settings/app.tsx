@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { markSeen } from "@/lib/release-notes";
 import { HelperTokens } from "@/components/helper-tokens";
+import { WhatsNew } from "@/components/whats-new";
 import { SectionTitle } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { desktop, RELEASES, useDesktopStatus, useInDesktopApp } from "@/lib/desktop";
@@ -15,9 +18,18 @@ export const Route = createFileRoute("/settings/app")({
 
 function AppSettings() {
 	const inApp = useInDesktopApp();
+	// Opening this page counts as having seen the notes for this version.
+	useEffect(() => {
+		const version = desktop()?.version;
+		if (version) markSeen(version);
+	}, []);
 	return (
 		<div className="max-w-3xl pb-12">
 			{inApp ? <ThisApp /> : <GetTheApp />}
+			<section id="whats-new" className="mt-10 scroll-mt-4">
+				<SectionTitle>What's new</SectionTitle>
+				<WhatsNew upTo={inApp ? desktop()?.version : undefined} />
+			</section>
 			<section className="mt-10">
 				<SectionTitle>Connected computers</SectionTitle>
 				<HelperTokens />

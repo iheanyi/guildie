@@ -15,6 +15,7 @@ export type Crumb = {
 type Match = { routeId: string; params: Record<string, string>; loaderData?: unknown };
 
 const TAB_LABELS: Record<string, string> = {
+	"/settings/guilds": "Guilds",
 	"/settings/addon": "Addon",
 	"/settings/app": "App",
 	"/g/$region/$slug/crafting": "Crafting",

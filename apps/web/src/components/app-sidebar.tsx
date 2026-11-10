@@ -6,8 +6,10 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, type LinkProps, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
+import { CharacterAvatar } from "@/components/character-avatar";
 import { ClassText } from "@/components/class-name";
 import { UpdateReady } from "@/components/update-ready";
+import { UpdatedNotice } from "@/components/whats-new";
 import { useCurrentGuild } from "@/lib/breadcrumbs";
 import { usePageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
@@ -58,28 +60,36 @@ function SidebarNav() {
 	return (
 		<nav className="flex min-h-0 flex-1 flex-col text-[0.8125rem]">
 			<div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-2 pt-2 pb-4">
-				{guilds.map((g) => (
-					<NavSection key={`${g.region}/${g.slug}`} title={g.name}>
-						<NavLink to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} activeOptions={{ exact: true }} className="pl-3">
-							<HugeiconsIcon icon={UserGroupIcon} size={15} strokeWidth={1.75} />
-							Roster
-						</NavLink>
-						<NavLink to="/g/$region/$slug/crafting" params={{ region: g.region, slug: g.slug }} className="pl-3">
-							<HugeiconsIcon icon={AnvilIcon} size={15} strokeWidth={1.75} />
-							Crafting
-						</NavLink>
+				{guilds.length > 0 && (
+					<NavSection title="Guilds">
+						<div className="space-y-2">
+							{guilds.map((g) => (
+								<div key={`${g.region}/${g.slug}`}>
+									{/* Each guild's name labels its pages; there can be several. */}
+									<div className="truncate px-2 pt-0.5 pb-0.5 text-xs font-medium text-muted-foreground" title={g.name}>
+										{g.name}
+									</div>
+									<div className="space-y-px">
+										<NavLink to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} activeOptions={{ exact: true }} className="pl-3">
+											<HugeiconsIcon icon={UserGroupIcon} size={15} strokeWidth={1.75} />
+											Roster
+										</NavLink>
+										<NavLink to="/g/$region/$slug/crafting" params={{ region: g.region, slug: g.slug }} className="pl-3">
+											<HugeiconsIcon icon={AnvilIcon} size={15} strokeWidth={1.75} />
+											Crafting
+										</NavLink>
+									</div>
+								</div>
+							))}
+						</div>
 					</NavSection>
-				))}
+				)}
 
 				{characters.length > 0 && (
 					<NavSection title="Characters">
 						{characters.map((c) => (
 							<NavLink key={c._id} to="/c/$region/$slug" params={{ region: c.region, slug: c.slug }} className="h-9 pl-1.5">
-								{c.avatarUrl ? (
-									<img src={c.avatarUrl} alt="" className="size-6 shrink-0 rounded-full border border-border object-cover" />
-								) : (
-									<span className="size-6 shrink-0 rounded-full border border-border bg-muted" />
-								)}
+								<CharacterAvatar url={c.avatarUrl} size={24} className="rounded-full" />
 								<span className="min-w-0 flex-1 truncate">
 									<ClassText classId={c.classId}>{c.name}</ClassText>
 									{c.surname && <span className="text-muted-foreground"> {c.surname}</span>}
@@ -93,6 +103,7 @@ function SidebarNav() {
 
 			<div className="flex-none space-y-px border-t border-border px-2 pt-2 pb-2">
 				<UpdateReady />
+				<UpdatedNotice />
 				{viewer ? (
 					<NavLink to="/settings">
 						<HugeiconsIcon icon={Settings02Icon} size={15} strokeWidth={1.75} />
