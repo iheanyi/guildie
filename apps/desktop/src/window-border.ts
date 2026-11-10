@@ -33,17 +33,33 @@ function dwmSetWindowAttribute(log: Log): SetAttribute | null {
 	return setAttribute;
 }
 
-export function hideWindowBorder(win: BrowserWindow, log: Log) {
-	if (process.platform !== "win32") return;
-	const set = dwmSetWindowAttribute(log);
-	if (!set) return;
+let reported = false;
+
+function apply(win: BrowserWindow, set: SetAttribute, log: Log, when: string) {
+	if (win.isDestroyed()) return;
 	try {
 		const handle = win.getNativeWindowHandle();
 		const hwnd = Number(handle.length >= 8 ? handle.readBigUInt64LE() : BigInt(handle.readUInt32LE()));
 		const result = set(hwnd, DWMWA_BORDER_COLOR, [DWMWA_COLOR_NONE], 4);
-		// 0 is S_OK; Windows 10 says E_INVALIDARG, which is fine (no such border there).
-		if (result !== 0) log(`Window border: DwmSetWindowAttribute returned 0x${(result >>> 0).toString(16)}`);
+		// Once per run, so the log says whether it took (0 is S_OK; Windows 10
+		// says E_INVALIDARG, which is fine: no such border there).
+		if (!reported) {
+			reported = true;
+			log(`Window border: ${result === 0 ? "hidden" : `DwmSetWindowAttribute returned 0x${(result >>> 0).toString(16)}`} (${when})`);
+		}
 	} catch (e) {
 		log(`Window border: ${(e as Error).message}`);
 	}
+}
+
+export function hideWindowBorder(win: BrowserWindow, log: Log) {
+	if (process.platform !== "win32") return;
+	const set = dwmSetWindowAttribute(log);
+	if (!set) return;
+	apply(win, set, log, "created");
+	// Windows can put the accent border back when the window is shown or
+	// becomes active (the outline appeared only while focused), so set it again then.
+	win.once("ready-to-show", () => apply(win, set, log, "shown"));
+	win.on("show", () => apply(win, set, log, "shown"));
+	win.on("focus", () => apply(win, set, log, "focused"));
 }

@@ -75,7 +75,6 @@ function GuildLayout() {
 						requestedAt={guild.syncRequestedAt}
 					/>
 				}
-				className="pb-0"
 			>
 				{guild.lastSyncError && <p className="mt-2 text-[0.8125rem] text-destructive">{guild.lastSyncError}</p>}
 			</PageHeader>
