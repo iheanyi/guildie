@@ -13,6 +13,7 @@ import type * as authBattlenet from "../authBattlenet.js";
 import type * as authGateway from "../authGateway.js";
 import type * as blizzard from "../blizzard.js";
 import type * as buildSite from "../buildSite.js";
+import type * as claimRegions from "../claimRegions.js";
 import type * as claims from "../claims.js";
 import type * as crons from "../crons.js";
 import type * as dev from "../dev.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   authGateway: typeof authGateway;
   blizzard: typeof blizzard;
   buildSite: typeof buildSite;
+  claimRegions: typeof claimRegions;
   claims: typeof claims;
   crons: typeof crons;
   dev: typeof dev;

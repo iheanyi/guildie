@@ -228,6 +228,20 @@ async function insertToken(ctx: MutationCtx, userId: Doc<"users">["_id"], label:
 	return token;
 }
 
+/**
+ * The Guildie desktop app shows our site in its window and asks for a token
+ * through its bridge (src/lib/desktop.ts) once the player is signed in. Same
+ * tokens as the helper's.
+ */
+export const issueDesktopToken = mutation({
+	args: { label: v.string() },
+	returns: v.string(),
+	handler: async (ctx, { label }) => {
+		const userId = await requireUserId(ctx);
+		return await insertToken(ctx, userId, label || "Desktop app");
+	},
+});
+
 /** The helper starts connecting: returns the code to show and the secret to poll with. */
 export const startPairing = mutation({
 	args: { label: v.string() },

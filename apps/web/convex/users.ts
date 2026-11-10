@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { vBattlenetProfile } from "./authBattlenet";
+import { guildsOf } from "./guilds";
 import { isLocalBackend } from "./origins";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
@@ -68,6 +69,8 @@ export const viewer = query({
 			.query("ownedCharacters")
 			.withIndex("by_user", (q) => q.eq("userId", user._id))
 			.collect();
-		return { ...user, characters };
+		// The guilds their characters are in: header link, home page, where sign-in lands.
+		const guilds = (await guildsOf(ctx, user._id)).map((g) => ({ _id: g._id, name: g.name, region: g.region, slug: g.slug }));
+		return { ...user, characters, guilds };
 	},
 });

@@ -4,6 +4,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts, useRouter } from "@tanstack/react-router";
 import { type ConvexReactClient, useConvexAuth } from "convex/react";
 import { type ReactNode, useEffect, useRef } from "react";
+import { DesktopBridge } from "@/components/desktop-bridge";
 import { SiteHeader } from "@/components/site-header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getAuthToken } from "@/lib/convex-auth-start/functions";
@@ -63,6 +64,7 @@ function RootComponent() {
 		<ConvexAuthStartProvider client={convex} initialToken={token}>
 			<TooltipProvider>
 				<AuthSync />
+				<DesktopBridge />
 				<div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 sm:px-8">
 					<SiteHeader />
 					<main className="flex-1 pb-16">

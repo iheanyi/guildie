@@ -123,8 +123,8 @@ npx convex run --deployment <dev name> dev:addGuild '{"name": "Your Guild", "reg
 pnpm dev                    # https://guildie.localhost:1355
 ```
 
-**Check:** your guild shows; Battle.net sign-in and "Claim my characters"
-work; a second worktree (`git worktree add ../guildie-test -b test`) signs in
+**Check:** your guild shows; Battle.net sign-in works and lands on your
+guild with your characters claimed; a second worktree (`git worktree add ../guildie-test -b test`) signs in
 at its own URL.
 
 ## Part 6: The app Worker

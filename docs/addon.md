@@ -49,6 +49,33 @@ A character is accepted only if the token's owner claimed it: matched by
 Blizzard's character id (the hex number at the end of the in-game GUID), or by
 first name if exactly one claimed character has it.
 
+## Desktop app bridge
+
+The Guildie desktop app loads the site in its window and exposes a bridge
+through Electron's `contextBridge`, on our own origins only:
+
+```ts
+window.guildieDesktop?: {
+	isDesktop: true;
+	version: string;
+	getState(): Promise<{ connected: boolean; account?: string }>;
+	setToken(token: string, account?: string): Promise<void>;
+	signOut(): Promise<void>;
+}
+```
+
+The web side (`apps/web/src/lib/desktop.ts`, `apps/web/src/components/desktop-bridge.tsx`,
+mounted in `__root.tsx`):
+
+- When the bridge exists, the player is signed in and `getState()` says not
+  connected, the page calls `helper:issueDesktopToken({ label })` (signed-in
+  user; label `Desktop app <version>`) and hands the token to
+  `setToken(token, battletag)`. Once per signed-in user per page load. It's
+  an ordinary `gld_…` token: same 10-per-account limit, listed on /me with
+  Disconnect, used with the API above.
+- "Sign out" on the site also calls `signOut()` on the bridge.
+- Nowhere else issues tokens without the pairing code.
+
 ## Guild data in game (reagent tooltips)
 
 The other direction: the helper downloads `GET /api/helper/guild-data` every

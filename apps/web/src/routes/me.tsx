@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
-import { className, REGIONS, type Region } from "@convex/shared/wow";
+import { className } from "@convex/shared/wow";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
@@ -10,7 +10,7 @@ import { ClassText } from "@/components/class-name";
 import { HelperTokens } from "@/components/helper-tokens";
 import { Button } from "@/components/ui/button";
 import { isAuthReturn } from "@/lib/auth-return";
-import { CLAIM_STATE_KEY } from "@/lib/claim";
+import { startClaim } from "@/lib/claim";
 
 
 export const Route = createFileRoute("/me")({
@@ -29,9 +29,22 @@ function Me() {
 		<div className="max-w-2xl py-10">
 			<h1 className="text-4xl">{viewer.battletag ?? viewer.name ?? "Your account"}</h1>
 
+			{viewer.guilds.length > 0 && (
+				<p className="mt-3">
+					{viewer.guilds.map((g, i) => (
+						<span key={g._id}>
+							{i > 0 && ", "}
+							<Link to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} className="underline underline-offset-4">
+								{g.name}
+							</Link>
+						</span>
+					))}
+				</p>
+			)}
+
 			<h2 className="mt-10 text-2xl">Your characters</h2>
 			<p className="mt-1 text-muted-foreground">
-				Claiming reads the character list from your Battle.net account, once. It proves which
+				Read from your Battle.net account each time you sign in, in every region. It proves which
 				guild members are yours, so guildmates can find you and, later, so we can notify you.
 			</p>
 			{viewer.characters.length > 0 && (
@@ -64,42 +77,25 @@ function Me() {
 
 function ClaimCharacters() {
 	const start = useMutation(api.claims.start);
-	const [region, setRegion] = useState<Region>("us");
 	const [error, setError] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
 	return (
 		<div className="mt-4">
-			<div className="flex items-center gap-2">
-				<select
-					aria-label="Region"
-					value={region}
-					onChange={(e) => setRegion(e.target.value as Region)}
-					className="h-7 rounded-md border bg-transparent px-1.5 text-xs"
-				>
-					{REGIONS.map((r) => (
-						<option key={r} value={r}>
-							{r.toUpperCase()}
-						</option>
-					))}
-				</select>
-				<Button
-					disabled={pending}
-					onClick={async () => {
-						setError(null);
-						setPending(true);
-						try {
-							const { url, state } = await start({ region, origin: window.location.origin });
-							sessionStorage.setItem(CLAIM_STATE_KEY, state);
-							window.location.assign(url);
-						} catch (err) {
-							setPending(false);
-							setError(err instanceof ConvexError ? String(err.data) : "Couldn't start. Try again.");
-						}
-					}}
-				>
-					{pending ? "Heading to Battle.net…" : "Claim my characters"}
-				</Button>
-			</div>
+			<Button
+				disabled={pending}
+				onClick={async () => {
+					setError(null);
+					setPending(true);
+					try {
+						await startClaim(start, "/me");
+					} catch (err) {
+						setPending(false);
+						setError(err instanceof ConvexError ? String(err.data) : "Couldn't start. Try again.");
+					}
+				}}
+			>
+				{pending ? "Heading to Battle.net…" : "Refresh my characters"}
+			</Button>
 			{error && <p className="mt-2 text-sm text-destructive">{error}</p>}
 		</div>
 	);

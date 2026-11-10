@@ -27,6 +27,20 @@ function Home() {
 				source.
 			</p>
 
+			{viewer && viewer.guilds.length > 0 && (
+				<p className="mt-6 text-lg">
+					Your guild:{" "}
+					{viewer.guilds.map((g, i) => (
+						<span key={g._id}>
+							{i > 0 && ", "}
+							<Link to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} className="underline underline-offset-4">
+								{g.name}
+							</Link>
+						</span>
+					))}
+				</p>
+			)}
+
 			<h2 className="mt-12 text-2xl">Guilds</h2>
 			{guilds.length === 0 ? (
 				<p className="mt-2 text-muted-foreground">No guilds yet.</p>

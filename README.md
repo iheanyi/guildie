@@ -49,10 +49,12 @@ Setting it all up from scratch: [docs/setup.md](docs/setup.md).
 - **Rosters**: `apps/web/convex/sync.ts` pulls each guild's roster from Blizzard's API
   every hour (and on "Sync now"), then each member's profile, equipment,
   professions and avatar, staggered under Blizzard's rate limits.
-- **Sign-in**: Battle.net OpenID Connect. We learn the BattleTag, nothing else.
-- **Claiming characters**: a separate, explicit Battle.net authorization with
-  the `wow.profile` scope. We read the account's character list once, store
-  the names, and drop the token. That's how a person is tied to guild members.
+- **Sign-in**: Battle.net OpenID Connect with `wow.profile`, one consent
+  screen. We learn the BattleTag and the character list.
+- **Claiming characters**: right after each sign-in, a second Battle.net hop
+  (approved without asking) reads the account's characters in every region;
+  we store the names and drop the token. That's how a person is tied to guild
+  members, and their guild is added if we don't have it yet.
 
 ## What Blizzard's API can't tell us
 

@@ -2,7 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, type QueryCtx, query } from "./_generated/server";
+import { internalMutation, mutation, type MutationCtx, type QueryCtx, query } from "./_generated/server";
 import { vRegion, vVisibility } from "./schema";
 import { pickTalents } from "./helper";
 import { requireUserId } from "./users";
@@ -11,21 +11,34 @@ import { guildSlug } from "./shared/wow";
 /** Manual "sync now" is allowed once per this window. */
 const MANUAL_SYNC_COOLDOWN_MS = 5 * 60_000;
 
-/** True when the viewer owns a character that's in this guild's roster. */
-async function isMember(ctx: QueryCtx, guild: Doc<"guilds">, userId: Id<"users"> | null) {
-	if (!userId) return false;
+/** The guilds a user's claimed characters are in now (per the last roster syncs). */
+export async function guildsOf(ctx: QueryCtx, userId: Id<"users">) {
 	const owned = await ctx.db
 		.query("ownedCharacters")
 		.withIndex("by_user", (q) => q.eq("userId", userId))
 		.collect();
+	const ids = new Set<Id<"guilds">>();
 	for (const c of owned) {
-		const member = await ctx.db
+		const rows = await ctx.db
 			.query("characters")
 			.withIndex("by_slug", (q) => q.eq("flavor", c.flavor).eq("region", c.region).eq("slug", c.slug))
-			.first();
-		if (member?.guildId === guild._id && member.inRoster) return true;
+			.collect();
+		for (const row of rows) if (row.inRoster) ids.add(row.guildId);
 	}
-	return false;
+	const guilds = await Promise.all([...ids].map((id) => ctx.db.get(id)));
+	return guilds.filter((g) => g !== null);
+}
+
+/** True when the viewer owns a character that's in this guild's roster. */
+async function isMember(ctx: QueryCtx, guild: Doc<"guilds">, userId: Id<"users"> | null) {
+	if (!userId) return false;
+	return (await guildsOf(ctx, userId)).some((g) => g._id === guild._id);
+}
+
+/** Make the guild master's player the owner (roster syncs and claims call this). */
+export async function setOwner(ctx: MutationCtx, guildId: Id<"guilds">, userId: Id<"users">) {
+	const guild = await ctx.db.get(guildId);
+	if (guild && guild.ownerId !== userId) await ctx.db.patch(guildId, { ownerId: userId });
 }
 
 async function access(ctx: QueryCtx, guild: Doc<"guilds">) {
@@ -120,7 +133,7 @@ export const character = query({
 export const add = mutation({
 	args: { region: vRegion, name: v.string() },
 	handler: async (ctx, { region, name }) => {
-		const userId = await requireUserId(ctx);
+		await requireUserId(ctx);
 		const slug = guildSlug(name);
 		if (!slug) throw new ConvexError("Enter a guild name");
 		const existing = await ctx.db
@@ -128,18 +141,40 @@ export const add = mutation({
 			.withIndex("by_key", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", slug))
 			.unique();
 		if (existing) return { region, slug };
-		const guildId = await ctx.db.insert("guilds", {
-			flavor: "forever",
-			region,
-			slug,
-			name: name.trim(),
-			visibility: "public",
-			// First come, first served for now. See docs/roadmap.md ("Guild ownership").
-			ownerId: userId,
-			memberCount: 0,
-		});
-		await ctx.scheduler.runAfter(0, internal.sync.syncGuild, { guildId });
+		await insertGuild(ctx, { region, slug, name: name.trim() });
 		return { region, slug };
+	},
+});
+
+/**
+ * A new guild: public, no owner until a roster sync finds that its guild
+ * master's character is claimed (sync.ts applyRoster).
+ */
+async function insertGuild(ctx: MutationCtx, g: { region: Doc<"guilds">["region"]; slug: string; name: string }) {
+	const guildId = await ctx.db.insert("guilds", {
+		flavor: "forever",
+		...g,
+		visibility: "public",
+		memberCount: 0,
+	});
+	await ctx.scheduler.runAfter(0, internal.sync.syncGuild, { guildId });
+	return guildId;
+}
+
+/** After a claim: make sure the guilds the player's characters are in exist here. */
+export const ensureGuilds = internalMutation({
+	args: { guilds: v.array(v.object({ region: vRegion, slug: v.string(), name: v.string() })) },
+	handler: async (ctx, { guilds }) => {
+		const out = [];
+		for (const g of guilds) {
+			const existing = await ctx.db
+				.query("guilds")
+				.withIndex("by_key", (q) => q.eq("flavor", "forever").eq("region", g.region).eq("slug", g.slug))
+				.unique();
+			if (!existing) await insertGuild(ctx, g);
+			out.push({ region: g.region, slug: g.slug, name: existing?.name ?? g.name });
+		}
+		return out;
 	},
 });
 

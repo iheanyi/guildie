@@ -7,6 +7,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
+    "test": "node --test convex/*.test.ts",
     "seed": "CONVEX_AGENT_MODE=anonymous convex run dev:seed",
     "push:cloud-dev": "sh scripts/push-cloud-dev.sh",
     "release": "sh scripts/cloudflare-deploy.sh",

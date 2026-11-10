@@ -17,9 +17,8 @@ would help which members.
 
 ## Next
 
-- **Guild ownership.** Right now whoever adds a guild owns it. Better: the
-  person who claims the guild master's character (rank 0) owns it, and can
-  hand settings to officers.
+- **Guild ownership.** The person who claims the guild master's character
+  (rank 0) owns it (done). Next: hand settings to officers.
 - **Rank names.** The API only gives numbers; let the owner name them.
 - **Notes.** Members add a note to their own characters (main/alt, spec,
   what they're farming).

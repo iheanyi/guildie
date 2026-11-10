@@ -15,13 +15,16 @@ cloud dev share one client. Same design as Onda and Sportsball.
 
 Each Battle.net client registers two redirect URLs, and they never change:
 
-| Tier | Sign-in | Claim my characters |
+| Tier | Sign-in | Read characters (claim) |
 |---|---|---|
 | Dev | `https://gateway-dev.guildie.club/oauth/battlenet/callback` | `https://gateway-dev.guildie.club/oauth/claim/callback` |
 | Prod | `https://gateway.guildie.club/oauth/battlenet/callback` | `https://gateway.guildie.club/oauth/claim/callback` |
 
-Sign-in asks for `openid`; claiming asks for `wow.profile`. We never store
-Battle.net's tokens.
+Sign-in asks for `openid wow.profile`, so Battle.net shows one consent
+screen. Convex Auth doesn't hand us the sign-in's access token, so reading the
+characters is a second authorization (`wow.profile`) right after sign-in,
+which Battle.net approves without asking again. We never store Battle.net's
+tokens.
 
 ## Settings, all of them
 
@@ -64,16 +67,33 @@ docs/deploy.md.
 
 ## How claiming flows
 
-The same routing, with provider `claim` (`apps/web/convex/claims.ts`):
+It runs by itself after every Battle.net sign-in, and from "Refresh my
+characters" on /me. The same routing, with provider `claim`
+(`apps/web/convex/claims.ts`, `apps/web/src/lib/claim.ts`):
 
-1. `claims:start` records the request (user, region, app origin) and sends
-   the browser to Battle.net with the prefixed state.
-2. The gateway forwards to `<CONVEX_SITE_URL>/oauth/claim/callback`
+1. "Continue with Battle.net" marks the tab (sessionStorage) and signs in as
+   above, returning to `/sign-in`. Once the browser has finished the sign-in,
+   `/sign-in` sees the mark and calls `claims:start`.
+2. `claims:start` records the request (user, app origin) and sends the browser
+   to Battle.net with the prefixed state. Battle.net approves without a
+   screen, since sign-in already granted `wow.profile`.
+3. The gateway forwards to `<CONVEX_SITE_URL>/oauth/claim/callback`
    (`apps/web/convex/http.ts`), which bounces the browser to `<app>/claim/callback`.
-3. The app checks the state against sessionStorage and calls
+4. The app checks the state against sessionStorage and calls
    `claims:complete` as the signed-in user, which exchanges the code and
-   reads the account's characters. Only the person who started, in the same
-   browser, can finish.
+   reads `/profile/user/wow` from the us, eu, kr and tw hosts with the one
+   token. Each region that answers replaces that region's claims (404 means
+   none there); a region that fails keeps what it had. Only the person who
+   started, in the same browser, can finish.
+5. For each claimed character at level 10+, `claims:complete` reads its
+   public profile (app token) for its guild, adds guilds we don't track yet
+   (public) and syncs them.
+6. The browser goes on to `next` if sign-in had one, else the player's guild
+   if they're in exactly one, else /me.
+
+A guild's owner is whoever claimed its guild master's character (rank 0),
+set by claims and roster syncs. Guilds added before that rule keep their
+first owner until the guild master claims.
 
 ## What we carry on top of the package
 

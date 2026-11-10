@@ -1,11 +1,13 @@
 import { type Infer, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalAction, internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { type ActionCtx, internalAction, internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { guildOfProfile } from "./claimRegions";
+import { setOwner } from "./guilds";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { appToken, blizzardGet } from "./blizzard";
 import { vTalentTree } from "./schema";
-import { FLAVORS } from "./shared/wow";
+import { FLAVORS, type Region } from "./shared/wow";
 
 // Roster sync (hourly cron + on demand) and per-character profile sync.
 // Blizzard allows 100 requests/s and 36,000/hour per client; a character
@@ -163,6 +165,15 @@ export const applyRoster = internalMutation({
 			rosterSyncedAt: now,
 			lastSyncError: undefined,
 		});
+		// The guild master's player owns the guild, once they've claimed.
+		const master = members.find((m) => m.rank === 0);
+		if (master) {
+			const claim = await ctx.db
+				.query("ownedCharacters")
+				.withIndex("by_slug", (q) => q.eq("flavor", guild.flavor).eq("region", guild.region).eq("slug", master.slug))
+				.first();
+			if (claim) await setOwner(ctx, guildId, claim.userId);
+		}
 		return due;
 	},
 });
@@ -365,6 +376,51 @@ async function learnTreeInfo(ctx: MutationCtx, trees: Infer<typeof vTalentTree>[
 			await ctx.db.patch(existing._id, { name: tree.name, blizzardId: tree.id });
 		}
 	}
+}
+
+const DISCOVER_CONCURRENCY = 8;
+
+/**
+ * After a claim: read each claimed character's public profile (level 10+;
+ * lower ones have none) for its guild, and make sure those guilds exist here.
+ * Failures skip that character. Returns the guilds found.
+ */
+export type FoundGuild = { region: Region; slug: string; name: string };
+
+export async function discoverGuilds(
+	ctx: ActionCtx,
+	characters: { region: Region; slug: string; level?: number }[],
+): Promise<FoundGuild[]> {
+	const flavor = FLAVORS.forever;
+	const eligible = characters.filter((c) => (c.level ?? 0) >= flavor.minProfileLevel);
+	const found = new Map<string, FoundGuild>();
+	const tokens = new Map<Region, Promise<string>>();
+	const tokenFor = (region: Region) => {
+		if (!tokens.has(region)) tokens.set(region, appToken(ctx, region));
+		return tokens.get(region)!;
+	};
+	for (let i = 0; i < eligible.length; i += DISCOVER_CONCURRENCY) {
+		await Promise.all(
+			eligible.slice(i, i + DISCOVER_CONCURRENCY).map(async (c) => {
+				try {
+					const token = await tokenFor(c.region);
+					const profile = await blizzardGet<{ guild?: { name?: string; slug?: string } }>({
+						token,
+						flavor: "forever",
+						region: c.region,
+						namespace: "profile",
+						path: flavor.characterPath(c.slug),
+					});
+					const guild = profile.ok ? guildOfProfile(profile.data) : null;
+					if (guild) found.set(`${c.region}:${guild.slug}`, { region: c.region, ...guild });
+				} catch (error) {
+					console.warn(`discoverGuilds: ${c.region}/${c.slug}: ${String(error)}`);
+				}
+			}),
+		);
+	}
+	if (found.size === 0) return [];
+	return await ctx.runMutation(internal.guilds.ensureGuilds, { guilds: [...found.values()] });
 }
 
 /** Cron: refresh every guild's roster. `force` refetches every profile too. */

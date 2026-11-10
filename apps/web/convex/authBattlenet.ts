@@ -3,8 +3,10 @@ import { type Infer, v } from "convex/values";
 
 // Battle.net sign-in on the generic OAuth component. OpenID Connect: the
 // id_token's `sub` is the Battle.net account id, and /userinfo adds the
-// BattleTag. Sign-in asks for `openid` only; reading the player's characters
-// (wow.profile) is a separate, explicit step (convex/claims.ts).
+// BattleTag. Sign-in also asks for `wow.profile`, so Battle.net asks for
+// consent once; the package doesn't give us the access token, so reading the
+// characters is a second hop right after sign-in that Battle.net approves
+// without asking again (convex/claims.ts).
 
 export const BATTLENET_AUTHORIZE = "https://oauth.battle.net/authorize";
 export const BATTLENET_TOKEN = "https://oauth.battle.net/token";
@@ -23,7 +25,7 @@ export const battlenetCatalog: OauthCatalog<BattlenetProfile, BattlenetUserInfo>
 	tokenEndpoint: BATTLENET_TOKEN,
 	issuer: "https://oauth.battle.net",
 	userInfoEndpoints: { user: "https://oauth.battle.net/userinfo" },
-	scopes: ["openid"],
+	scopes: ["openid", "wow.profile"],
 	profile: (claims, responses) => {
 		const id = claims?.sub;
 		if (!id) throw new Error("Battle.net returned no subject");

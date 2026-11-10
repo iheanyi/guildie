@@ -56,7 +56,11 @@ export default defineSchema({
 		faction: v.optional(v.string()),
 		ruleset: v.optional(v.string()),
 		visibility: vVisibility,
-		/** The person who added the guild; can change visibility. */
+		/**
+		 * The player who claimed the guild master's character (rank 0), set by
+		 * roster syncs and claims. Can change visibility. Guilds added before
+		 * this rule keep whoever added them until the guild master claims.
+		 */
 		ownerId: v.optional(v.id("users")),
 		memberCount: v.number(),
 		rosterSyncedAt: v.optional(v.number()),
@@ -115,17 +119,20 @@ export default defineSchema({
 		.index("by_user", ["userId"])
 		.index("by_slug", ["flavor", "region", "slug"]),
 
-	/** In-flight "claim my characters" OAuth flows. */
+	/** In-flight "claim my characters" OAuth flows (every region at once). */
 	claimRequests: defineTable({
 		userId: v.id("users"),
 		stateHash: v.string(),
-		region: vRegion,
+		/** Unused: claims used to be per region. Left optional for rows in flight at deploy. */
+		region: v.optional(vRegion),
 		/** The app origin that started the flow; the callback returns there. */
 		origin: v.string(),
 		/** The redirect_uri sent to Battle.net (the gateway's or ours), reused for the code exchange. */
 		callbackUrl: v.string(),
 		expiresAt: v.number(),
-	}).index("by_stateHash", ["stateHash"]),
+	})
+		.index("by_stateHash", ["stateHash"])
+		.index("by_user", ["userId"]),
 
 	/** Tokens the desktop helper uploads addon data with (apps/helper). Only the hash is stored. */
 	helperTokens: defineTable({

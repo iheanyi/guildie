@@ -3,17 +3,23 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { action, internalMutation, internalQuery, mutation } from "./_generated/server";
+import { fetchAccountCharacters } from "./claimRegions";
+import { setOwner } from "./guilds";
+import { discoverGuilds } from "./sync";
 import { routingPrefix } from "./authGateway";
 import { allowedRedirectOrigins } from "./origins";
 import { BATTLENET_AUTHORIZE } from "./authBattlenet";
 import { exchangeToken } from "./blizzard";
-import { vRegion } from "./schema";
 import { requireUserId } from "./users";
-import { FLAVORS, type Region } from "./shared/wow";
+import { vRegion } from "./schema";
+import { FLAVORS, REGIONS, type Region } from "./shared/wow";
 
-// "Claim my characters": a second, explicit Battle.net authorization with the
-// wow.profile scope. We read the account's character list once, keep the
-// names, and drop the Blizzard token.
+// Claiming characters: a second Battle.net authorization with the wow.profile
+// scope, run right after every sign-in (and from "Refresh my characters").
+// Sign-in already granted wow.profile, so Battle.net approves it without
+// asking. We read the account's character list in every region, keep the
+// names, and drop the Blizzard token. Convex Auth doesn't hand us the
+// sign-in's access token, which is why this is its own hop.
 //
 // Battle.net redirects to <CONVEX_SITE_URL>/oauth/claim/callback, or to the
 // gateway's /oauth/claim/callback when sign-in goes through the gateway
@@ -50,18 +56,23 @@ function claimCallbackUrl() {
 }
 
 export const start = mutation({
-	args: { region: vRegion, origin: v.string() },
-	handler: async (ctx, { region, origin }) => {
+	args: { origin: v.string() },
+	handler: async (ctx, { origin }) => {
 		const userId = await requireUserId(ctx);
 		const clientId = process.env.AUTH_BATTLENET_CLIENT_ID;
 		if (!clientId || clientId === "unset") throw new ConvexError("Battle.net isn't configured on this deployment");
 		if (!allowedRedirectOrigins.includes(origin)) throw new ConvexError("Unknown origin");
+		// Drop this user's abandoned requests.
+		const stale = await ctx.db
+			.query("claimRequests")
+			.withIndex("by_user", (q) => q.eq("userId", userId))
+			.collect();
+		for (const row of stale) if (row.expiresAt < Date.now()) await ctx.db.delete(row._id);
 		const state = randomToken();
 		const callbackUrl = claimCallbackUrl();
 		await ctx.db.insert("claimRequests", {
 			userId,
 			stateHash: await sha256(state),
-			region,
 			origin,
 			callbackUrl,
 			expiresAt: Date.now() + REQUEST_TTL_MS,
@@ -105,7 +116,7 @@ export const consume = internalMutation({
 		if (!request) return null;
 		await ctx.db.delete(request._id);
 		if (request.userId !== userId || request.expiresAt < Date.now()) return null;
-		return { userId: request.userId, region: request.region, callbackUrl: request.callbackUrl };
+		return { userId: request.userId, callbackUrl: request.callbackUrl };
 	},
 });
 
@@ -117,82 +128,88 @@ const vOwned = v.object({
 	classId: v.optional(v.number()),
 });
 
+/**
+ * Replace the account's claims in each region that answered: the list is the
+ * truth there. Regions that failed aren't passed, so their claims stay.
+ */
 export const save = internalMutation({
-	args: { userId: v.id("users"), region: vRegion, characters: v.array(vOwned) },
-	handler: async (ctx, { userId, region, characters }) => {
-		// Replace this account's claims for the region: the list is the truth.
+	args: { userId: v.id("users"), regions: v.array(v.object({ region: vRegion, characters: v.array(vOwned) })) },
+	handler: async (ctx, { userId, regions }) => {
 		const existing = await ctx.db
 			.query("ownedCharacters")
 			.withIndex("by_user", (q) => q.eq("userId", userId))
 			.collect();
-		for (const row of existing) if (row.region === region) await ctx.db.delete(row._id);
+		const answered = new Set(regions.map((r) => r.region));
+		for (const row of existing) if (answered.has(row.region)) await ctx.db.delete(row._id);
 		const now = Date.now();
 		let inGuilds = 0;
-		for (const c of characters) {
-			// A character can only be claimed by one person at a time: the latest proof wins.
-			const previous = await ctx.db
-				.query("ownedCharacters")
-				.withIndex("by_slug", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", c.slug))
-				.collect();
-			for (const row of previous) await ctx.db.delete(row._id);
-			await ctx.db.insert("ownedCharacters", { ...c, userId, flavor: "forever", region, claimedAt: now });
-			const member = await ctx.db
-				.query("characters")
-				.withIndex("by_slug", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", c.slug))
-				.first();
-			if (member?.inRoster) inGuilds++;
+		for (const { region, characters } of regions) {
+			for (const c of characters) {
+				// A character can only be claimed by one person at a time: the latest proof wins.
+				const previous = await ctx.db
+					.query("ownedCharacters")
+					.withIndex("by_slug", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", c.slug))
+					.collect();
+				for (const row of previous) await ctx.db.delete(row._id);
+				await ctx.db.insert("ownedCharacters", { ...c, userId, flavor: "forever", region, claimedAt: now });
+				const rows = await ctx.db
+					.query("characters")
+					.withIndex("by_slug", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", c.slug))
+					.collect();
+				const member = rows.find((r) => r.inRoster);
+				if (!member) continue;
+				inGuilds++;
+				// The guild master's player owns the guild.
+				if (member.rank === 0) await setOwner(ctx, member.guildId, userId);
+			}
 		}
 		return inGuilds;
 	},
 });
 
-type AccountProfile = {
-	wow_accounts?: {
-		characters?: {
-			id?: number;
-			name: string;
-			surname?: string;
-			level?: number;
-			playable_class?: { id: number };
-			character?: { href?: string };
-		}[];
-	}[];
-};
-
-function slugOf(c: { name: string; surname?: string; character?: { href?: string } }) {
-	if (c.surname) return `${c.name}-${c.surname}`.toLowerCase();
-	const fromHref = c.character?.href?.match(/\/character\/([^/?]+)(?:\?|$)/)?.[1];
-	return decodeURIComponent(fromHref ?? c.name).toLowerCase();
-}
-
 export const complete = action({
 	args: { code: v.string(), state: v.string() },
-	handler: async (ctx, { code, state }): Promise<{ total: number; inGuilds: number }> => {
+	handler: async (
+		ctx,
+		{ code, state },
+	): Promise<{
+		total: number;
+		inGuilds: number;
+		failedRegions: Region[];
+		guilds: { region: Region; slug: string; name: string }[];
+	}> => {
 		const request = await ctx.runMutation(internal.claims.consume, { stateHash: await sha256(state) });
 		if (!request) throw new ConvexError("This claim link expired or isn't yours. Start again.");
 		const { access_token } = await exchangeToken(
 			new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: request.callbackUrl }),
 		);
-		const region = request.region as Region;
-		const url = new URL(`https://${region}.api.blizzard.com/profile/user/wow`);
-		url.searchParams.set("namespace", FLAVORS.forever.namespace("profile", region));
-		url.searchParams.set("locale", "en_US");
-		const res = await fetch(url, { headers: { Authorization: `Bearer ${access_token}` } });
-		// 404: no characters in this flavor + region on the account.
-		if (res.status !== 404 && !res.ok) throw new Error(`Account profile failed: ${res.status} ${await res.text()}`);
-		const profile: AccountProfile = res.status === 404 ? {} : await res.json();
-		const characters = (profile.wow_accounts ?? []).flatMap((a) => a.characters ?? []).map((c) => ({
-			slug: slugOf(c),
-			blizzardId: c.id,
-			name: c.name,
-			level: c.level,
-			classId: c.playable_class?.id,
-		}));
-		const inGuilds: number = await ctx.runMutation(internal.claims.save, {
-			userId: request.userId as Id<"users">,
-			region,
-			characters,
+		// One user token works against every regional host.
+		const results = await fetchAccountCharacters({
+			token: access_token,
+			regions: REGIONS,
+			namespace: (region) => FLAVORS.forever.namespace("profile", region),
 		});
-		return { total: characters.length, inGuilds };
+		const answered = results.flatMap((r) =>
+			r.status === "ok" ? [{ region: r.region, characters: r.characters }] : r.status === "none" ? [{ region: r.region, characters: [] }] : [],
+		);
+		const failedRegions = results.flatMap((r) => (r.status === "error" ? [r.region] : []));
+		for (const r of results) if (r.status === "error") console.warn(`claim: ${r.region} failed: ${r.error}`);
+		if (answered.length === 0) throw new ConvexError("Battle.net didn't answer. Try again in a minute.");
+		const userId = request.userId as Id<"users">;
+		const inGuilds: number = await ctx.runMutation(internal.claims.save, { userId, regions: answered });
+		// The claim is saved; finding guilds is a bonus that mustn't fail it.
+		const guilds = await discoverGuilds(
+			ctx,
+			answered.flatMap(({ region, characters }) => characters.map((c) => ({ region, slug: c.slug, level: c.level }))),
+		).catch((error) => {
+			console.warn(`claim: guild discovery failed: ${String(error)}`);
+			return [];
+		});
+		return {
+			total: answered.reduce((n, r) => n + r.characters.length, 0),
+			inGuilds,
+			failedRegions,
+			guilds,
+		};
 	},
 });

@@ -8,6 +8,8 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"noEmit": true,
+		// Lets node --test run convex/*.test.ts directly.
+		"allowImportingTsExtensions": true,
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"types": ["vite/client", "node"],
