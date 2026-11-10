@@ -14,6 +14,21 @@ local function isMine(name)
     return name == UnitName("player")
 end
 
+-- Class colors as the game shows them; ours (from guildie.club) as a fallback.
+local FALLBACK_COLORS = {
+    [1] = "ffc69b6d", [2] = "fff48cba", [3] = "ffaad372", [4] = "fffff468", [5] = "ffffffff",
+    [7] = "ff0070dd", [8] = "ff3fc7eb", [9] = "ff8788ee", [11] = "ffff7c0a",
+}
+
+local function classColored(name, classId)
+    local color
+    local info = classId and C_CreatureInfo and C_CreatureInfo.GetClassInfo and C_CreatureInfo.GetClassInfo(classId)
+    local classColor = info and RAID_CLASS_COLORS and RAID_CLASS_COLORS[info.classFile]
+    if classColor and classColor.colorStr then color = classColor.colorStr end
+    color = color or (classId and FALLBACK_COLORS[classId])
+    return color and ("|c" .. color .. name .. "|r") or name
+end
+
 local function suggestion(itemID)
     local entry = GuildieData and GuildieData.reagents and GuildieData.reagents[itemID]
     if not entry then return nil end
@@ -21,7 +36,7 @@ local function suggestion(itemID)
     for _, user in ipairs(entry.users or {}) do
         if not isMine(user.name) then
             if #names < MAX_NAMES then
-                table.insert(names, string.format("%s (%s)", user.name, user.profession))
+                table.insert(names, string.format("%s (%s)", classColored(user.name, user.classId), user.profession))
             else
                 extra = extra + 1
             end

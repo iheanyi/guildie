@@ -307,7 +307,7 @@ type GuildDataBase = {
 	guilds: {
 		name: string;
 		region: string;
-		members: { name: string; slug: string; professions: { name: string; skill?: number; knownRecipes: number[] }[] }[];
+		members: { name: string; slug: string; classId: number; professions: { name: string; skill?: number; knownRecipes: number[] }[] }[];
 	}[];
 };
 
@@ -318,7 +318,7 @@ export type GuildData = {
 	mine: string[];
 	recipesKnown: number;
 	recipesInCatalog: number;
-	reagents: Record<string, { name: string; users: { name: string; profession: string; recipes: number }[] }>;
+	reagents: Record<string, { name: string; users: { name: string; classId: number; profession: string; recipes: number }[] }>;
 };
 
 /** The token's guilds (those its claimed characters are in) and their members. */
@@ -353,6 +353,7 @@ export const guildDataBase = internalQuery({
 				members: members.map((m) => ({
 					name: m.name,
 					slug: m.slug,
+					classId: m.classId,
 					professions: (m.professions ?? []).map((p) => ({ name: p.name, skill: p.skill, knownRecipes: p.knownRecipes ?? [] })),
 				})),
 			});
@@ -379,7 +380,7 @@ export const guildData = action({
 			}
 		}
 		// itemId -> member -> { profession, recipes using it }
-		const uses = new Map<number, { name: string; users: Map<string, { name: string; profession: string; recipes: number }> }>();
+		const uses = new Map<number, { name: string; users: Map<string, { name: string; classId: number; profession: string; recipes: number }> }>();
 		for (const g of base.guilds) {
 			for (const m of g.members) {
 				for (const p of m.professions) {
@@ -388,7 +389,7 @@ export const guildData = action({
 							let entry = uses.get(reagent.itemId);
 							if (!entry) uses.set(reagent.itemId, (entry = { name: reagent.name, users: new Map() }));
 							const key = `${g.region}:${m.slug}:${p.name}`;
-							const user = entry.users.get(key) ?? { name: m.name, profession: p.name, recipes: 0 };
+							const user = entry.users.get(key) ?? { name: m.name, classId: m.classId, profession: p.name, recipes: 0 };
 							user.recipes += 1;
 							entry.users.set(key, user);
 						}
