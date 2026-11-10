@@ -8,7 +8,7 @@ import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { Page, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { desktop, useInDesktopApp } from "@/lib/desktop";
+import { desktop, useDesktopStatus, useInDesktopApp } from "@/lib/desktop";
 import { landingPath, markSignInPending, safeNext, signInPending, startClaim, updateSignInPending } from "@/lib/claim";
 import type { RouterContext } from "./__root";
 
@@ -178,12 +178,5 @@ function DesktopSignIn() {
 
 /** The code the app is waiting on, while it signs in through the browser (from the tray too). */
 function usePairingCode() {
-	const [code, setCode] = useState<string | undefined>();
-	useEffect(() => {
-		const app = desktop();
-		if (!app?.getStatus || !app.onStatus) return;
-		void app.getStatus().then((s) => setCode(s.pairingCode));
-		return app.onStatus((s) => setCode(s.pairingCode));
-	}, []);
-	return code;
+	return useDesktopStatus()?.pairingCode;
 }

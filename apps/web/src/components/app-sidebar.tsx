@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, type LinkProps, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { ClassText } from "@/components/class-name";
+import { UpdateReady } from "@/components/update-ready";
 import { useCurrentGuild } from "@/lib/breadcrumbs";
 import { usePageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
@@ -91,6 +92,7 @@ function SidebarNav() {
 			</div>
 
 			<div className="flex-none space-y-px border-t border-border px-2 pt-2 pb-2">
+				<UpdateReady />
 				<NavLink to="/addon">
 					<HugeiconsIcon icon={PuzzleIcon} size={15} strokeWidth={1.75} />
 					Addon

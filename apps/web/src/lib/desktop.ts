@@ -105,3 +105,15 @@ export function desktop(): GuildieDesktop | undefined {
 	const bridge = window.guildieDesktop;
 	return bridge?.isDesktop === true ? bridge : undefined;
 }
+
+/** The desktop app's live status (sync, addon, a downloaded update), or null outside the app. */
+export function useDesktopStatus() {
+	const [status, setStatus] = useState<DesktopStatus | null>(null);
+	useEffect(() => {
+		const app = desktop();
+		if (!app?.getStatus || !app.onStatus) return;
+		void app.getStatus().then(setStatus);
+		return app.onStatus(setStatus);
+	}, []);
+	return status;
+}
