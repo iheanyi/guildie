@@ -28,7 +28,8 @@ if (!version || !/^\d+\.\d+\.\d+$/.test(version)) fail("give the new version, e.
 if (git("status", "--porcelain")) fail("the working tree has changes; commit or stash them first");
 if (git("rev-parse", "--abbrev-ref", "HEAD") !== "main") fail("run it on main");
 git("fetch", "--quiet", "origin", "main", "--tags");
-if (git("rev-parse", "HEAD") !== git("rev-parse", "origin/main")) fail("main isn't the same as origin/main; pull first");
+if (git("rev-parse", "HEAD") !== git("rev-parse", "origin/main"))
+	fail("main isn't the same as origin/main; pull first");
 if (git("tag", "--list", `desktop-v${version}`)) fail(`desktop-v${version} already exists`);
 
 const pkgPath = join(root, "apps/desktop/package.json");
@@ -63,7 +64,9 @@ if (push) {
 	git("push", "origin", "main");
 	git("push", "origin", `desktop-v${version}`);
 	console.log("Pushed. The Desktop release workflow builds and publishes it:");
-	console.log("  gh run watch $(gh run list --workflow desktop-release.yml --limit 1 --json databaseId -q '.[0].databaseId')");
+	console.log(
+		"  gh run watch $(gh run list --workflow desktop-release.yml --limit 1 --json databaseId -q '.[0].databaseId')",
+	);
 } else {
 	console.log(`Push when ready: git push origin main && git push origin desktop-v${version}`);
 }
