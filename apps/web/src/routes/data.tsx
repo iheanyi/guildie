@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Page, PageHeader, SectionTitle } from "@/components/page-header";
 
 export const Route = createFileRoute("/data")({
 	head: () => ({ meta: [{ title: "Where the data comes from · Guildie" }] }),
@@ -32,31 +33,26 @@ const GAPS = [
 
 function DataNotes() {
 	return (
-		<div className="max-w-3xl py-10">
-			<h1 className="text-4xl">Where the data comes from</h1>
-			<p className="mt-3 text-muted-foreground">Everything here is for WoW: Forever.</p>
+		<Page width="medium">
+			<PageHeader title="Where the data comes from" description="Everything here is for WoW: Forever." />
+			<Notes title="Sources" rows={SOURCES} />
+			<Notes title="What we can't know (yet)" rows={GAPS} className="mt-8" />
+		</Page>
+	);
+}
 
-			<div className="parchment mt-8 px-4 py-5 sm:px-6">
-				<h2 className="text-2xl">Sources</h2>
-				<dl className="mt-3 border-t text-sm">
-					{SOURCES.map(([name, text]) => (
-						<div key={name} className="grid gap-x-6 border-b py-2 sm:grid-cols-[14rem_1fr]">
-							<dt className="font-semibold">{name}</dt>
-							<dd className="text-muted-foreground">{text}</dd>
-						</div>
-					))}
-				</dl>
-
-				<h2 className="mt-8 text-2xl">What we can't know (yet)</h2>
-				<dl className="mt-3 border-t text-sm">
-					{GAPS.map(([name, text]) => (
-						<div key={name} className="grid gap-x-6 border-b py-2 sm:grid-cols-[14rem_1fr]">
-							<dt className="font-semibold">{name}</dt>
-							<dd className="text-muted-foreground">{text}</dd>
-						</div>
-					))}
-				</dl>
-			</div>
-		</div>
+function Notes({ title, rows, className }: { title: string; rows: string[][]; className?: string }) {
+	return (
+		<section className={className}>
+			<SectionTitle>{title}</SectionTitle>
+			<dl className="mt-2 border-t border-border">
+				{rows.map(([name, text]) => (
+					<div key={name} className="grid gap-x-6 gap-y-0.5 border-b border-border py-2 sm:grid-cols-[13rem_1fr]">
+						<dt className="font-medium">{name}</dt>
+						<dd className="text-muted-foreground">{text}</dd>
+					</div>
+				))}
+			</dl>
+		</section>
 	);
 }

@@ -29,6 +29,8 @@ export function getRouter() {
 		context: { convex, queryClient, convexQueryClient, token: null },
 		defaultPreload: "intent",
 		scrollRestoration: true,
+		// The page never scrolls; the content pane does (__root.tsx).
+		scrollToTopSelectors: ["#content"],
 		defaultErrorComponent: ErrorPage,
 		defaultNotFoundComponent: NotFoundPage,
 	});

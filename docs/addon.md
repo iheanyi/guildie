@@ -94,6 +94,14 @@ mounted in `__root.tsx`):
   Disconnect, used with the API above.
 - "Sign out" on the site also calls `signOut()` on the bridge.
 - Nowhere else issues tokens without the pairing code.
+- Layout: the app appends ` GuildieDesktop/<version>` (and ` (Mica)` on
+  Windows 11) to its user agent. The root route reads it during SSR
+  (`readDesktopInfo` in `lib/desktop.ts`) and renders
+  `<html data-desktop="true">` (and `data-material="mica"`), which switches on
+  the title bar (`components/app-titlebar.tsx`), default cursors, and
+  transparent chrome over Mica (`styles/app.css`). `useInDesktopApp()` is true
+  from the first render when the user agent says so, and once mounted when only
+  the bridge does (app builds before 0.2).
 
 ## Guild data in game (reagent tooltips)
 

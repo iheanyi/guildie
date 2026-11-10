@@ -94,14 +94,24 @@ export const missing = internalQuery({
 const BATCH = 20;
 const BATCH_STAGGER_MS = 2_000;
 
+/**
+ * What we already know about an item from elsewhere (an equipped item's name
+ * and quality). Blizzard's item endpoint 404s for many Forever items whose
+ * icons exist, so these fill in the row then.
+ */
+const vHint = v.object({ itemId: v.number(), name: v.optional(v.string()), quality: v.optional(v.string()) });
+
 /** Fetch the given items we don't have yet, in staggered batches. */
 export const ensure = internalAction({
-	args: { itemIds: v.array(v.number()) },
-	handler: async (ctx, { itemIds }): Promise<{ queued: number }> => {
+	args: { itemIds: v.array(v.number()), hints: v.optional(v.array(vHint)) },
+	handler: async (ctx, { itemIds, hints }): Promise<{ queued: number }> => {
 		const due: number[] = await ctx.runQuery(internal.items.missing, { itemIds });
+		const hintOf = new Map((hints ?? []).map((h) => [h.itemId, h]));
 		for (let i = 0; i < due.length; i += BATCH) {
+			const ids = due.slice(i, i + BATCH);
 			await ctx.scheduler.runAfter((i / BATCH) * BATCH_STAGGER_MS, internal.items.syncBatch, {
-				itemIds: due.slice(i, i + BATCH),
+				itemIds: ids,
+				hints: ids.map((id) => hintOf.get(id)).filter((h) => h !== undefined),
 			});
 		}
 		return { queued: due.length };
@@ -134,8 +144,9 @@ type Item = { name?: string; quality?: { type?: string }; item_subclass?: { name
 type Media = { assets?: { key: string; value: string }[] };
 
 export const syncBatch = internalAction({
-	args: { itemIds: v.array(v.number()) },
-	handler: async (ctx, { itemIds }) => {
+	args: { itemIds: v.array(v.number()), hints: v.optional(v.array(vHint)) },
+	handler: async (ctx, { itemIds, hints }) => {
+		const hintOf = new Map((hints ?? []).map((h) => [h.itemId, h]));
 		const token = await appToken(ctx, "us");
 		const common = { flavor: "forever" as const, region: "us" as const, namespace: "static" as const, token };
 		const fetched = await Promise.all(
@@ -144,7 +155,12 @@ export const syncBatch = internalAction({
 					blizzardGet<Item>({ ...common, path: `/data/wow/item/${itemId}` }),
 					blizzardGet<Media>({ ...common, path: `/data/wow/media/item/${itemId}` }),
 				]);
-				if (!item.ok) return null;
+				if (!item.ok) {
+					const hint = hintOf.get(itemId);
+					const icon = media.ok ? media.data.assets?.find((a) => a.key === "icon")?.value : undefined;
+					if (!hint?.name || !icon) return null;
+					return { itemId, name: hint.name, quality: hint.quality ?? "COMMON", icon, tooltip: [] };
+				}
 				return {
 					itemId,
 					name: item.data.name ?? item.data.preview_item?.name ?? `Item ${itemId}`,

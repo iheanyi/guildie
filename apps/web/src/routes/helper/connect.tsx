@@ -5,6 +5,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useState } from "react";
+import { Page, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 
 // The desktop helper opens this page with its code; the signed-in player
@@ -25,36 +26,36 @@ function Connect() {
 	const [error, setError] = useState<string | null>(null);
 
 	return (
-		<div className="max-w-xl py-10">
-			<h1 className="text-4xl">Connect the Guildie helper</h1>
+		<Page width="narrow">
+			<PageHeader title="Connect the Guildie app" />
 			{!viewer ? (
-				<p className="mt-3">
+				<p>
 					<Link
 						to="/sign-in"
 						search={{ next: `/helper/connect?code=${encodeURIComponent(code)}` }}
-						className="underline underline-offset-4"
+						className="text-foreground underline underline-offset-4"
 					>
 						Sign in
 					</Link>{" "}
 					first, then you'll come back here.
 				</p>
 			) : !pairing ? null : pairing.state === "unknown" ? (
-				<p className="mt-3 text-muted-foreground">
+				<p className="text-muted-foreground">
 					This code expired or doesn't exist. Choose "Connect" in the helper again.
 				</p>
 			) : pairing.state === "approved" ? (
-				<p className="mt-3">Connected. You can close this tab; the helper takes it from here.</p>
+				<p>Connected. You can close this tab; the helper takes it from here.</p>
 			) : (
 				<>
-					<p className="mt-3 text-muted-foreground">
+					<p className="text-muted-foreground">
 						The helper on <span className="text-foreground">{pairing.label}</span> wants to upload your
 						addon data as {viewer.battletag ?? viewer.name}. Check the code matches the one the helper
 						shows.
 					</p>
-					<p className="num inset mt-6 inline-block px-4 py-2 font-mono text-3xl tracking-widest text-gold">{code}</p>
+					<p className="num mt-5 inline-block rounded-md border border-border bg-muted px-4 py-2 font-mono text-2xl tracking-[0.25em]">{code}</p>
 					<Button
 						size="lg"
-						className="mt-6"
+						className="mt-5 flex"
 						onClick={async () => {
 							setError(null);
 							try {
@@ -69,6 +70,6 @@ function Connect() {
 					{error && <p className="mt-3 text-destructive">{error}</p>}
 				</>
 			)}
-		</div>
+		</Page>
 	);
 }

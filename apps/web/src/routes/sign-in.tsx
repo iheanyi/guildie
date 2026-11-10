@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
+import { Page, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { desktop, useInDesktopApp } from "@/lib/desktop";
 import { landingPath, markSignInPending, safeNext, signInPending, startClaim, updateSignInPending } from "@/lib/claim";
@@ -49,15 +50,13 @@ function SignIn() {
 	if (inApp) return <DesktopSignIn />;
 
 	return (
-		<div className="max-w-md py-10">
-			<h1 className="text-4xl">Sign in</h1>
-			<p className="mt-3 text-muted-foreground">
-				Use your Battle.net account. We learn your BattleTag and your character list, which is how
-				we find your guild. We don't keep Battle.net's tokens.
-			</p>
+		<Page width="narrow">
+			<PageHeader
+				title="Sign in"
+				description="Use your Battle.net account. We learn your BattleTag and your character list, which is how we find your guild. We don't keep Battle.net's tokens."
+			/>
 			<Button
 				size="lg"
-				className="mt-6"
 				disabled={pending || claiming}
 				onClick={async () => {
 					setPending(true);
@@ -76,7 +75,7 @@ function SignIn() {
 				{claiming ? "Reading your characters…" : pending ? "Heading to Battle.net…" : "Continue with Battle.net"}
 			</Button>
 			{(flowError || startError) && (
-				<p className="mt-4 text-destructive">
+				<p className="mt-3 text-destructive">
 					{flowError?.error === "ACCESS_DENIED"
 						? "Sign-in was cancelled."
 						: flowError?.error === "EXPIRED"
@@ -85,7 +84,7 @@ function SignIn() {
 				</p>
 			)}
 			{guestEnabled && <GuestSignIn />}
-		</div>
+		</Page>
 	);
 }
 
@@ -127,7 +126,7 @@ function GuestSignIn() {
 	const { signIn } = useSignInAnonymously({ signInAnonymously: api.auth.signInAsGuest });
 	const router = useRouter();
 	return (
-		<div className="mt-12 border-t pt-4 text-sm">
+		<div className="mt-10 border-t border-border pt-4">
 			<p className="text-muted-foreground">Local backend: guest accounts are on.</p>
 			<Button
 				variant="outline"
@@ -148,15 +147,13 @@ function GuestSignIn() {
 function DesktopSignIn() {
 	const [pending, setPending] = useState(false);
 	return (
-		<div className="max-w-md py-10">
-			<h1 className="text-4xl">Sign in</h1>
-			<p className="mt-3 text-muted-foreground">
-				You'll sign in with Battle.net in your web browser, where any of your usual logins work. Then
-				click Connect there, and the app signs in by itself.
-			</p>
+		<Page width="narrow">
+			<PageHeader
+				title="Sign in"
+				description="You'll sign in with Battle.net in your web browser, where any of your usual logins work. Then click Connect there, and the app signs in by itself."
+			/>
 			<Button
 				size="lg"
-				className="mt-6"
 				disabled={pending}
 				onClick={async () => {
 					setPending(true);
@@ -166,6 +163,6 @@ function DesktopSignIn() {
 			>
 				{pending ? "Continue in your browser…" : "Sign in with your browser"}
 			</Button>
-		</div>
+		</Page>
 	);
 }

@@ -8,6 +8,8 @@ import { ConvexError } from "convex/values";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Page, PageHeader } from "@/components/page-header";
 
 export const Route = createFileRoute("/")({
 	loader: ({ context }) => context.queryClient.ensureQueryData(convexQuery(api.guilds.list, {})),
@@ -18,62 +20,56 @@ function Home() {
 	const { data: guilds } = useSuspenseQuery(convexQuery(api.guilds.list, {}));
 	const { data: viewer } = useSuspenseQuery(convexQuery(api.users.viewer, {}));
 	return (
-		<div className="py-10">
-			<h1 className="max-w-2xl text-4xl leading-tight">
-				Who's in the guild, what they play, and what they're wearing.
-			</h1>
-			<p className="mt-3 max-w-2xl text-muted-foreground">
-				Rosters come from Blizzard's API and refresh every hour. Built for WoW: Forever, and open
-				source.
-			</p>
-
-			{viewer && viewer.guilds.length > 0 && (
-				<p className="mt-6 text-lg">
-					Your guild:{" "}
-					{viewer.guilds.map((g, i) => (
-						<span key={g._id}>
-							{i > 0 && ", "}
-							<Link to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} className="underline underline-offset-4">
-								{g.name}
-							</Link>
-						</span>
-					))}
-				</p>
-			)}
-
-			<h2 className="mt-12 text-2xl">Guilds</h2>
+		<Page width="medium">
+			<PageHeader
+				title="Guilds"
+				description="Who's in the guild, what they play, and what they're wearing. Rosters come from Blizzard's API and refresh every hour. Built for WoW: Forever, and open source."
+			/>
 			{guilds.length === 0 ? (
-				<p className="mt-2 text-muted-foreground">No guilds yet.</p>
+				<p className="text-muted-foreground">No guilds yet.</p>
 			) : (
-				<ul className="mt-3 divide-y border-y">
-					{guilds.map((g) => (
-						<li key={g._id}>
-							<Link
-								to="/g/$region/$slug"
-								params={{ region: g.region, slug: g.slug }}
-								className="flex items-baseline justify-between gap-4 px-2 py-2.5 hover:bg-[rgb(255_209_0/0.07)]"
-							>
-								<span className="font-heading text-lg text-gold">{g.name}</span>
-								<span className="num text-sm text-muted-foreground">
-									{g.region.toUpperCase()} · {g.memberCount} members
-								</span>
-							</Link>
-						</li>
-					))}
-				</ul>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Name</TableHead>
+							<TableHead>Region</TableHead>
+							<TableHead className="text-right">Members</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{guilds.map((g) => (
+							<TableRow key={g._id} className="relative">
+								<TableCell>
+									<Link
+										to="/g/$region/$slug"
+										params={{ region: g.region, slug: g.slug }}
+										className="font-medium after:absolute after:inset-0"
+									>
+										{g.name}
+									</Link>
+									{viewer?.guilds.some((mine) => mine._id === g._id) && (
+										<span className="ml-2 text-xs text-muted-foreground">yours</span>
+									)}
+								</TableCell>
+								<TableCell className="text-muted-foreground">{g.region.toUpperCase()}</TableCell>
+								<TableCell className="num text-right">{g.memberCount}</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
 			)}
 
 			{viewer ? (
 				<AddGuild />
 			) : (
-				<p className="mt-6 text-sm text-muted-foreground">
-					<Link to="/sign-in" className="underline underline-offset-4">
+				<p className="mt-6 text-[0.8125rem] text-muted-foreground">
+					<Link to="/sign-in" className="text-foreground underline underline-offset-4">
 						Sign in
 					</Link>{" "}
 					to add your guild.
 				</p>
 			)}
-		</div>
+		</Page>
 	);
 }
 
@@ -85,7 +81,7 @@ function AddGuild() {
 	const [error, setError] = useState<string | null>(null);
 	return (
 		<form
-			className="mt-10 max-w-xl"
+			className="mt-8 max-w-xl"
 			onSubmit={async (e) => {
 				e.preventDefault();
 				setError(null);
@@ -97,7 +93,7 @@ function AddGuild() {
 				}
 			}}
 		>
-			<label htmlFor="guild-name" className="text-sm font-medium">
+			<label htmlFor="guild-name" className="text-[0.8125rem] font-medium">
 				Add a guild
 			</label>
 			<div className="mt-1.5 flex gap-2">
@@ -105,7 +101,7 @@ function AddGuild() {
 					aria-label="Region"
 					value={region}
 					onChange={(e) => setRegion(e.target.value as Region)}
-					className="h-8 rounded-sm border px-1.5 text-sm"
+					className="h-8 rounded-md border px-1.5 text-[0.8125rem]"
 				>
 					{REGIONS.map((r) => (
 						<option key={r} value={r}>

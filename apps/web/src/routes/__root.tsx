@@ -1,14 +1,16 @@
 import { convexQuery, type ConvexQueryClient } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts, useRouter } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouter } from "@tanstack/react-router";
 import { type ConvexReactClient, useConvexAuth } from "convex/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { DesktopBridge } from "@/components/desktop-bridge";
-import { SiteHeader } from "@/components/site-header";
+import { AppSidebar, AppTopBar } from "@/components/app-sidebar";
+import { AppTitleBar } from "@/components/app-titlebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getAuthToken } from "@/lib/convex-auth-start/functions";
 import { ConvexAuthStartProvider } from "@/lib/convex-auth-start/provider";
+import { readDesktopInfo } from "@/lib/desktop";
 import appCss from "@/styles/app.css?url";
 
 export type RouterContext = {
@@ -20,10 +22,10 @@ export type RouterContext = {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	beforeLoad: async ({ context }) => {
-		const token = await getAuthToken();
+		const [token, desktop] = await Promise.all([getAuthToken(), readDesktopInfo()]);
 		// SSR queries run over HTTP; give them the request's identity.
 		if (token) context.convexQueryClient.serverHttpClient?.setAuth(token);
-		return { token };
+		return { token, desktop };
 	},
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(convexQuery(api.users.viewer, {}));
@@ -32,7 +34,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-				{ name: "theme-color", content: "#1c150e" },
+			{ name: "theme-color", content: "#111113" },
 			{ title: "Guildie" },
 			{ name: "description", content: "A home base for World of Warcraft guilds." },
 		],
@@ -46,8 +48,15 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
+	// The desktop app's layout from the first paint (see readDesktopInfo).
+	const desktop = Route.useRouteContext({ select: (c) => c.desktop });
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html
+			lang="en"
+			data-desktop={desktop ? "true" : undefined}
+			data-material={desktop?.mica ? "mica" : undefined}
+			suppressHydrationWarning
+		>
 			<head>
 				<HeadContent />
 			</head>
@@ -67,21 +76,13 @@ function RootComponent() {
 				<AuthSync />
 				<DesktopBridge />
 				<div className="app-shell">
-					<SiteHeader />
-					<div className="app-scroll">
-						<main className="mx-auto w-full max-w-6xl flex-1 px-2.5 py-4 sm:px-6 sm:py-8">
-							<div className="frame px-4 sm:px-8 [&>*]:pt-6 [&>*]:pb-8 sm:[&>*]:pt-8 sm:[&>*]:pb-10">
-								<Outlet />
-							</div>
+					<AppSidebar />
+					<div className="app-main">
+						<AppTitleBar />
+						<AppTopBar />
+						<main id="content" data-scroll-restoration-id="content" className="app-content px-4 sm:px-6">
+							<Outlet />
 						</main>
-						<footer className="mx-auto flex w-full max-w-6xl gap-5 px-4 pt-1 pb-6 text-sm text-muted-foreground sm:px-8">
-							<Link to="/data" className="hover:text-gold">
-								Where the data comes from
-							</Link>
-							<a href="https://github.com/natedunn/guildie" className="hover:text-gold">
-								Source
-							</a>
-						</footer>
 					</div>
 				</div>
 			</TooltipProvider>

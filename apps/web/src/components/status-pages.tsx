@@ -1,21 +1,29 @@
 import { type ErrorComponentProps, Link } from "@tanstack/react-router";
+import { Page, PageHeader } from "@/components/page-header";
 
 export function NotFoundPage() {
 	return (
-		<div className="py-16">
-			<h1 className="text-3xl">Nothing here</h1>
-			<p className="mt-2 text-muted-foreground">
-				That page doesn't exist. <Link to="/" className="underline underline-offset-4">Back to guilds</Link>.
-			</p>
-		</div>
+		<Page width="narrow">
+			<PageHeader
+				title="Nothing here"
+				description={
+					<>
+						That page doesn't exist.{" "}
+						<Link to="/" className="text-foreground underline underline-offset-4">
+							Back to guilds
+						</Link>
+						.
+					</>
+				}
+			/>
+		</Page>
 	);
 }
 
 export function ErrorPage({ error }: ErrorComponentProps) {
 	return (
-		<div className="py-16">
-			<h1 className="text-3xl">Something broke</h1>
-			<p className="mt-2 text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
-		</div>
+		<Page width="narrow">
+			<PageHeader title="Something broke" description={error instanceof Error ? error.message : String(error)} />
+		</Page>
 	);
 }

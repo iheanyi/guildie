@@ -25,6 +25,7 @@ async function recipeView(ctx: QueryCtx, recipe: Doc<"recipes">, items: Map<numb
 		recipeId: recipe.recipeId,
 		name: recipe.name,
 		profession: recipe.profession,
+		professionId: recipe.professionId,
 		item: made
 			? { itemId: made.itemId, name: made.name, quality: made.quality, icon: made.icon, kind: made.kind, tooltip: made.tooltip }
 			: null,

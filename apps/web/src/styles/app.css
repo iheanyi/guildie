@@ -1,21 +1,23 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource/marcellus/400.css";
-@import "@fontsource-variable/source-sans-3/wght.css";
+@import "@fontsource-variable/inter/wght.css";
 
-/* One theme, dark, like the game's UI. `dark:` variants always apply. */
+/* One theme, dark. `dark:` variants always apply. */
 @custom-variant dark (&:where(:root, :root *));
+/* The Windows app (html[data-desktop]). SSR sets it from the user agent. */
+@custom-variant desktop (&:where(html[data-desktop="true"], html[data-desktop="true"] *));
 
 @theme inline {
-	--font-heading: "Marcellus", "Palatino Linotype", Georgia, serif;
-	--font-sans: "Source Sans 3 Variable", "Segoe UI", system-ui, sans-serif;
-	--color-gold: var(--gold);
-	--color-heading: var(--heading);
-	--color-bronze: var(--bronze);
-	--color-panel: var(--panel);
+	--font-sans: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+	--font-heading: var(--font-sans);
+	--color-chrome: var(--chrome);
+	--color-surface: var(--surface);
+	--color-hover: var(--hover);
+	--color-selected: var(--selected);
+	--color-tooltip: var(--tooltip);
+	--color-tooltip-border: var(--tooltip-border);
 	--color-well: var(--well);
-	--color-popover-border: var(--popover-border);
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,73 +49,69 @@
 	--color-card: var(--card);
 	--color-foreground: var(--foreground);
 	--color-background: var(--background);
-	--radius-sm: calc(var(--radius) * 0.6);
-	--radius-md: calc(var(--radius) * 0.8);
+	--radius-sm: calc(var(--radius) * 0.67);
+	--radius-md: var(--radius);
 	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) * 1.4);
-	--radius-2xl: calc(var(--radius) * 1.8);
-	--radius-3xl: calc(var(--radius) * 2.2);
-	--radius-4xl: calc(var(--radius) * 2.6);
+	--radius-xl: calc(var(--radius) * 1.34);
+	--radius-2xl: calc(var(--radius) * 2);
+	--radius-3xl: calc(var(--radius) * 2.67);
+	--radius-4xl: calc(var(--radius) * 3.34);
 }
 
-/* Stone, leather and bronze, with gold text where the game uses it. Color
-   that means something (class, item quality) comes from the game's own
-   palettes below; the UI around it stays brown-black. */
+/* Paper-thin greys. Color that means something (class, item quality, the
+   game's tooltip lines) comes from the game; the UI around it stays neutral. */
 :root {
-	/* The header bar. The desktop app paints its window buttons on this. */
-	--titlebar: #1c150e;
-	--background: #0e0b08;
-	/* Frame interior, and the inset wells inside frames. */
-	--panel: #18130d;
-	--panel-raised: #241b11;
-	--well: #0b0906;
-	--foreground: #ebe2cc;
-	--muted-foreground: #a59880;
-	/* GameFontNormal: labels, column heads, links. */
-	--gold: #ffd100;
-	/* Big headings: the same gold, a shade softer at size. */
-	--heading: #f4c94f;
-	/* Frame borders: lit edge, body, shadow edge. */
-	--bronze-light: #c9a256;
-	--bronze: #8b6a33;
-	--bronze-dark: #4b3a1f;
-	/* UIPanelButton red. */
-	--red: #8e1b10;
-	--red-dark: #4e0a05;
-	--card: var(--panel);
+	/* Sidebar and title bar. The desktop app paints its window buttons on
+	   this (apps/desktop/src/window.ts TITLEBAR), or on Mica instead. */
+	--chrome: #111113;
+	/* The content pane. */
+	--background: #18181b;
+	--surface: #1d1d21;
+	--well: #141417;
+	--foreground: #ececef;
+	--muted-foreground: #8e8e96;
+	--hover: rgb(255 255 255 / 0.05);
+	--selected: rgb(255 255 255 / 0.08);
+	--card: var(--surface);
 	--card-foreground: var(--foreground);
-	/* Tooltips: the game's navy-black with a silver edge. */
-	--popover: #090a17;
-	--popover-foreground: #f2efe6;
-	--popover-border: #a7a9b5;
-	--primary: var(--gold);
-	--primary-foreground: #1a1208;
-	--secondary: var(--panel-raised);
+	/* Menus and popovers. */
+	--popover: #1f1f23;
+	--popover-foreground: var(--foreground);
+	/* The game's tooltip: navy-black with a light grey edge. */
+	--tooltip: rgb(9 10 23 / 0.95);
+	--tooltip-border: #a3a5b0;
+	--primary: #ececef;
+	--primary-foreground: #111113;
+	--secondary: rgb(255 255 255 / 0.06);
 	--secondary-foreground: var(--foreground);
-	--muted: #221a11;
-	--accent: #2b2115;
+	--muted: rgb(255 255 255 / 0.04);
+	--accent: var(--selected);
 	--accent-foreground: var(--foreground);
-	--destructive: #ff5a48;
-	--border: #3b2f1f;
-	--input: #4f3f26;
-	--ring: var(--gold);
-	--chart-1: var(--gold);
+	--destructive: #f2555a;
+	--border: rgb(255 255 255 / 0.08);
+	--border-strong: rgb(255 255 255 / 0.14);
+	--input: rgb(255 255 255 / 0.1);
+	--ring: rgb(255 255 255 / 0.35);
+	--chart-1: var(--foreground);
 	--chart-2: var(--muted-foreground);
 	--chart-3: var(--muted-foreground);
 	--chart-4: var(--muted-foreground);
 	--chart-5: var(--muted-foreground);
-	--radius: 0.1875rem;
-	--sidebar: var(--panel);
+	--radius: 0.375rem;
+	--sidebar: var(--chrome);
 	--sidebar-foreground: var(--foreground);
 	--sidebar-primary: var(--primary);
 	--sidebar-primary-foreground: var(--primary-foreground);
-	--sidebar-accent: var(--accent);
-	--sidebar-accent-foreground: var(--accent-foreground);
+	--sidebar-accent: var(--selected);
+	--sidebar-accent-foreground: var(--foreground);
 	--sidebar-border: var(--border);
 	--sidebar-ring: var(--ring);
-	/* Faint grain, so stone and leather don't read as flat black. */
-	--grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .45 0 0 0 0 .3 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 	color-scheme: dark;
+}
+
+/* Windows draws the app in Segoe; the site keeps Inter elsewhere. */
+html[data-desktop="true"] {
+	--font-sans: "Segoe UI Variable Text", "Segoe UI", "Inter Variable", system-ui, sans-serif;
 }
 
 @layer base {
@@ -123,12 +121,14 @@
 	html {
 		@apply font-sans;
 		font-size: 16px;
-		background-color: var(--background);
+		background-color: var(--chrome);
 	}
 	body {
 		@apply text-foreground antialiased;
-		background-color: var(--background);
-		background-image: var(--grain);
+		font-size: 0.875rem;
+		line-height: 1.45;
+		background-color: var(--chrome);
+		font-feature-settings: "cv11", "ss01";
 	}
 	button:not(:disabled),
 	[role="button"]:not(:disabled) {
@@ -137,56 +137,42 @@
 	h1,
 	h2,
 	h3 {
-		@apply font-heading;
-		font-weight: 400;
-		color: var(--heading);
-		text-shadow: 0 1px 0 #000, 0 0 8px rgb(0 0 0 / 0.6);
-	}
-	h1 {
-		letter-spacing: 0.01em;
-	}
-	.font-heading {
-		font-synthesis-weight: none;
+		font-weight: 600;
+		letter-spacing: -0.01em;
 	}
 	::selection {
-		background: rgb(255 209 0 / 0.3);
+		background: rgb(255 255 255 / 0.18);
 	}
 	a {
-		text-decoration-color: color-mix(in oklab, var(--gold) 55%, transparent);
-	}
-	/* Inline text links read as links: gold, like the game's. */
-	a:where(.underline) {
-		color: var(--gold);
+		text-decoration-color: rgb(255 255 255 / 0.35);
 	}
 	a:where(.underline):hover {
-		color: #fff2b0;
+		text-decoration-color: currentColor;
 	}
 	code {
 		@apply rounded-sm px-1 py-px font-mono text-[0.85em];
-		background: var(--well);
+		background: var(--muted);
 		border: 1px solid var(--border);
-		color: var(--foreground);
 	}
 	select {
-		background-color: var(--well);
+		background-color: transparent;
 		border-color: var(--input);
 		color: var(--foreground);
 	}
 	select option {
-		background-color: var(--panel);
+		background-color: var(--popover);
 		color: var(--foreground);
 	}
 	select:focus-visible {
 		outline: none;
-		border-color: var(--gold);
+		border-color: var(--ring);
 	}
 	.num {
 		font-variant-numeric: tabular-nums;
 	}
 }
 
-/* Class colors are the game's; they're made for this kind of background. A
-   touch of white keeps Shaman blue legible on brown-black. */
+/* Class colors are the game's; a touch of white keeps Shaman blue legible. */
 .class-color {
 	color: color-mix(in oklab, var(--class) 88%, white);
 }
@@ -199,240 +185,190 @@
 .q-EPIC { --class: #a335ee; }
 .q-LEGENDARY { --class: #ff8000; }
 
-/* App shell. On the web the document scrolls; in the desktop app the header
-   stays put as the window's title bar and the content scrolls under it. */
-.app-shell {
-	display: flex;
-	min-height: 100dvh;
-	flex-direction: column;
-}
-.app-scroll {
-	display: flex;
-	flex: 1;
-	flex-direction: column;
-}
-
-/* The top bar: dark leather, bronze rule under it. */
-.site-header {
-	position: relative;
-	z-index: 10;
-	display: flex;
-	height: 48px;
-	flex: none;
-	align-items: center;
-	background-color: var(--titlebar);
-	border-bottom: 1px solid #000;
-	box-shadow: 0 1px 0 var(--bronze-dark), 0 2px 0 #000, 0 4px 12px rgb(0 0 0 / 0.5);
-}
-
-/* Inside the desktop app (frameless window, native buttons drawn top right). */
-html[data-desktop="true"] .app-shell {
-	height: 100dvh;
-	overflow: hidden;
-}
-html[data-desktop="true"] .app-scroll {
-	min-height: 0;
-	overflow-y: auto;
-}
-html[data-desktop="true"] .site-header {
-	height: 40px;
-	-webkit-app-region: drag;
-	app-region: drag;
-	user-select: none;
-	padding-left: env(titlebar-area-x, 0px);
-	/* Room for minimize / maximize / close. */
-	padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - 140px)));
-}
-html[data-desktop="true"] .site-header :is(a, button, input, select, [role="button"]) {
-	-webkit-app-region: no-drag;
-	app-region: no-drag;
-}
-
+/* Components, so Tailwind utilities on the same elements win. */
 @layer components {
-/* A framed window: a bronze band (lit edge, body, shadow edge) between two
-   black lines, with riveted plates at the corners. Pages live in one. Drawn
-   with inset shadows so it costs no layout; keep content 6px+ inside. */
-.frame {
-	position: relative;
-	background-color: var(--panel);
-	background-image: var(--grain);
-	border-radius: 5px;
-	box-shadow:
-		inset 0 0 0 1px #000,
-		inset 0 0 0 2px var(--bronze-light),
-		inset 0 0 0 4px var(--bronze),
-		inset 0 0 0 5px var(--bronze-dark),
-		inset 0 0 0 6px #000,
-		inset 0 0 0 7px rgb(201 162 86 / 0.15),
-		inset 0 0 60px rgb(0 0 0 / 0.5),
-		0 12px 32px rgb(0 0 0 / 0.65);
-}
-/* Pages that set their own reading width get a window that fits them,
-   centered, like a dialog. */
-.frame:has(> [class*="max-w-"]) {
-	width: fit-content;
-	min-width: min(100%, 32rem);
-	margin-inline: auto;
-}
-.frame::before {
-	content: "";
-	position: absolute;
-	inset: -3px;
-	pointer-events: none;
-	--rivet: radial-gradient(circle at center, #f0d38a 0 1px, var(--bronze-light) 1.5px 2px, #3a2a12 2.5px 3px, transparent 3.5px);
-	--plate: linear-gradient(135deg, var(--bronze-light), var(--bronze) 45%, var(--bronze-dark));
-	background:
-		var(--rivet) top 2px left 2px / 14px 14px no-repeat,
-		var(--rivet) top 2px right 2px / 14px 14px no-repeat,
-		var(--rivet) bottom 2px left 2px / 14px 14px no-repeat,
-		var(--rivet) bottom 2px right 2px / 14px 14px no-repeat,
-		var(--plate) top left / 18px 18px no-repeat,
-		var(--plate) top right / 18px 18px no-repeat,
-		var(--plate) bottom left / 18px 18px no-repeat,
-		var(--plate) bottom right / 18px 18px no-repeat;
-	/* Plates get a black edge from this mask-free trick: a drop shadow. */
-	filter: drop-shadow(0 0 1px #000);
-}
+	/* ---- App shell: sidebar + one pane that scrolls by itself ---- */
 
-/* The game's tooltip: navy-black, a silver edge inside a black one. Used by
-   tooltips and menus. */
-.wow-tooltip {
-	color: var(--popover-foreground);
-	background-color: rgb(9 10 23 / 0.95);
-	border: 1px solid var(--popover-border);
-	border-radius: 4px;
-	box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, 0 6px 18px rgb(0 0 0 / 0.6);
-}
+	html,
+	body {
+		height: 100%;
+		overflow: hidden;
+		overscroll-behavior: none;
+	}
+	.app-shell {
+		display: flex;
+		height: 100dvh;
+	}
+	.app-sidebar {
+		display: flex;
+		width: 220px;
+		flex: none;
+		flex-direction: column;
+		background-color: var(--chrome);
+		border-right: 1px solid var(--border);
+	}
+	.app-main {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		flex-direction: column;
+	}
+	.app-content {
+		position: relative;
+		min-height: 0;
+		flex: 1;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		background-color: var(--background);
+		scrollbar-color: rgb(255 255 255 / 0.16) transparent;
+		scrollbar-width: thin;
+	}
+	.app-titlebar {
+		display: none;
+	}
+	/* Chrome isn't text to select. */
+	.app-sidebar,
+	.app-titlebar,
+	.app-topbar,
+	[data-slot="button"],
+	[data-slot="tabs-list"],
+	.page-tabs {
+		user-select: none;
+	}
 
-/* An inset well inside a frame, like the game's inset panels. */
-.inset {
-	background-color: rgb(0 0 0 / 0.35);
-	border: 1px solid var(--bronze-dark);
-	border-radius: 2px;
-	box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.7);
-}
+	/* A nav row in the sidebar. */
+	.nav-item {
+		display: flex;
+		height: 1.875rem;
+		align-items: center;
+		gap: 0.5rem;
+		padding-inline: 0.5rem;
+		border-radius: var(--radius);
+		color: var(--muted-foreground);
+		white-space: nowrap;
+	}
+	.nav-item:hover {
+		background-color: var(--hover);
+		color: var(--foreground);
+	}
+	.nav-item[data-status="active"] {
+		background-color: var(--selected);
+		color: var(--foreground);
+	}
 
-/* A heading bar over a list or table inside a frame. */
-.section-head {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 0.75rem;
-	padding-bottom: 0.375rem;
-	border-bottom: 1px solid var(--bronze-dark);
-	box-shadow: 0 1px 0 #000;
-}
+	/* ---- The Windows app ---- */
 
-/* Parchment, for pages that are mostly reading. Tokens flip to ink. */
-.parchment {
-	--foreground: #2e2010;
-	--muted-foreground: #5c4529;
-	--heading: #3a230c;
-	--border: #b99c6a;
-	--gold: #7a4e0c;
-	color: var(--foreground);
-	background-color: #e8d6ae;
-	background-image: radial-gradient(ellipse at center, transparent 55%, rgb(120 80 30 / 0.28));
-	border: 1px solid #000;
-	border-radius: 2px;
-	box-shadow: inset 0 0 0 1px #c9ab72, inset 0 0 24px rgb(90 55 15 / 0.35);
-}
-.parchment :is(h1, h2, h3) {
-	text-shadow: none;
-}
-.parchment .class-color {
-	color: color-mix(in oklab, var(--class) 55%, black);
-}
+	html[data-desktop="true"] .app-titlebar {
+		display: flex;
+		height: 40px;
+		flex: none;
+		align-items: center;
+		gap: 0.25rem;
+		padding-left: 0.5rem;
+		/* Room for minimize / maximize / close (titleBarOverlay). */
+		padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - 138px)));
+		background-color: var(--chrome);
+		-webkit-app-region: drag;
+		app-region: drag;
+	}
+	html[data-desktop="true"] :is(.app-titlebar, .app-sidebar-drag) :is(a, button, input, select, [role="button"]) {
+		-webkit-app-region: no-drag;
+		app-region: no-drag;
+	}
+	html[data-desktop="true"] .app-sidebar-drag {
+		-webkit-app-region: drag;
+		app-region: drag;
+	}
+	/* The pane is a layer on the window: rounded where it meets the chrome. */
+	html[data-desktop="true"] .app-content {
+		border-top: 1px solid var(--border);
+		border-left: 1px solid var(--border);
+		border-top-left-radius: 8px;
+	}
+	html[data-desktop="true"] .app-sidebar {
+		border-right: 0;
+	}
+	/* The title bar has the menu button there. */
+	html[data-desktop="true"] .app-topbar {
+		display: none;
+	}
+	/* Native apps don't use the hand cursor on their own controls. */
+	html[data-desktop="true"] :is(.nav-item, .page-tabs a, [data-slot="button"], [data-slot="tabs-trigger"]) {
+		cursor: default;
+	}
+	html[data-desktop="true"] img {
+		-webkit-user-drag: none;
+	}
 
-/* Toggle chips: class filters and similar. Small framed buttons; the active
-   one is lit. */
-.chip {
-	display: inline-flex;
-	align-items: baseline;
-	gap: 0.375rem;
-	padding: 0.125rem 0.5rem;
-	border: 1px solid var(--border);
-	border-radius: 2px;
-	background-color: rgb(0 0 0 / 0.3);
-	color: var(--muted-foreground);
-	transition: border-color 0.1s, background-color 0.1s;
-}
-.chip:hover {
-	border-color: var(--bronze);
-	color: var(--foreground);
-}
-.chip[data-active="true"] {
-	border-color: var(--bronze-light);
-	background-color: var(--panel-raised);
-	color: var(--foreground);
-	box-shadow: inset 0 0 6px rgb(255 209 0 / 0.15);
-}
+	/* Windows 11 Mica behind the sidebar and title bar (the window sets it up). */
+	html[data-material="mica"],
+	html[data-material="mica"] body {
+		background-color: transparent;
+	}
+	html[data-material="mica"] :is(.app-sidebar, .app-titlebar) {
+		background-color: transparent;
+	}
 
-/* Buttons, after the game's panel buttons. */
-.btn-red {
-	color: var(--gold);
-	text-shadow: 0 1px 0 #000;
-	background-color: var(--red);
-	/* The bevel: light from above. */
-	background-image: linear-gradient(to bottom, #b0281a, var(--red) 45%, var(--red-dark));
-	border: 1px solid #000;
-	box-shadow: inset 0 0 0 1px rgb(214 172 90 / 0.75), inset 0 2px 0 1px rgb(255 200 140 / 0.12), 0 1px 2px rgb(0 0 0 / 0.6);
-}
-.btn-red:hover {
-	color: #fff2b0;
-	background-image: linear-gradient(to bottom, #c4321f, #a12114 45%, #5e0d07);
-	box-shadow: inset 0 0 0 1px rgb(240 200 110 / 0.9), inset 0 0 8px rgb(255 200 80 / 0.25), 0 1px 2px rgb(0 0 0 / 0.6);
-}
-.btn-red:active {
-	background-image: linear-gradient(to bottom, var(--red-dark), var(--red) 70%);
-}
-.btn-dark {
-	color: var(--gold);
-	text-shadow: 0 1px 0 #000;
-	background-color: var(--panel-raised);
-	background-image: linear-gradient(to bottom, #3a2c1b, #221a10 50%, #150f09);
-	border: 1px solid #000;
-	box-shadow: inset 0 0 0 1px var(--bronze), inset 0 2px 0 1px rgb(255 220 160 / 0.06), 0 1px 2px rgb(0 0 0 / 0.6);
-}
-.btn-dark:hover,
-.btn-dark[aria-expanded="true"] {
-	color: #fff2b0;
-	box-shadow: inset 0 0 0 1px var(--bronze-light), inset 0 0 8px rgb(255 200 80 / 0.18), 0 1px 2px rgb(0 0 0 / 0.6);
-}
-.btn-dark:active {
-	background-image: linear-gradient(to bottom, #150f09, #221a10);
-}
-:is(.btn-red, .btn-dark):disabled {
-	opacity: 1;
-	color: #8a8a8a;
-	background-image: linear-gradient(to bottom, #4a4a4a, #2e2e2e 50%, #1d1d1d);
-	box-shadow: inset 0 0 0 1px #6a6a6a, 0 1px 2px rgb(0 0 0 / 0.6);
-}
-}
+	/* ---- Tooltips and popovers ---- */
 
-/* Tables: column heads in gold on a raised strip, faint row banding, a lit
-   bar under the pointer. */
-[data-slot="table"] thead tr {
-	background-color: var(--panel-raised);
-	border-bottom: 1px solid var(--bronze-dark);
-	box-shadow: inset 0 -1px 0 #000;
-}
-[data-slot="table"] th {
-	color: var(--gold);
-	font-weight: 600;
-}
-[data-slot="table"] tbody tr {
-	border-color: rgb(255 255 255 / 0.04);
-}
-[data-slot="table"] tbody tr:nth-child(even) {
-	background-color: rgb(255 255 255 / 0.02);
-}
-[data-slot="table"] tbody tr:hover {
-	background-color: rgb(255 209 0 / 0.07);
-	box-shadow: inset 2px 0 0 var(--gold);
-}
+	/* The game's tooltip: navy-black, a thin light-grey edge. Plain tooltips and
+	   item tooltips (components/item.tsx) both. */
+	[data-slot="tooltip-content"],
+	.item-tooltip {
+		color: #fff;
+		background-color: var(--tooltip);
+		border: 1px solid var(--tooltip-border);
+		border-radius: 4px;
+		box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6), 0 8px 24px rgb(0 0 0 / 0.5);
+	}
 
-/* A row with an item: a quality-colored edge, like the slot border. */
-.item-row {
-	box-shadow: inset 2px 0 0 color-mix(in oklab, var(--class, transparent) 70%, transparent);
+	/* ---- Tables: hairlines, quiet heads, a fill under the pointer ---- */
+
+	[data-slot="table"] thead tr {
+		border-bottom: 1px solid var(--border);
+	}
+	[data-slot="table"] th {
+		color: var(--muted-foreground);
+		font-weight: 500;
+	}
+	[data-slot="table"] tbody tr {
+		border-color: rgb(255 255 255 / 0.05);
+	}
+	[data-slot="table"] tbody tr:hover {
+		background-color: var(--hover);
+	}
+	/* A table that fills the pane keeps its head in view. */
+	[data-slot="table-container"]:has(> .table-sticky) {
+		overflow: visible;
+	}
+	.table-sticky thead th {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		background-color: var(--background);
+		box-shadow: inset 0 -1px 0 var(--border);
+	}
+
+	/* Toggle chips: class filters and similar. */
+	.chip {
+		display: inline-flex;
+		height: 1.625rem;
+		align-items: center;
+		gap: 0.375rem;
+		padding-inline: 0.5rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		color: var(--muted-foreground);
+		font-size: 0.8125rem;
+		transition: background-color 0.1s, border-color 0.1s;
+	}
+	.chip:hover {
+		background-color: var(--hover);
+		color: var(--foreground);
+	}
+	.chip[data-active="true"] {
+		border-color: var(--border-strong);
+		background-color: var(--selected);
+		color: var(--foreground);
+	}
 }

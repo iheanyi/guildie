@@ -1,3 +1,5 @@
+import { useRouteContext } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 
 // The Guildie desktop app loads this site in its window and exposes this
@@ -25,11 +27,36 @@ declare global {
 	}
 }
 
-/** True once mounted inside the desktop app (false during SSR, so markup matches). */
+/**
+ * What the desktop app says about itself in its user agent: the window appends
+ * " GuildieDesktop/<version>", plus " (Mica)" when the window has Windows 11's
+ * Mica behind it (apps/desktop/src/window.ts). Read on the server too, so the
+ * first paint already has the app's layout (html[data-desktop]).
+ */
+export type DesktopInfo = { version: string; mica: boolean };
+
+export function parseDesktopUserAgent(ua: string | null | undefined): DesktopInfo | null {
+	const match = /\bGuildieDesktop\/([\w.+-]+)( \(Mica\))?/.exec(ua ?? "");
+	return match ? { version: match[1], mica: !!match[2] } : null;
+}
+
+/** The current request's (server) or the window's (client) desktop app, if any. */
+export const readDesktopInfo = createIsomorphicFn()
+	.server(async () => {
+		const { getRequestHeader } = await import("@tanstack/react-start/server");
+		return parseDesktopUserAgent(getRequestHeader("user-agent"));
+	})
+	.client(async () => parseDesktopUserAgent(navigator.userAgent));
+
+/**
+ * True inside the desktop app. Known from the user agent during SSR, so markup
+ * matches; app builds before 0.2 don't send it and are found once mounted.
+ */
 export function useInDesktopApp() {
-	const [inApp, setInApp] = useState(false);
-	useEffect(() => setInApp(!!desktop()), []);
-	return inApp;
+	const fromAgent = useRouteContext({ from: "__root__", select: (c) => !!c.desktop });
+	const [bridged, setBridged] = useState(false);
+	useEffect(() => setBridged(!!desktop()), []);
+	return fromAgent || bridged;
 }
 
 /** The desktop app's bridge, when this page is running inside it. */

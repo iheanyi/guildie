@@ -307,8 +307,13 @@ export const syncCharacter = internalAction({
 		});
 		// Icons and names for gear we haven't seen yet.
 		if (equipment.ok) {
-			const itemIds = (equipment.data.equipped_items ?? []).map((i) => i.item.id);
-			if (itemIds.length) await ctx.scheduler.runAfter(0, internal.items.ensure, { itemIds });
+			const worn = equipment.data.equipped_items ?? [];
+			if (worn.length) {
+				await ctx.scheduler.runAfter(0, internal.items.ensure, {
+					itemIds: worn.map((i) => i.item.id),
+					hints: worn.map((i) => ({ itemId: i.item.id, name: i.name, quality: i.quality.type })),
+				});
+			}
 		}
 	},
 });

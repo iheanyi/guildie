@@ -65,3 +65,9 @@ checkout's `.convex/local` to reseed, which also wipes its data.
   `CONVEX_AGENT_MODE=anonymous` when running it by hand). Use `--deployment`
   or `--prod` for cloud deployments.
 - Removing a worktree (`git worktree remove`) removes its data with it.
+- The desktop app's layout without the app: send its user agent, e.g.
+  `curl -sk -A "Mozilla/5.0 GuildieDesktop/0.2.0" https://<name>.guildie.localhost:1355/`
+  (the browser's devtools can override the user agent too; add ` (Mica)` for
+  the transparent chrome). The app itself against your checkout:
+  `pnpm --filter @guildie/desktop dev --url https://<name>.guildie.localhost:1355`,
+  or `smoke` instead of `dev` for the headless check.

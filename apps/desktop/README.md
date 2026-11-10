@@ -10,8 +10,10 @@ Electron + TypeScript. Windows first; it runs on macOS for development.
 
 - **Install:** `Guildie-Setup-<version>.exe` (per user, no admin), or unzip
   `Guildie-<version>-win-x64.zip` anywhere and run `Guildie.exe`.
-- **Window:** guildie.club, with Windows' own window buttons over the site's
-  header. Links to other sites open in your browser. Battle.net sign-in stays
+- **Window:** guildie.club as an app: a sidebar, a title bar with back and
+  forward, Windows' own window buttons, Mica behind it on Windows 11. Mouse
+  back/forward buttons, Alt+Left/Right and Ctrl+R (or F5) work. Links to
+  other sites open in your browser. Battle.net sign-in stays
   in the window.
 - **Connecting:** signing in on the site hands the app a token (the bridge
   below). Until the site does that, choose **Connect...** in the tray: the
@@ -120,16 +122,28 @@ Calls from a different Guildie site than the one the app is set to (say a
 preview opened from guildie.club) get `{ connected: false }`, and `setToken`
 and `signOut` reject.
 
-The title bar: the window buttons are drawn over the top right, 40px tall, on
-`TITLEBAR.color` (`#1c150e` for now; it should match the site's `--titlebar`).
-The site should keep that strip clear with
-`env(titlebar-area-x)` / `env(titlebar-area-width)` / `env(titlebar-area-height)`
-and mark its header `-webkit-app-region: drag` (links and buttons `no-drag`).
-Until it does, the app makes any `<header>` draggable itself, with a rule any
-site rule overrides.
+The window tells the site it's the app in its user agent:
+` GuildieDesktop/<version>`, plus ` (Mica)` on Windows 11 (`desktopUserAgent`
+in `src/window.ts`). The site reads it while rendering on the server and puts
+`data-desktop="true"` (and `data-material="mica"`) on `<html>`, so the first
+paint already has the app's layout: the page doesn't scroll, only its content
+pane does; a 40px title bar with back, forward and the page title sits over
+the content; the sidebar runs to the top on the left. The preload still marks
+`data-desktop` too, for pages served before that.
+
+The title bar: the window buttons are drawn over the top right, 40px tall
+(`TITLEBAR`), on `#111113` (the site's `--chrome`), or transparent over Mica
+on Windows 11 (build 22000+; `hasMica`), where the site makes its sidebar and
+title bar transparent and keeps the content pane solid. Windows 10 and macOS
+get the solid color. The site keeps the buttons' strip clear with
+`env(titlebar-area-x)` / `env(titlebar-area-width)` and marks its title bar
+`-webkit-app-region: drag` (links and buttons `no-drag`). For sites from
+before that (no `.app-titlebar`), the app makes any `<header>` draggable
+itself, with a rule any site rule overrides.
 
 ## Not verified on Windows yet
 
 Built from macOS and smoke-tested there against a local Guildie. Still to try
-on Windows: the installer, the title bar overlay, the tray icon and menu,
+on Windows: the installer, the title bar overlay and Mica (and that Windows
+10 falls back to the solid color), mouse back/forward buttons, the tray icon and menu,
 notifications, Start with Windows, DPAPI, and WoW folder detection.

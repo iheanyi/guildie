@@ -69,6 +69,17 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 			security.keys,
 		);
 		check('html[data-desktop="true"]', security.dataset === "true");
+
+		// The app's layout comes from the server (the user agent), not after load.
+		const shell = await page<Record<string, string | boolean>>(`(async () => ({
+			userAgent: navigator.userAgent,
+			serverRendered: /<html[^>]*data-desktop="true"/.test(await fetch(location.href).then((r) => r.text())),
+			titlebar: String(document.querySelector(".app-titlebar") && getComputedStyle(document.querySelector(".app-titlebar")).display),
+			pageScrolls: getComputedStyle(document.body).overflow !== "hidden",
+		}))()`);
+		check("user agent says GuildieDesktop", String(shell.userAgent).includes(" GuildieDesktop/"), shell.userAgent);
+		check("server renders the app layout", shell.serverRendered === true);
+		check("title bar shown, page doesn't scroll", shell.titlebar === "flex" && shell.pageScrolls === false, shell);
 		check("no Node or Electron in the page", security.require === "undefined" && security.electron === "false" && security.ipc === "undefined");
 
 		const state = await page<{ connected: boolean }>("window.guildieDesktop.getState()");

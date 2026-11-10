@@ -4,6 +4,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ConvexHttpClient } from "convex/browser";
 import { useEffect, useRef, useState } from "react";
+import { Page, PageHeader } from "@/components/page-header";
 import { landingPath } from "@/lib/claim";
 
 // The desktop app opens this in its window with a one-time code, after the
@@ -46,13 +47,13 @@ function DesktopSession() {
 	}, [code, router, setSession]);
 
 	return (
-		<div className="max-w-md py-10">
-			<h1 className="text-4xl">Signing in</h1>
-			<p className="mt-3 text-muted-foreground">
+		<Page width="narrow">
+			<PageHeader title="Signing in" />
+			<p className="text-muted-foreground">
 				{failed ? (
 					<>
 						That sign-in link expired or was already used.{" "}
-						<Link to="/sign-in" className="underline underline-offset-4">
+						<Link to="/sign-in" className="text-foreground underline underline-offset-4">
 							Sign in again
 						</Link>
 						.
@@ -61,6 +62,6 @@ function DesktopSession() {
 					"One moment…"
 				)}
 			</p>
-		</div>
+		</Page>
 	);
 }
