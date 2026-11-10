@@ -117,3 +117,6 @@ export function useDesktopStatus() {
 	}, []);
 	return status;
 }
+
+/** Where the Guildie app's installer is (GitHub Releases; the app updates itself from there too). */
+export const RELEASES = "https://github.com/natedunn/guildie/releases/latest";

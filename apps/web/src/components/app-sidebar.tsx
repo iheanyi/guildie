@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { Dialog } from "@base-ui/react/dialog";
 import { api } from "@convex/_generated/api";
-import { AnvilIcon, Cancel01Icon, Login03Icon, Menu01Icon, PuzzleIcon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { AnvilIcon, Cancel01Icon, Login03Icon, Menu01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, type LinkProps, useRouterState } from "@tanstack/react-router";
@@ -93,10 +93,6 @@ function SidebarNav() {
 
 			<div className="flex-none space-y-px border-t border-border px-2 pt-2 pb-2">
 				<UpdateReady />
-				<NavLink to="/addon">
-					<HugeiconsIcon icon={PuzzleIcon} size={15} strokeWidth={1.75} />
-					Addon
-				</NavLink>
 				{viewer ? (
 					<NavLink to="/settings">
 						<HugeiconsIcon icon={Settings02Icon} size={15} strokeWidth={1.75} />

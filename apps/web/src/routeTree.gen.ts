@@ -21,6 +21,9 @@ import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
 import { Route as ClaimCallbackRouteImport } from './routes/claim/callback'
 import { Route as DesktopSessionRouteImport } from './routes/desktop/session'
 import { Route as HelperConnectRouteImport } from './routes/helper/connect'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as SettingsAddonRouteImport } from './routes/settings/addon'
+import { Route as SettingsAppRouteImport } from './routes/settings/app'
 import { Route as ApiHelperGuildDataRouteImport } from './routes/api/helper/guild-data'
 import { Route as ApiHelperMeRouteImport } from './routes/api/helper/me'
 import { Route as ApiHelperPairRouteImport } from './routes/api/helper/pair'
@@ -95,6 +98,21 @@ const HelperConnectRoute = HelperConnectRouteImport.update({
   path: '/helper/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsAddonRoute = SettingsAddonRouteImport.update({
+  id: '/addon',
+  path: '/addon',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsAppRoute = SettingsAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => SettingsRoute,
+} as any)
 const ApiHelperGuildDataRoute = ApiHelperGuildDataRouteImport.update({
   id: '/api/helper/guild-data',
   path: '/api/helper/guild-data',
@@ -166,7 +184,7 @@ export interface FileRoutesByFullPath {
   '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -174,6 +192,9 @@ export interface FileRoutesByFullPath {
   '/claim/callback': typeof ClaimCallbackRoute
   '/desktop/session': typeof DesktopSessionRoute
   '/helper/connect': typeof HelperConnectRoute
+  '/settings/addon': typeof SettingsAddonRoute
+  '/settings/app': typeof SettingsAppRoute
+  '/settings/': typeof SettingsIndexRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
@@ -193,7 +214,6 @@ export interface FileRoutesByTo {
   '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
-  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -201,6 +221,9 @@ export interface FileRoutesByTo {
   '/claim/callback': typeof ClaimCallbackRoute
   '/desktop/session': typeof DesktopSessionRoute
   '/helper/connect': typeof HelperConnectRoute
+  '/settings/addon': typeof SettingsAddonRoute
+  '/settings/app': typeof SettingsAppRoute
+  '/settings': typeof SettingsIndexRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
@@ -219,7 +242,7 @@ export interface FileRoutesById {
   '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
-  '/settings': typeof SettingsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -227,6 +250,9 @@ export interface FileRoutesById {
   '/claim/callback': typeof ClaimCallbackRoute
   '/desktop/session': typeof DesktopSessionRoute
   '/helper/connect': typeof HelperConnectRoute
+  '/settings/addon': typeof SettingsAddonRoute
+  '/settings/app': typeof SettingsAppRoute
+  '/settings/': typeof SettingsIndexRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
@@ -256,6 +282,9 @@ export interface FileRouteTypes {
     | '/claim/callback'
     | '/desktop/session'
     | '/helper/connect'
+    | '/settings/addon'
+    | '/settings/app'
+    | '/settings/'
     | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
@@ -275,7 +304,6 @@ export interface FileRouteTypes {
     | '/addon'
     | '/data'
     | '/me'
-    | '/settings'
     | '/sign-in'
     | '/auth/refresh'
     | '/auth/signin'
@@ -283,6 +311,9 @@ export interface FileRouteTypes {
     | '/claim/callback'
     | '/desktop/session'
     | '/helper/connect'
+    | '/settings/addon'
+    | '/settings/app'
+    | '/settings'
     | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
@@ -308,6 +339,9 @@ export interface FileRouteTypes {
     | '/claim/callback'
     | '/desktop/session'
     | '/helper/connect'
+    | '/settings/addon'
+    | '/settings/app'
+    | '/settings/'
     | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
@@ -328,7 +362,7 @@ export interface RootRouteChildren {
   AddonRoute: typeof AddonRoute
   DataRoute: typeof DataRoute
   MeRoute: typeof MeRoute
-  SettingsRoute: typeof SettingsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   SignInRoute: typeof SignInRoute
   AuthRefreshRoute: typeof AuthRefreshRoute
   AuthSigninRoute: typeof AuthSigninRoute
@@ -431,6 +465,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelperConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/addon': {
+      id: '/settings/addon'
+      path: '/addon'
+      fullPath: '/settings/addon'
+      preLoaderRoute: typeof SettingsAddonRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/app': {
+      id: '/settings/app'
+      path: '/app'
+      fullPath: '/settings/app'
+      preLoaderRoute: typeof SettingsAppRouteImport
+      parentRoute: typeof SettingsRoute
+    }
     '/api/helper/guild-data': {
       id: '/api/helper/guild-data'
       path: '/api/helper/guild-data'
@@ -525,6 +580,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SettingsRouteChildren {
+  SettingsAddonRoute: typeof SettingsAddonRoute
+  SettingsAppRoute: typeof SettingsAppRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsAddonRoute: SettingsAddonRoute,
+  SettingsAppRoute: SettingsAppRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 interface ApiHelperPairRouteChildren {
   ApiHelperPairPollRoute: typeof ApiHelperPairPollRoute
 }
@@ -572,7 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   AddonRoute: AddonRoute,
   DataRoute: DataRoute,
   MeRoute: MeRoute,
-  SettingsRoute: SettingsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   SignInRoute: SignInRoute,
   AuthRefreshRoute: AuthRefreshRoute,
   AuthSigninRoute: AuthSigninRoute,

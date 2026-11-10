@@ -9,12 +9,14 @@ type GuildRef = { name: string; region: string; slug: string };
 
 export type Crumb = {
 	label: string;
-	link?: { to: "/g/$region/$slug" | "/c/$region/$slug"; params: { region: string; slug: string } };
+	link?: { to: "/g/$region/$slug" | "/c/$region/$slug"; params: { region: string; slug: string } } | { to: "/settings"; params?: undefined };
 };
 
 type Match = { routeId: string; params: Record<string, string>; loaderData?: unknown };
 
 const TAB_LABELS: Record<string, string> = {
+	"/settings/addon": "Addon",
+	"/settings/app": "App",
 	"/g/$region/$slug/crafting": "Crafting",
 	"/c/$region/$slug/talents": "Talents",
 	"/c/$region/$slug/professions": "Professions",
@@ -31,6 +33,8 @@ function crumbsOf(matches: Match[]): Crumb[] | null {
 				crumbs.push({ label: data.guild.name, link: { to: "/g/$region/$slug", params: { region: data.guild.region, slug: data.guild.slug } } });
 			}
 			crumbs.push({ label: data.name, link: { to: "/c/$region/$slug", params: { region: m.params.region, slug: m.params.slug } } });
+		} else if (m.routeId === "/settings") {
+			crumbs.push({ label: "Settings", link: { to: "/settings" } });
 		} else if (TAB_LABELS[m.routeId]) {
 			crumbs.push({ label: TAB_LABELS[m.routeId] });
 		}
