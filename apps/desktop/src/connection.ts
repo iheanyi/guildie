@@ -17,6 +17,10 @@ export type Status = {
 	wowFolder?: string;
 	/** While connecting through the pairing flow: the code to approve. */
 	pairingCode?: string;
+	/** The Guildie addon's version in the WoW folder (undefined: not installed). Set by main (addon.ts). */
+	addonVersion?: string;
+	/** An app update downloaded and waiting for a restart (updater.ts). */
+	updateReady?: string;
 };
 
 const TICK_MS = 2_000;
@@ -30,11 +34,15 @@ export class Connection {
 	private readonly log: Log;
 	private account: string | undefined;
 	private pairingCode: string | undefined;
+	private addonVersion: string | undefined;
+	private updateReady: string | undefined;
 	private timer: NodeJS.Timeout | undefined;
 	private lastRetry = 0;
 	private readonly listeners = new Set<(status: Status) => void>();
 	/** Notices for the user (shown as notifications by main). */
 	onNotice: (title: string, body: string) => void = () => {};
+	/** The WoW folder was chosen (main installs or updates the addon there). */
+	onWowFolder: (folder: string) => void = () => {};
 
 	constructor(origin: string, log: Log) {
 		this.origin = origin;
@@ -64,7 +72,16 @@ export class Connection {
 			guildDataAt: this.sync.guildDataAt,
 			wowFolder: this.sync.wowFolder,
 			pairingCode: this.pairingCode,
+			addonVersion: this.addonVersion,
+			updateReady: this.updateReady,
 		};
+	}
+
+	/** What main knows about the addon and app updates, shown with the sync status. */
+	setExtras(extras: { addonVersion?: string; updateReady?: string }) {
+		if ("addonVersion" in extras) this.addonVersion = extras.addonVersion;
+		if ("updateReady" in extras) this.updateReady = extras.updateReady;
+		this.emit();
 	}
 
 	onStatus(listener: (status: Status) => void) {
@@ -148,6 +165,7 @@ export class Connection {
 		settings.wow = folder;
 		this.sync.setWow(folder);
 		this.log(`WoW folder: ${folder}`);
+		this.onWowFolder(folder);
 		this.emit();
 	}
 

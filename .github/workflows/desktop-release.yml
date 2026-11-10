@@ -1,0 +1,72 @@
+name: Desktop release
+
+# Builds the Windows installer and publishes it, with latest.yml (what the
+# installed app checks for updates, apps/desktop/src/updater.ts), as the
+# GitHub Release for the tag. Cut one by bumping apps/desktop/package.json
+# and pushing the tag desktop-v<that version> (apps/desktop/README.md).
+#
+# Run by hand on a tag, it publishes that tag; on a branch, it only builds and
+# keeps the installer as a workflow artifact (a test build, never published).
+on:
+  push:
+    tags:
+      - "desktop-v*"
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Tag matches the app's version
+        run: |
+          version=$(node -p "require('./apps/desktop/package.json').version")
+          echo "Guildie $version"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "desktop-v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match apps/desktop/package.json ($version): expected desktop-v$version"
+            exit 1
+          fi
+
+      # Only the app and what it uses (packages/sync), not the website.
+      - run: pnpm install --frozen-lockfile --filter "@guildie/desktop..."
+
+      - run: pnpm --filter @guildie/desktop check
+      - run: pnpm --filter @guildie/desktop test
+
+      # Creates the release desktop-v<version> (a normal one, not a draft:
+      # electron-builder.yml publish.releaseType) and uploads the installer,
+      # its .blockmap and latest.yml.
+      - name: Build and publish
+        if: github.ref_type == 'tag'
+        run: pnpm --filter @guildie/desktop release:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (not published)
+        if: github.ref_type != 'tag'
+        run: pnpm --filter @guildie/desktop build:win --publish never
+
+      - uses: actions/upload-artifact@v4
+        if: github.ref_type != 'tag'
+        with:
+          name: guildie-desktop-windows
+          path: |
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.zip
+          if-no-files-found: error

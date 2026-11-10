@@ -10,6 +10,10 @@ export type TrayActions = {
 	connect: () => void;
 	uploadNow: () => void;
 	chooseWow: () => void;
+	/** Install the addon, or put a fresh copy over the installed one. */
+	reinstallAddon: () => void;
+	/** Quit and install the downloaded app update. */
+	restartToUpdate: () => void;
 	startWithSystem: { get: () => boolean; set: (on: boolean) => void } | undefined;
 	about: () => void;
 	signOut: () => void;
@@ -42,11 +46,18 @@ export function createTray(actions: TrayActions) {
 				{ label: statusLine, enabled: false },
 				{ label: lastLine, enabled: false },
 				{ label: status.wowFolder ? `WoW: ${status.wowFolder}` : "WoW folder not found", enabled: false },
+				status.addonVersion
+					? { label: `Addon: ${status.addonVersion}`, enabled: false }
+					: { label: "Addon: not installed — Install", enabled: !!status.wowFolder, click: actions.reinstallAddon },
+				...(status.updateReady
+					? [{ type: "separator" as const }, { label: `Restart to update (${status.updateReady})`, click: actions.restartToUpdate }]
+					: []),
 				{ type: "separator" },
 				{ label: "Open Guildie", click: actions.open },
 				{ label: "Sign in...", visible: !status.connected && !status.pairingCode, click: actions.connect },
 				{ label: "Upload now", enabled: status.connected, click: actions.uploadNow },
 				{ label: "Choose World of Warcraft folder...", click: actions.chooseWow },
+				{ label: "Reinstall addon", visible: !!status.addonVersion, click: actions.reinstallAddon },
 				...(actions.startWithSystem
 					? [
 							{

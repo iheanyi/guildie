@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Log } from "@guildie/sync";
 import { app, type BrowserWindow } from "electron";
+import { readAddonVersion } from "./addon.ts";
 import type { Connection } from "./connection.ts";
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,20 +23,21 @@ async function until<T>(what: () => T | Promise<T>, ms: number): Promise<T | und
 	return undefined;
 }
 
-/** A WoW folder with the addon installed and a saved file, like the game leaves it. */
+/** A WoW folder with an older addon installed and a saved file, like the game leaves it. */
 function fakeWow() {
 	const wow = mkdtempSync(join(tmpdir(), "guildie-smoke-wow-"));
 	const saved = join(wow, "_forever_", "WTF", "Account", "SMOKE", "SavedVariables");
 	const addon = join(wow, "_forever_", "Interface", "AddOns", "Guildie");
 	mkdirSync(saved, { recursive: true });
 	mkdirSync(addon, { recursive: true });
-	writeFileSync(join(addon, "Guildie.toc"), "## Title: Guildie\n");
+	writeFileSync(join(addon, "Guildie.toc"), "## Title: Guildie\n## Version: 0.0.1\n");
+	writeFileSync(join(addon, "GuildieData.lua"), "-- smoke: the app's data, kept across updates\n");
 	const payload = JSON.stringify({ version: 1, characters: [] });
 	writeFileSync(join(saved, "Guildie.lua"), `GuildieDB = {\n\t["payload"] = "${payload.replace(/"/g, '\\"')}",\n}\n`);
 	return { wow, addon };
 }
 
-export async function runSmokeTest(win: BrowserWindow, connection: Connection, url: string, log: Log) {
+export async function runSmokeTest(win: BrowserWindow, connection: Connection, url: string, log: Log, addonSource: string) {
 	// The page's own errors and warnings, so a failing check shows why.
 	win.webContents.on("console-message", (details) => {
 		if (details.level === "error" || details.level === "warning") log(`page ${details.level}: ${details.message}`);
@@ -98,17 +100,36 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		);
 		check("onStatus rejects a non-function", badCallback === "threw");
 
+		// The addon: a WoW install without it gets it.
+		const shipped = readAddonVersion(addonSource);
+		check("the app ships the addon", !!shipped, { addonSource, shipped });
+		const bare = mkdtempSync(join(tmpdir(), "guildie-smoke-bare-"));
+		mkdirSync(join(bare, "_forever_"));
+		connection.setWowFolder(bare);
+		const installed = join(bare, "_forever_", "Interface", "AddOns", "Guildie");
+		check(
+			"addon installed into a WoW folder without it",
+			readAddonVersion(installed) === shipped && existsSync(join(installed, "GuildieData.lua")),
+			readAddonVersion(installed),
+		);
+
 		// The sync engine: point it at a fake WoW folder and watch the status reach the page.
 		await page("window.__statuses = []; window.__off = window.guildieDesktop.onStatus((s) => window.__statuses.push(s)); 1");
 		const { wow, addon } = fakeWow();
 		connection.setWowFolder(wow);
+		check("older addon updated to the shipped version", readAddonVersion(addon) === shipped, readAddonVersion(addon));
+		check(
+			"GuildieData.lua survives the update",
+			readFileSync(join(addon, "GuildieData.lua"), "utf8") === "-- smoke: the app's data, kept across updates\n",
+		);
 		const pushed = await until(
 			() => page<{ wowFolder?: string }[]>("window.__statuses").then((s) => s.find((x) => x.wowFolder === wow)),
 			5_000,
 		);
 		check("onStatus delivers the WoW folder to the page", !!pushed, pushed);
-		const status = await page<{ wowFolder?: string }>("window.guildieDesktop.getStatus()");
+		const status = await page<{ wowFolder?: string; addonVersion?: string }>("window.guildieDesktop.getStatus()");
 		check("getStatus() has the WoW folder", status.wowFolder === wow, status);
+		check("getStatus() has the addon version", status.addonVersion === shipped, status.addonVersion);
 
 		const token = process.env.GUILDIE_SMOKE_TOKEN;
 		if (token) {

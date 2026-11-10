@@ -14,11 +14,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { configDir, DEFAULT_API, loadConfig, makeLogger } from "@guildie/sync";
 import { app, BrowserWindow, dialog, type IpcMainInvokeEvent, ipcMain, Notification, session, shell } from "electron";
+import { type AddonResult, ensureAddon, foreverFlavors, readAddonVersion } from "./addon.ts";
 import { Connection, type Status } from "./connection.ts";
 import { allowsSelfSigned, isGuildieUrl, originOf } from "./origins.ts";
 import { settings } from "./settings.ts";
 import { runSmokeTest } from "./smoke.ts";
 import { createTray } from "./tray.ts";
+import { canSelfUpdate, startUpdater, type Updater } from "./updater.ts";
 import { createWindow } from "./window.ts";
 
 declare const __VERSION__: string;
@@ -82,9 +84,13 @@ function notify(title: string, body: string) {
 	new Notification({ title, body, icon: join(__dirname, "assets", "guildie-256.png") }).show();
 }
 
-/** "Start with Windows". A portable build runs from a temp copy, so point at the real .exe. */
+/**
+ * "Start with Windows". The installer puts Guildie.exe in one place per user
+ * (%LOCALAPPDATA%\Programs\guildie) and updates replace it there, so the
+ * running .exe's path stays valid across updates.
+ */
 const loginItem = {
-	path: process.env.PORTABLE_EXECUTABLE_FILE ?? process.execPath,
+	path: process.execPath,
 	args: ["--hidden", ...(siteUrl === DEFAULT_API ? [] : ["--url", siteUrl])],
 };
 const startWithSystem =
@@ -96,7 +102,7 @@ const startWithSystem =
 		: undefined;
 
 /** The sync status as the page sees it. */
-const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode }: Status) => ({
+const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode, addonVersion }: Status) => ({
 	connected,
 	account,
 	lastUpload,
@@ -104,7 +110,16 @@ const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, 
 	wowFolder,
 	// The code the browser's Connect page shows, so the window can show it too.
 	pairingCode,
+	addonVersion,
 });
+
+/**
+ * The addon the app ships (electron-builder extraResources; GuildieData.lua
+ * left out). In development, the repo's own apps/addon/Guildie.
+ */
+const addonSource = app.isPackaged
+	? join(process.resourcesPath, "addon", "Guildie")
+	: join(__dirname, "..", "..", "addon", "Guildie");
 
 app.whenReady().then(async () => {
 	if (!origin) return;
@@ -122,6 +137,42 @@ app.whenReady().then(async () => {
 	const connection = new Connection(origin, log);
 	connection.onNotice = notify;
 	log(`Guildie ${__VERSION__} for ${origin}`);
+
+	// ---- The addon: installed and kept up to date in WoW: Forever ----
+	/** Versions already announced this run, so a change is told once. */
+	const announced = new Set<string>();
+	const manageAddon = (wow = connection.status.wowFolder, force = false) => {
+		let results: AddonResult[] = [];
+		if (wow) {
+			try {
+				results = ensureAddon(addonSource, wow, log, force);
+			} catch (e) {
+				log(`Addon: ${(e as Error).message}`);
+			}
+			if (!foreverFlavors(wow).length) {
+				log(`Addon: no _forever_ folder in ${wow}; nothing to install`);
+				// Asked for from the tray: say why nothing happened.
+				if (force) notify("Guildie", `No WoW: Forever (_forever_) folder in ${wow}. Choose your World of Warcraft folder.`);
+			}
+		}
+		// Files on disk apply at the game's next /reload (or start, for a new install),
+		// so this is said even when WoW is running: nothing waits for it to close.
+		for (const r of results) {
+			if (r.action === "none" || r.error || !r.version || announced.has(`${r.action}:${r.version}`)) continue;
+			announced.add(`${r.action}:${r.version}`);
+			notify(
+				"Guildie",
+				r.action === "install"
+					? `Guildie addon ${r.version} installed. Restart WoW if it's running to load it.`
+					: `Guildie addon updated to ${r.version}. Type /reload in WoW (or restart it) to load it.`,
+			);
+		}
+		const failed = results.find((r) => r.error);
+		if (failed) notify("Guildie", `Couldn't install the addon in ${failed.folder}: ${failed.error}`);
+		connection.setExtras({ addonVersion: results.find((r) => r.version)?.version });
+	};
+	connection.onWowFolder = (folder) => manageAddon(folder);
+	log(`Addon shipped with the app: ${readAddonVersion(addonSource) ?? `missing at ${addonSource}`}`);
 
 	// ---- The bridge (preload.ts): only Guildie's own page, on this site ----
 	const fromSite = (event: IpcMainInvokeEvent) => {
@@ -170,7 +221,9 @@ app.whenReady().then(async () => {
 	});
 
 	if (smokeTest) {
-		const ok = await runSmokeTest(win!, connection, siteUrl, log);
+		// No addon run at start here: it'd touch the real WoW folder. The smoke
+		// test checks it against fake ones (setWowFolder).
+		const ok = await runSmokeTest(win!, connection, siteUrl, log, addonSource);
 		quitting = true;
 		app.exit(ok ? 0 : 1);
 		return;
@@ -187,7 +240,7 @@ app.whenReady().then(async () => {
 		const folder = result.filePaths[0];
 		if (result.canceled || !folder) return;
 		try {
-			connection.setWowFolder(folder);
+			connection.setWowFolder(folder); // installs or updates the addon there too
 			connection.uploadNow();
 		} catch (e) {
 			void dialog.showMessageBox({ type: "warning", message: (e as Error).message });
@@ -207,8 +260,14 @@ app.whenReady().then(async () => {
 		if (!fromSite(event)) throw new Error("Not allowed from this page.");
 		signIn();
 	});
+	let updater: Updater | undefined;
 	const { update } = createTray({
 		open: () => showWindow(),
+		reinstallAddon: () => manageAddon(undefined, true),
+		restartToUpdate: () => {
+			quitting = true;
+			updater?.restart();
+		},
 		connect: signIn,
 		uploadNow: () => connection.uploadNow(),
 		chooseWow: () => void chooseWow(),
@@ -230,6 +289,14 @@ app.whenReady().then(async () => {
 	});
 	connection.onStatus(update);
 	update(connection.status);
+
+	// Before syncing starts, so guild data lands in an installed addon.
+	manageAddon();
+	if (canSelfUpdate()) {
+		updater = startUpdater(log, notify, () => connection.setExtras({ updateReady: updater?.ready }));
+	} else {
+		log("Updates: off (not the installed app)");
+	}
 
 	await connection.start();
 	if (!connection.status.wowFolder) log("No World of Warcraft folder found; choose it from the tray menu.");

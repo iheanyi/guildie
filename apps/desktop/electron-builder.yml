@@ -1,5 +1,6 @@
 # electron-builder: pnpm --filter @guildie/desktop build:win (on Windows) or
 # build:win-cross (from macOS, no wine). Output in apps/desktop/release.
+# Releases: .github/workflows/desktop-release.yml (README.md, "Releasing").
 appId: club.guildie.desktop
 productName: Guildie
 copyright: Guildie
@@ -13,24 +14,48 @@ files:
 asar: true
 extraMetadata:
   main: dist/main.cjs
+  # The installer's folder name (%LOCALAPPDATA%\Programs\guildie); the
+  # workspace name, @guildie/desktop, would make it "@guildiedesktop".
+  name: guildie
+# The addon the app installs into WoW (src/addon.ts reads it from
+# resources/addon/Guildie). GuildieData.lua is the app's to write, per player.
+extraResources:
+  - from: ../addon/Guildie
+    to: addon/Guildie
+    filter:
+      - "**/*"
+      - "!GuildieData.lua"
+# Where the app looks for updates (src/updater.ts; baked in as
+# resources/app-update.yml) and where the release workflow uploads. Tags are
+# desktop-v<version> so they don't collide with other releases; published as
+# a normal release, since electron-updater only sees the repo's latest one.
+publish:
+  provider: github
+  owner: natedunn
+  repo: guildie
+  tagNamePrefix: desktop-v
+  releaseType: release
 win:
   icon: dist/assets/guildie.ico
   executableName: Guildie
+  # The installer is the one that updates itself; the zip is for trying a
+  # build (build:win-cross) and never updates.
   target:
     - target: nsis
       arch: [x64]
     - target: zip
       arch: [x64]
   artifactName: Guildie-${version}-win-${arch}.${ext}
+# Per user (%LOCALAPPDATA%\Programs\guildie), no admin prompt, one click;
+# updates run the same installer silently.
 nsis:
   oneClick: true
   perMachine: false
   runAfterFinish: true
   createDesktopShortcut: true
+  createStartMenuShortcut: true
   shortcutName: Guildie
   artifactName: Guildie-Setup-${version}.${ext}
-portable:
-  artifactName: Guildie-${version}-portable.${ext}
 mac:
   target: dir
   category: public.app-category.games

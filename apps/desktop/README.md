@@ -2,14 +2,36 @@
 
 Guildie in its own window, plus what the helper (`apps/helper`) does: it
 uploads what the Guildie addon saves in game, and downloads your guild's data
-into the addon for its tooltips. Sign in inside the window and that's it.
+into the addon for its tooltips. It also installs the addon and keeps it up to
+date, and updates itself. Sign in inside the window and that's it.
+
+The app is how players get the addon: there's no addon-store release, and the
+addon needs the app anyway (it uploads the addon's saved data and writes the
+guild data the tooltips use).
 
 Electron + TypeScript. Windows first; it runs on macOS for development.
 
 ## Using it
 
-- **Install:** `Guildie-Setup-<version>.exe` (per user, no admin), or unzip
-  `Guildie-<version>-win-x64.zip` anywhere and run `Guildie.exe`.
+- **Install:** download `Guildie-Setup-<version>.exe` from
+  [GitHub Releases](https://github.com/natedunn/guildie/releases/latest) and
+  run it: per user (`%LOCALAPPDATA%\Programs\guildie`), no admin prompt, a
+  desktop and Start menu shortcut. The builds aren't code-signed, so Windows
+  SmartScreen says "Windows protected your PC": **More info**, then **Run
+  anyway** (once per download).
+- **The addon:** the app ships it and installs it into every WoW: Forever
+  folder (`_forever_*`) of the WoW folder it uses: on start, and when you
+  choose a WoW folder. A missing addon is installed; an older one (by `##
+  Version` in `Guildie.toc`) is replaced, keeping its `GuildieData.lua`; a
+  newer one (a developer's) is left alone; other addons are never touched.
+  It's swapped in as a whole folder, so a crash leaves the old or the new
+  addon, never half. If WoW is running it still updates and says so: the new
+  files load at `/reload` (a first install, at the game's next start).
+- **App updates:** the installed app checks GitHub Releases at start and every
+  6 hours, downloads an update in the background, and installs it when you
+  quit, or right away with **Restart to update** in the tray (it also
+  notifies once it's downloaded). The zip build, development and the smoke
+  test never update.
 - **Window:** guildie.club as an app: a sidebar, a title bar with back and
   forward, Windows' own window buttons, Mica behind it on Windows 11. Mouse
   back/forward buttons, Alt+Left/Right and Ctrl+R (or F5) work. Links to
@@ -19,8 +41,11 @@ Electron + TypeScript. Windows first; it runs on macOS for development.
   below). Until the site does that, choose **Connect...** in the tray: the
   window shows a code to approve, as the helper did.
 - **Tray** (notification area): who you're connected as, the last upload, the
-  WoW folder, **Open Guildie**, **Upload now**, **Choose World of Warcraft
-  folder...**, **Start with Windows**, **About Guildie**, **Sign out**, **Quit**.
+  WoW folder, the addon's version (**Addon: not installed — Install** when it
+  isn't), **Restart to update** (once an update is downloaded), **Open
+  Guildie**, **Upload now**, **Choose World of Warcraft folder...**,
+  **Reinstall addon**, **Start with Windows**, **About Guildie**, **Sign
+  out**, **Quit**.
   Left-click opens the window. Closing the window keeps it running in the tray,
   with the window and its page unloaded (only the uploader stays in memory;
   started with `--hidden` there's no window until you open one). About shows
@@ -48,8 +73,12 @@ On the Windows PC (from the repo root):
 ```sh
 pnpm install
 pnpm --filter @guildie/desktop build:win
-# -> apps/desktop/release/Guildie-Setup-0.1.0.exe and Guildie-0.1.0-win-x64.zip
+# -> apps/desktop/release/Guildie-Setup-0.3.0.exe and Guildie-0.3.0-win-x64.zip
 ```
+
+The addon goes in as `resources/addon/Guildie` (electron-builder
+`extraResources`, from `apps/addon/Guildie` minus `GuildieData.lua`). In
+development the app installs from `apps/addon/Guildie` directly.
 
 From macOS, without wine: `pnpm --filter @guildie/desktop build:win-cross`
 makes the zip (exe icon and version included). The NSIS installer needs
@@ -57,19 +86,44 @@ makes the zip (exe icon and version included). The NSIS installer needs
 it runs once Rosetta is installed (`softwareupdate --install-rosetta`), then
 `build:win` works on the Mac too.
 
+## Releasing
+
+Releases are built on GitHub (`.github/workflows/desktop-release.yml`, on
+`windows-latest`) and published as GitHub Releases, which is where installed
+apps look for updates.
+
+1. Bump `version` in `apps/desktop/package.json` (say `0.3.0`) and commit. To
+   ship a new addon with it, bump `## Version` in `apps/addon/Guildie/Guildie.toc`
+   too: players' addons are updated only when that number goes up.
+2. Tag that commit `desktop-v<version>` and push the tag:
+   `git tag desktop-v0.3.0 && git push origin desktop-v0.3.0`.
+3. The workflow checks the tag matches the version (it fails otherwise),
+   builds, and creates the release `desktop-v0.3.0` with
+   `Guildie-Setup-0.3.0.exe`, its `.blockmap` and `latest.yml`. It's a normal
+   release, not a draft (`publish.releaseType: release`), and becomes the
+   repo's **Latest**.
+
+electron-updater reads only the repo's *Latest* release (`releases/latest`),
+so any other release in this repo (an addon zip, say) must be a pre-release or
+unticked as Latest, or installed apps stop finding updates. Running the
+workflow by hand on a branch builds without publishing and keeps the installer
+as a workflow artifact.
+
 Development (any OS):
 
 ```sh
 pnpm --filter @guildie/desktop dev --url https://desktop.guildie.localhost:1355
 pnpm --filter @guildie/desktop smoke --url https://desktop.guildie.localhost:1355
-pnpm --filter @guildie/desktop test     # origin rules
+pnpm --filter @guildie/desktop test     # origin rules, addon install/update
 pnpm --filter @guildie/desktop check
 ```
 
 `--smoke-test` starts hidden with a throwaway settings folder, loads the site,
 checks the bridge (present only on Guildie's pages, exactly these functions,
-bad input rejected, no Node in the page), points the sync engine at a fake WoW
-folder and checks the status reaches the page, prints PASS/FAIL and exits 0
+bad input rejected, no Node in the page), installs the addon into a fake WoW
+folder, updates an older one in another (its `GuildieData.lua` kept), points
+the sync engine there and checks the status (addon version included) reaches
+the page, prints PASS/FAIL and exits 0
 or 1. With `GUILDIE_SMOKE_TOKEN=gld_…` (a token for that site) it also
 connects, uploads, downloads guild data and signs out (which revokes the
 token). With `GUILDIE_SMOKE_PAIR=1` it also runs the pairing fallback and
@@ -86,6 +140,8 @@ waits for someone to approve the code it logs.
 | `src/connection.ts` | Token, connect / pair / sign out, runs `SyncEngine` from `packages/sync` |
 | `src/settings.ts` | `settings.json`: window, WoW folder, encrypted tokens |
 | `src/tray.ts` | The tray menu |
+| `src/addon.ts` | Installs and updates the addon in WoW: Forever from the shipped copy |
+| `src/updater.ts` | App updates from GitHub Releases (electron-updater) |
 | `src/smoke.ts` | `--smoke-test` |
 
 The upload and download logic is `packages/sync` (`@guildie/sync`), shared
@@ -117,6 +173,7 @@ window.guildieDesktop = {
 		lastUpload?: { at: number; characters: string[] }; // character slugs
 		guildDataAt?: number;
 		wowFolder?: string;
+		addonVersion?: string; // the Guildie addon installed in that WoW folder
 	}>,
 	onStatus(callback: (status) => void): () => void, // returns unsubscribe
 };
@@ -150,4 +207,8 @@ itself, with a rule any site rule overrides.
 Built from macOS and smoke-tested there against a local Guildie. Still to try
 on Windows: the installer, the title bar overlay and Mica (and that Windows
 10 falls back to the solid color), mouse back/forward buttons, the tray icon and menu,
-notifications, Start with Windows, DPAPI, and WoW folder detection.
+notifications, Start with Windows, DPAPI, and WoW folder detection. Also:
+installing the addon into a real WoW: Forever folder (and the folder swap
+while the game runs; if Windows won't rename the folder the app overwrites
+the files one by one instead), self-updates from a release (needs two
+releases to see one), and Start with Windows surviving an update.

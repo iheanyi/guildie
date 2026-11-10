@@ -7,8 +7,11 @@ Addons can't use the internet. The game writes the addon's data
 (`WTF/Account/<account>/SavedVariables/Guildie.lua`) when you log out or
 reload the UI, and the helper, running on the same computer, uploads it then.
 
-- **Install:** copy the `Guildie` folder into your WoW: Forever
-  `Interface/AddOns`.
+- **Install:** install the Guildie desktop app (apps/desktop, from GitHub
+  Releases); it installs this folder into WoW: Forever's `Interface/AddOns`
+  and updates it when a newer app ships a higher `## Version`. Bump that
+  version in `Guildie.toc` whenever the addon changes, or players keep the old
+  copy. (Copying the folder by hand works for development.)
 - **Minimap button** (drag it around the minimap) or `/guildie`: opens the
   window: what's saved, whether it changed since your last upload, and
   **Upload now**, which reloads the UI so it goes right away.

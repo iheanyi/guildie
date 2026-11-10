@@ -13,6 +13,29 @@ Two programs do the uploading, with the same code (`packages/sync`):
 
 Below, "the helper" means either.
 
+## Installing
+
+Players install the desktop app, and the app installs the addon:
+
+1. Download `Guildie-Setup-<version>.exe` from
+   [GitHub Releases](https://github.com/natedunn/guildie/releases/latest) and
+   run it (per user, no admin; unsigned, so SmartScreen asks once: **More
+   info**, **Run anyway**).
+2. The app finds the WoW folder (or **Choose World of Warcraft folder...** in
+   the tray) and installs the addon into `_forever_/Interface/AddOns/Guildie`.
+   Restart WoW if it was running.
+3. Sign in in the app's window.
+
+After that, both stay current on their own: a new app version downloads from
+GitHub Releases and installs when the app quits (or **Restart to update**),
+and each app version carries the addon, updating an older installed copy
+(`## Version` in `Guildie.toc`) on start, keeping its `GuildieData.lua`. If
+WoW is running, the app says to `/reload`.
+
+There's no addon-store (CurseForge, Wago) release: the addon is useless without
+the app, which uploads what it saves and writes its guild data. Releasing:
+apps/desktop/README.md, "Releasing".
+
 ```
 game ── addon saves GuildieDB ──▶ SavedVariables/Guildie.lua (on /reload, logout)
                                          │ desktop app (or helper) watches, uploads on change
@@ -26,8 +49,9 @@ game ── addon saves GuildieDB ──▶ SavedVariables/Guildie.lua (on /relo
 
 | Piece | Where |
 |---|---|
-| Addon (Lua, interface 16001) | `apps/addon/Guildie` |
-| Desktop app (Electron → Windows installer) | `apps/desktop` |
+| Addon (Lua, interface 16001) | `apps/addon/Guildie` (shipped inside the desktop app) |
+| Desktop app (Electron → Windows installer, GitHub Releases) | `apps/desktop` |
+| Addon install and update, app self-update | `apps/desktop/src/addon.ts`, `apps/desktop/src/updater.ts` |
 | Helper (Bun → Windows .exe) | `apps/helper` |
 | Shared: SavedVariables reader, uploader, `GuildieData.lua` writer, WoW folder search | `packages/sync` (`@guildie/sync`) |
 | Tokens, ingest, newest-wins | `apps/web/convex/helper.ts` |
