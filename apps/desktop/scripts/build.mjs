@@ -13,7 +13,8 @@ const common = {
 	platform: "node",
 	format: "cjs",
 	target: "node22",
-	external: ["electron"],
+	// koffi's native binary loads at runtime from resources/koffi (window-border.ts).
+	external: ["electron", "*.node"],
 	define: { __VERSION__: JSON.stringify(version) },
 	sourcemap: "linked",
 	logLevel: "warning",

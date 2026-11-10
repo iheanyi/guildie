@@ -21,6 +21,7 @@ import { settings } from "./settings.ts";
 import { runSmokeTest } from "./smoke.ts";
 import { createTray } from "./tray.ts";
 import { canSelfUpdate, startUpdater, type Updater, type UpdateState } from "./updater.ts";
+import { hideWindowBorder } from "./window-border.ts";
 import { createWindow } from "./window.ts";
 
 declare const __VERSION__: string;
@@ -208,6 +209,7 @@ app.whenReady().then(async () => {
 	// ---- The window ----
 	openWindow = (url = lastUrl) => {
 		const created = createWindow(url, { show: true, preload: join(__dirname, "preload.cjs") });
+		hideWindowBorder(created, log);
 		created.on("close", () => {
 			if (quitting || smokeTest) return;
 			const current = created.webContents.getURL();

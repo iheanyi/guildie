@@ -24,6 +24,7 @@
 		"electron-builder": "26.18.0",
 		"electron-updater": "6.8.11",
 		"esbuild": "0.28.2",
+		"koffi": "2.14.1",
 		"typescript": "~5.9.3"
 	}
 }
