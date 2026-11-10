@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { DesktopBridge } from "@/components/desktop-bridge";
 import { AppSidebar, AppTopBar } from "@/components/app-sidebar";
 import { AppTitleBar } from "@/components/app-titlebar";
+import { ItemSheet } from "@/components/item-sheet";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getAuthToken } from "@/lib/convex-auth-start/functions";
 import { ConvexAuthStartProvider } from "@/lib/convex-auth-start/provider";
@@ -21,6 +22,11 @@ export type RouterContext = {
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
+	// `?item=<id>` opens the item panel over any page (components/item-sheet.tsx).
+	validateSearch: (search: Record<string, unknown>): { item?: number } => {
+		const item = Number(search.item);
+		return Number.isInteger(item) && item > 0 ? { item } : {};
+	},
 	beforeLoad: async ({ context }) => {
 		const [token, desktop] = await Promise.all([getAuthToken(), readDesktopInfo()]);
 		// SSR queries run over HTTP; give them the request's identity.
@@ -83,6 +89,7 @@ function RootComponent() {
 						<main id="content" data-scroll-restoration-id="content" className="app-content px-4 sm:px-6">
 							<Outlet />
 						</main>
+						<ItemSheet />
 					</div>
 				</div>
 			</TooltipProvider>

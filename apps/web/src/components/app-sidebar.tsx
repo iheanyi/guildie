@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, type LinkProps, useRouter, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { ClassText } from "@/components/class-name";
+import { useCurrentGuild } from "@/lib/breadcrumbs";
 import { usePageTitle } from "@/lib/page-title";
 import { desktop } from "@/lib/desktop";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,11 @@ export function Wordmark() {
 
 function SidebarNav() {
 	const { data: viewer } = useQuery(convexQuery(api.users.viewer, {}));
+	// Your guilds, plus the one you're looking at if it isn't yours, so its
+	// pages are always one click away (the guild page itself has no tabs).
+	const current = useCurrentGuild();
+	const guilds: { name: string; region: string; slug: string }[] = [...(viewer?.guilds ?? [])];
+	if (current && !guilds.some((g) => g.region === current.region && g.slug === current.slug)) guilds.push(current);
 	const characters = [...(viewer?.characters ?? [])].sort(
 		(a, b) => (b.level ?? 0) - (a.level ?? 0) || a.name.localeCompare(b.name),
 	);
@@ -59,8 +65,8 @@ function SidebarNav() {
 					</NavLink>
 				</div>
 
-				{viewer?.guilds.map((g) => (
-					<NavSection key={g._id} title={g.name}>
+				{guilds.map((g) => (
+					<NavSection key={`${g.region}/${g.slug}`} title={g.name}>
 						<NavLink to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} activeOptions={{ exact: true }}>
 							Roster
 						</NavLink>

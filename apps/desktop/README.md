@@ -21,7 +21,11 @@ Electron + TypeScript. Windows first; it runs on macOS for development.
 - **Tray** (notification area): who you're connected as, the last upload, the
   WoW folder, **Open Guildie**, **Upload now**, **Choose World of Warcraft
   folder...**, **Start with Windows**, **About Guildie**, **Sign out**, **Quit**.
-  Left-click opens the window. Closing the window keeps it running in the tray.
+  Left-click opens the window. Closing the window keeps it running in the tray,
+  with the window and its page unloaded (only the uploader stays in memory;
+  started with `--hidden` there's no window until you open one). About shows
+  memory and CPU across Guildie's processes; the log gets the same line every
+  15 minutes.
 - **WoW folder:** found in the usual places (or the helper's remembered one);
   otherwise choose it from the tray. It watches every
   `_*_/WTF/Account/*/SavedVariables/Guildie.lua` and writes

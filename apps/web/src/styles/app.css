@@ -223,8 +223,20 @@ html[data-desktop="true"] {
 		scrollbar-color: rgb(255 255 255 / 0.16) transparent;
 		scrollbar-width: thin;
 	}
+	/* The web gets the title bar's breadcrumbs on wide screens (phones have the
+	   top bar); the desktop app's version is below. */
 	.app-titlebar {
 		display: none;
+	}
+	@media (min-width: 48rem) {
+		html:not([data-desktop="true"]) .app-titlebar {
+			display: flex;
+			height: 40px;
+			flex: none;
+			align-items: center;
+			padding-inline: 1rem;
+			border-bottom: 1px solid var(--border);
+		}
 	}
 	/* Chrome isn't text to select. */
 	.app-sidebar,

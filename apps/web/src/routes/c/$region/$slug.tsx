@@ -11,7 +11,7 @@ export const Route = createFileRoute("/c/$region/$slug")({
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(characterQuery(params.region, params.slug));
 		if (!data) throw notFound();
-		return { name: `${data.character.name} ${data.character.surname ?? ""}`.trim() };
+		return { name: `${data.character.name} ${data.character.surname ?? ""}`.trim(), guild: data.guild };
 	},
 	head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.name ?? "Character"} · Guildie` }] }),
 	component: CharacterLayout,

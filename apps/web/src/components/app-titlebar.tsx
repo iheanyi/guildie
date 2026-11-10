@@ -1,23 +1,42 @@
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Link, useRouter } from "@tanstack/react-router";
+import { Fragment, useEffect, useState } from "react";
 import { NavSheet } from "@/components/app-sidebar";
-import { usePageTitle } from "@/lib/page-title";
+import { useBreadcrumbs } from "@/lib/breadcrumbs";
 
-// The desktop app's title bar over the content pane: back, forward, the page
-// title. The whole row drags the window (app.css .app-titlebar); Windows
-// draws minimize / maximize / close at its right end.
+// The title bar over the content pane: where you are (breadcrumbs), and in the
+// desktop app back / forward too. There the whole row drags the window
+// (app.css .app-titlebar) and Windows draws minimize / maximize / close at its
+// right end. On the web it's a plain row (the browser has back and forward).
 
 export function AppTitleBar() {
-	const title = usePageTitle();
+	const crumbs = useBreadcrumbs();
 	const { canBack, canForward, back, forward } = useHistoryButtons();
 	return (
 		<div className="app-titlebar">
 			<NavSheet className="md:hidden" />
-			<TitleButton label="Back (Alt+Left)" disabled={!canBack} onClick={back} icon={ArrowLeft01Icon} />
-			<TitleButton label="Forward (Alt+Right)" disabled={!canForward} onClick={forward} icon={ArrowRight01Icon} />
-			<span className="ml-2 truncate text-xs text-muted-foreground">{title}</span>
+			<span className="hidden gap-0.5 desktop:flex">
+				<TitleButton label="Back (Alt+Left)" disabled={!canBack} onClick={back} icon={ArrowLeft01Icon} />
+				<TitleButton label="Forward (Alt+Right)" disabled={!canForward} onClick={forward} icon={ArrowRight01Icon} />
+			</span>
+			<nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-xs desktop:ml-2">
+				{crumbs.map((c, i) => {
+					const last = i === crumbs.length - 1;
+					return (
+						<Fragment key={`${i}-${c.label}`}>
+							{i > 0 && <span className="text-muted-foreground/50">/</span>}
+							{c.link && !last ? (
+								<Link to={c.link.to} params={c.link.params} className="truncate rounded px-1 text-muted-foreground hover:text-foreground">
+									{c.label}
+								</Link>
+							) : (
+								<span className={last ? "truncate px-1 text-foreground" : "truncate px-1 text-muted-foreground"}>{c.label}</span>
+							)}
+						</Fragment>
+					);
+				})}
+			</nav>
 		</div>
 	);
 }

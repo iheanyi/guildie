@@ -105,3 +105,73 @@ export const guildCrafting = query({
 		return out.sort((a, b) => a.profession.localeCompare(b.profession) || a.name.localeCompare(b.name));
 	},
 });
+
+/**
+ * One item, for the item panel: its tooltip, the recipes that make it (with
+ * who in the guild knows them) and the recipes it's a reagent in. `guild` is
+ * the guild in view (a guild page, or the character's guild on a character
+ * page); without it, crafters are left out.
+ */
+export const itemDetail = query({
+	args: {
+		itemId: v.number(),
+		guild: v.optional(v.object({ region: vRegion, slug: v.string(), kind: v.union(v.literal("guild"), v.literal("character")) })),
+	},
+	handler: async (ctx, { itemId, guild: where }) => {
+		const items = new Map<number, Doc<"items"> | null>();
+		const item = await itemRow(ctx, itemId);
+		items.set(itemId, item);
+
+		let guild: Doc<"guilds"> | null = null;
+		if (where?.kind === "guild") guild = await guildByKey(ctx, where.region, where.slug);
+		if (where?.kind === "character") {
+			const character = await ctx.db
+				.query("characters")
+				.withIndex("by_slug", (q) => q.eq("flavor", "forever").eq("region", where.region).eq("slug", where.slug))
+				.first();
+			guild = character ? await ctx.db.get(character.guildId) : null;
+		}
+		if (guild && !(await access(ctx, guild)).canView) guild = null;
+		const members = guild
+			? await ctx.db
+					.query("characters")
+					.withIndex("by_guild", (q) => q.eq("guildId", guild._id).eq("inRoster", true))
+					.collect()
+			: [];
+		const craftersOf = (recipeId: number) =>
+			members
+				.flatMap((m) =>
+					(m.professions ?? [])
+						.filter((p) => p.knownRecipes?.includes(recipeId))
+						.map((p) => ({ name: m.name, slug: m.slug, region: m.region, classId: m.classId, skill: p.skill })),
+				)
+				.sort((a, b) => (b.skill ?? 0) - (a.skill ?? 0));
+
+		const makers = await ctx.db
+			.query("recipes")
+			.withIndex("by_craftedItemId", (q) => q.eq("craftedItemId", itemId))
+			.collect();
+		const craftedBy = await Promise.all(
+			makers.map(async (r) => ({ ...(await recipeView(ctx, r, items)), crafters: craftersOf(r.recipeId) })),
+		);
+
+		// No index on reagents (an array); the catalog is a few thousand small rows.
+		const usedIn = [];
+		for await (const r of ctx.db.query("recipes")) {
+			const reagent = r.reagents.find((x) => x.itemId === itemId);
+			if (!reagent) continue;
+			const view = await recipeView(ctx, r, items);
+			usedIn.push({ recipeId: view.recipeId, name: view.name, profession: view.profession, item: view.item, quantity: reagent.quantity });
+			if (usedIn.length >= 40) break;
+		}
+		usedIn.sort((a, b) => a.profession.localeCompare(b.profession) || a.name.localeCompare(b.name));
+
+		return {
+			itemId,
+			item: item ? { name: item.name, quality: item.quality, icon: item.icon, kind: item.kind, tooltip: item.tooltip } : null,
+			guild: guild ? { name: guild.name, region: guild.region, slug: guild.slug } : null,
+			craftedBy,
+			usedIn,
+		};
+	},
+});

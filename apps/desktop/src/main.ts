@@ -54,9 +54,23 @@ if (process.platform === "win32") app.setAppUserModelId("club.guildie.desktop");
 
 let win: BrowserWindow | undefined;
 let quitting = false;
+/** Where the window was when it closed, so reopening comes back there. */
+let lastUrl = siteUrl;
+/** Set once the app is ready: makes the window (it exists only while open). */
+let openWindow: ((url?: string) => BrowserWindow) | undefined;
 
-function showWindow() {
-	if (!win || win.isDestroyed()) return;
+/**
+ * Show the window, making it if it's closed. Closing destroys it rather than
+ * hiding it, so a Guildie sitting in the tray holds no page in memory (the
+ * renderer and GPU processes go away); only the uploader keeps running.
+ */
+function showWindow(url?: string) {
+	if (!win || win.isDestroyed()) {
+		if (!openWindow) return;
+		win = openWindow(url);
+		return;
+	}
+	if (url) void win.loadURL(url);
 	if (win.isMinimized()) win.restore();
 	win.show();
 	win.focus();
@@ -130,17 +144,22 @@ app.whenReady().then(async () => {
 	});
 
 	// ---- The window ----
-	win = createWindow(siteUrl, { show: !startHidden, preload: join(__dirname, "preload.cjs") });
-	win.on("close", (event) => {
-		if (quitting || smokeTest) return;
-		// Closing hides to the tray: it keeps uploading.
-		event.preventDefault();
-		win?.hide();
-		if (!settings.trayNoticeShown) {
-			settings.trayNoticeShown = true;
-			notify("Guildie is still running", "It keeps uploading your addon data. Quit from the tray icon.");
-		}
-	});
+	openWindow = (url = lastUrl) => {
+		const created = createWindow(url, { show: true, preload: join(__dirname, "preload.cjs") });
+		created.on("close", () => {
+			if (quitting || smokeTest) return;
+			const current = created.webContents.getURL();
+			if (isGuildieUrl(current) && originOf(current) === origin) lastUrl = current;
+			if (!settings.trayNoticeShown) {
+				settings.trayNoticeShown = true;
+				notify("Guildie is still running", "It keeps uploading your addon data. Quit from the tray icon.");
+			}
+		});
+		return created;
+	};
+	// Started from "Start with Windows" (--hidden): no window until it's opened.
+	if (smokeTest) win = createWindow(siteUrl, { show: false, preload: join(__dirname, "preload.cjs") });
+	else if (!startHidden) win = openWindow(siteUrl);
 	connection.onStatus((status) => {
 		const contents = win && !win.isDestroyed() ? win.webContents : undefined;
 		if (contents && isGuildieUrl(contents.getURL()) && originOf(contents.getURL()) === origin) {
@@ -149,7 +168,7 @@ app.whenReady().then(async () => {
 	});
 
 	if (smokeTest) {
-		const ok = await runSmokeTest(win, connection, siteUrl, log);
+		const ok = await runSmokeTest(win!, connection, siteUrl, log);
 		quitting = true;
 		app.exit(ok ? 0 : 1);
 		return;
@@ -179,8 +198,7 @@ app.whenReady().then(async () => {
 		void connection.pair(
 			(connectUrl) => void shell.openExternal(connectUrl),
 			(sessionCode) => {
-				void win?.loadURL(`${origin}/desktop/session?code=${encodeURIComponent(sessionCode)}`);
-				showWindow();
+				showWindow(`${origin}/desktop/session?code=${encodeURIComponent(sessionCode)}`);
 			},
 		);
 	ipcMain.handle("guildie:sign-in", (event) => {
@@ -188,7 +206,7 @@ app.whenReady().then(async () => {
 		signIn();
 	});
 	const { update } = createTray({
-		open: showWindow,
+		open: () => showWindow(),
 		connect: signIn,
 		uploadNow: () => connection.uploadNow(),
 		chooseWow: () => void chooseWow(),
@@ -199,7 +217,7 @@ app.whenReady().then(async () => {
 					type: "info",
 					title: "About Guildie",
 					message: `Guildie ${__VERSION__}`,
-					detail: `Site: ${origin}\nElectron ${process.versions.electron}\nSettings and log: ${app.getPath("userData")}`,
+					detail: `Site: ${origin}\nElectron ${process.versions.electron}\n${usageLine()}\nSettings and log: ${app.getPath("userData")}`,
 					buttons: ["OK", "Open log"],
 				})
 				.then(({ response }) => {
@@ -215,10 +233,22 @@ app.whenReady().then(async () => {
 	if (!connection.status.wowFolder) log("No World of Warcraft folder found; choose it from the tray menu.");
 });
 
-app.on("second-instance", showWindow);
-app.on("activate", showWindow); // macOS: clicking the Dock icon
+app.on("second-instance", () => showWindow());
+app.on("activate", () => showWindow()); // macOS: clicking the Dock icon
 app.on("before-quit", () => {
 	quitting = true;
 });
-// The window only hides, so this means quitting.
-app.on("window-all-closed", () => app.quit());
+// Closing the window leaves Guildie in the tray; "Quit" in the tray menu quits.
+app.on("window-all-closed", () => {
+	if (quitting) app.quit();
+});
+
+/** Memory and CPU across all of Guildie's processes, e.g. "92 MB in 1 process, CPU 0.1%". */
+function usageLine() {
+	const metrics = app.getAppMetrics();
+	const mb = metrics.reduce((sum, m) => sum + (m.memory.privateBytes ?? m.memory.workingSetSize), 0) / 1024;
+	const cpu = metrics.reduce((sum, m) => sum + m.cpu.percentCPUUsage, 0);
+	return `Memory: ${Math.round(mb)} MB in ${metrics.length} process${metrics.length === 1 ? "" : "es"}, CPU ${cpu.toFixed(1)}%`;
+}
+// A line in the log every 15 minutes, to see what it uses over a play session.
+setInterval(() => log(usageLine()), 15 * 60_000).unref();

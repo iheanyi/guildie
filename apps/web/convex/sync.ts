@@ -311,7 +311,7 @@ export const syncCharacter = internalAction({
 			if (worn.length) {
 				await ctx.scheduler.runAfter(0, internal.items.ensure, {
 					itemIds: worn.map((i) => i.item.id),
-					hints: worn.map((i) => ({ itemId: i.item.id, name: i.name, quality: i.quality.type })),
+					hints: worn.map((i) => ({ itemId: i.item.id, name: i.name, quality: i.quality.type, tooltip: tooltipLines(i) })),
 				});
 			}
 		}

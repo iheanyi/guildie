@@ -8,14 +8,13 @@ import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
-import { PageTab, PageTabs } from "@/components/page-tabs";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ago } from "@/lib/format";
 
 // A guild's pages: the roster (index) and what the guild can craft
 // (crafting), under one header with the guild's facts and the owner's
-// controls.
+// controls. The sidebar switches between them (no tabs here).
 export const Route = createFileRoute("/g/$region/$slug")({
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(
@@ -72,14 +71,6 @@ function GuildLayout() {
 				className="pb-0"
 			>
 				{guild.lastSyncError && <p className="mt-2 text-[0.8125rem] text-destructive">{guild.lastSyncError}</p>}
-				<PageTabs className="mt-4">
-					<PageTab to="/g/$region/$slug" params={params}>
-						Roster
-					</PageTab>
-					<PageTab to="/g/$region/$slug/crafting" params={params}>
-						Crafting
-					</PageTab>
-				</PageTabs>
 			</PageHeader>
 			<Outlet />
 		</div>

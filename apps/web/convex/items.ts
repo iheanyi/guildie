@@ -77,15 +77,17 @@ export function tooltipLines(p: ItemPreview): Line[] {
 
 /** Which of these items we don't have yet (or have stale). */
 export const missing = internalQuery({
-	args: { itemIds: v.array(v.number()), olderThan: v.optional(v.number()) },
-	handler: async (ctx, { itemIds, olderThan }) => {
+	args: { itemIds: v.array(v.number()), olderThan: v.optional(v.number()), refetchEmpty: v.optional(v.boolean()) },
+	handler: async (ctx, { itemIds, olderThan, refetchEmpty }) => {
 		const out: number[] = [];
 		for (const itemId of new Set(itemIds)) {
 			const row = await ctx.db
 				.query("items")
 				.withIndex("by_itemId", (q) => q.eq("itemId", itemId))
 				.unique();
-			if (!row || (olderThan !== undefined && row.syncedAt < olderThan)) out.push(itemId);
+			// Gear saved before hints carried tooltips has none; refetch it when a
+			// hint can fill it in (trade goods legitimately have no lines).
+			if (!row || (refetchEmpty && row.tooltip.length === 0) || (olderThan !== undefined && row.syncedAt < olderThan)) out.push(itemId);
 		}
 		return out;
 	},
@@ -99,13 +101,21 @@ const BATCH_STAGGER_MS = 2_000;
  * and quality). Blizzard's item endpoint 404s for many Forever items whose
  * icons exist, so these fill in the row then.
  */
-const vHint = v.object({ itemId: v.number(), name: v.optional(v.string()), quality: v.optional(v.string()) });
+const vHint = v.object({
+	itemId: v.number(),
+	name: v.optional(v.string()),
+	quality: v.optional(v.string()),
+	tooltip: v.optional(v.array(v.object({ left: v.string(), right: v.optional(v.string()), color: v.optional(v.string()) }))),
+});
 
 /** Fetch the given items we don't have yet, in staggered batches. */
 export const ensure = internalAction({
 	args: { itemIds: v.array(v.number()), hints: v.optional(v.array(vHint)) },
 	handler: async (ctx, { itemIds, hints }): Promise<{ queued: number }> => {
-		const due: number[] = await ctx.runQuery(internal.items.missing, { itemIds });
+		const due: number[] = await ctx.runQuery(internal.items.missing, {
+			itemIds,
+			refetchEmpty: hints?.some((h) => h.tooltip?.length) ?? false,
+		});
 		const hintOf = new Map((hints ?? []).map((h) => [h.itemId, h]));
 		for (let i = 0; i < due.length; i += BATCH) {
 			const ids = due.slice(i, i + BATCH);
@@ -159,7 +169,7 @@ export const syncBatch = internalAction({
 					const hint = hintOf.get(itemId);
 					const icon = media.ok ? media.data.assets?.find((a) => a.key === "icon")?.value : undefined;
 					if (!hint?.name || !icon) return null;
-					return { itemId, name: hint.name, quality: hint.quality ?? "COMMON", icon, tooltip: [] };
+					return { itemId, name: hint.name, quality: hint.quality ?? "COMMON", icon, tooltip: hint.tooltip ?? [] };
 				}
 				return {
 					itemId,

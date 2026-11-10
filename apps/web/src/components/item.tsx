@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { CSSProperties, ReactNode } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -85,7 +86,8 @@ export function ItemTooltipBody({ item }: { item: ItemLike }) {
 
 /**
  * Hover (or focus) an item to see its tooltip. Wraps `children` (an icon, a
- * name, a row) in a trigger; clicking opens Wowhead's Forever page.
+ * name, a row) in a trigger; clicking opens the item panel (`?item=`), which
+ * links on to Wowhead's Forever page.
  */
 export function ItemHover({
 	item,
@@ -101,7 +103,7 @@ export function ItemHover({
 	return (
 		<Tooltip>
 			<TooltipTrigger
-				render={<a href={wowheadItemUrl(item.itemId)} target="_blank" rel="noreferrer" className={className} />}
+				render={<Link to="." search={(prev: Record<string, unknown>) => ({ ...prev, item: item.itemId })} className={className} />}
 			>
 				{children}
 			</TooltipTrigger>
