@@ -4,7 +4,6 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, mutation, type MutationCtx, type QueryCtx, query } from "./_generated/server";
 import { vRegion, vVisibility } from "./schema";
-import { forgetAddonBundle } from "./addon";
 import { pickTalents } from "./helper";
 import { requireUserId } from "./users";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
@@ -219,8 +218,6 @@ export const setVisibility = mutation({
 		const guild = await ctx.db.get(guildId);
 		if (!guild || guild.ownerId !== userId) throw new ConvexError("Only the guild's owner can change this");
 		await ctx.db.patch(guildId, { visibility });
-		// A guild that turns members-only leaves the addon's public bundle now, not at the next rebuild.
-		if (visibility === "members") await forgetAddonBundle(ctx);
 	},
 });
 

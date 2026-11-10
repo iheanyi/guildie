@@ -8,7 +8,6 @@
  * @module
  */
 
-import type * as addon from "../addon.js";
 import type * as auth from "../auth.js";
 import type * as authBattlenet from "../authBattlenet.js";
 import type * as authGateway from "../authGateway.js";
@@ -38,7 +37,6 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  addon: typeof addon;
   auth: typeof auth;
   authBattlenet: typeof authBattlenet;
   authGateway: typeof authGateway;

@@ -19,7 +19,6 @@ import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
 import { Route as ClaimCallbackRouteImport } from './routes/claim/callback'
 import { Route as DesktopSessionRouteImport } from './routes/desktop/session'
 import { Route as HelperConnectRouteImport } from './routes/helper/connect'
-import { Route as ApiAddonBundleRouteImport } from './routes/api/addon/bundle'
 import { Route as ApiHelperGuildDataRouteImport } from './routes/api/helper/guild-data'
 import { Route as ApiHelperMeRouteImport } from './routes/api/helper/me'
 import { Route as ApiHelperPairRouteImport } from './routes/api/helper/pair'
@@ -82,11 +81,6 @@ const DesktopSessionRoute = DesktopSessionRouteImport.update({
 const HelperConnectRoute = HelperConnectRouteImport.update({
   id: '/helper/connect',
   path: '/helper/connect',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAddonBundleRoute = ApiAddonBundleRouteImport.update({
-  id: '/api/addon/bundle',
-  path: '/api/addon/bundle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHelperGuildDataRoute = ApiHelperGuildDataRouteImport.update({
@@ -166,7 +160,6 @@ export interface FileRoutesByFullPath {
   '/claim/callback': typeof ClaimCallbackRoute
   '/desktop/session': typeof DesktopSessionRoute
   '/helper/connect': typeof HelperConnectRoute
-  '/api/addon/bundle': typeof ApiAddonBundleRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
@@ -192,7 +185,6 @@ export interface FileRoutesByTo {
   '/claim/callback': typeof ClaimCallbackRoute
   '/desktop/session': typeof DesktopSessionRoute
   '/helper/connect': typeof HelperConnectRoute
-  '/api/addon/bundle': typeof ApiAddonBundleRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
@@ -217,7 +209,6 @@ export interface FileRoutesById {
   '/claim/callback': typeof ClaimCallbackRoute
   '/desktop/session': typeof DesktopSessionRoute
   '/helper/connect': typeof HelperConnectRoute
-  '/api/addon/bundle': typeof ApiAddonBundleRoute
   '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
@@ -245,7 +236,6 @@ export interface FileRouteTypes {
     | '/claim/callback'
     | '/desktop/session'
     | '/helper/connect'
-    | '/api/addon/bundle'
     | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
@@ -271,7 +261,6 @@ export interface FileRouteTypes {
     | '/claim/callback'
     | '/desktop/session'
     | '/helper/connect'
-    | '/api/addon/bundle'
     | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
@@ -295,7 +284,6 @@ export interface FileRouteTypes {
     | '/claim/callback'
     | '/desktop/session'
     | '/helper/connect'
-    | '/api/addon/bundle'
     | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
@@ -322,7 +310,6 @@ export interface RootRouteChildren {
   ClaimCallbackRoute: typeof ClaimCallbackRoute
   DesktopSessionRoute: typeof DesktopSessionRoute
   HelperConnectRoute: typeof HelperConnectRoute
-  ApiAddonBundleRoute: typeof ApiAddonBundleRoute
   ApiHelperGuildDataRoute: typeof ApiHelperGuildDataRoute
   ApiHelperMeRoute: typeof ApiHelperMeRoute
   ApiHelperPairRoute: typeof ApiHelperPairRouteWithChildren
@@ -402,13 +389,6 @@ declare module '@tanstack/react-router' {
       path: '/helper/connect'
       fullPath: '/helper/connect'
       preLoaderRoute: typeof HelperConnectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/addon/bundle': {
-      id: '/api/addon/bundle'
-      path: '/api/addon/bundle'
-      fullPath: '/api/addon/bundle'
-      preLoaderRoute: typeof ApiAddonBundleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/helper/guild-data': {
@@ -558,7 +538,6 @@ const rootRouteChildren: RootRouteChildren = {
   ClaimCallbackRoute: ClaimCallbackRoute,
   DesktopSessionRoute: DesktopSessionRoute,
   HelperConnectRoute: HelperConnectRoute,
-  ApiAddonBundleRoute: ApiAddonBundleRoute,
   ApiHelperGuildDataRoute: ApiHelperGuildDataRoute,
   ApiHelperMeRoute: ApiHelperMeRoute,
   ApiHelperPairRoute: ApiHelperPairRouteWithChildren,

@@ -3,11 +3,9 @@ import { join } from "node:path";
 import type { GuildData } from "./api.ts";
 import type { Log } from "./config.ts";
 
-// Turns the guild data from guildie.club into Lua files the addon loads:
-// GuildieData.lua (the Guildie app, the player's guilds) and GuildieBundle.lua
-// (the addon release, every public guild; apps/addon/scripts/build.ts). The game
-// runs addon files as code, so everything here is written as plain data
-// literals: numbers and fully escaped strings only.
+// Turns the guild data from guildie.club into a Lua file the addon loads
+// (GuildieData.lua). The game runs addon files as code, so everything here is
+// written as plain data literals: numbers and fully escaped strings only.
 
 function luaString(s: string) {
 	let out = '"';
@@ -39,19 +37,8 @@ export function toLua(value: unknown): string {
 
 /** The whole file. Strings come out as UTF-8 bytes, one char each: write it as latin1 so each byte lands as-is. */
 export function guildDataFile(data: unknown) {
-	return `-- Written by the Guildie app from guildie.club; replaced on every refresh. Don't edit.\nGuildieData = ${toLua(data)}\n`;
+	return `-- Written by the Guildie helper from guildie.club; replaced on every refresh. Don't edit.\nGuildieData = ${toLua(data)}\n`;
 }
-
-/** GuildieBundle.lua for an addon release: every public guild. Same encoding as guildDataFile. */
-export function bundleFile(data: unknown) {
-	return `-- Every public guild on guildie.club, bundled with this release of the addon. Don't edit.\nGuildieBundle = ${toLua(data)}\n`;
-}
-
-const describe = (data: GuildData) => {
-	const guilds = Object.values(data.guilds);
-	const reagents = guilds.reduce((n, g) => n + Object.keys(g.reagents).length, 0);
-	return `${guilds.map((g) => g.name).join(", ") || "no guilds"} (${reagents} reagents)`;
-};
 
 /** Writes GuildieData.lua into each addon folder, only where it changed. Returns the files written. */
 export function writeGuildData(folders: string[], data: GuildData, log: Log): string[] {
@@ -63,7 +50,7 @@ export function writeGuildData(folders: string[], data: GuildData, log: Log): st
 			if (existsSync(file) && readFileSync(file).equals(content)) continue;
 			writeFileSync(file, content);
 			written.push(file);
-			log(`Wrote guild data for ${describe(data)} to ${file}`);
+			log(`Wrote guild data for ${data.guilds.join(", ") || "no guilds"} (${Object.keys(data.reagents).length} reagents) to ${file}`);
 		} catch (e) {
 			log(`Couldn't write ${file}: ${(e as Error).message}`);
 		}

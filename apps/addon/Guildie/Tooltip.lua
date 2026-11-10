@@ -1,12 +1,18 @@
 -- Adds a line to item tooltips: guildmates whose known recipes use this item.
 -- A suggestion, not a certainty: knowing a recipe doesn't mean they're still
--- making it. Data is your current guild's newest copy (Data.lua): bundled with
--- the addon, from the Guildie app, or shared by a guildmate.
+-- making it. Data comes from GuildieData.lua, which the helper downloads.
 
 local ADDON, ns = ...
 
 local GOLD = "|cffd9b45a"
 local MAX_NAMES = 3
+
+local function isMine(name)
+    for _, mine in ipairs(GuildieData and GuildieData.mine or {}) do
+        if mine == name then return true end
+    end
+    return name == UnitName("player")
+end
 
 -- Class colors as the game shows them; ours (from guildie.club) as a fallback.
 local FALLBACK_COLORS = {
@@ -24,12 +30,11 @@ local function classColored(name, classId)
 end
 
 local function suggestion(itemID)
-    local reagents = ns.active and ns.active.entry.reagents
-    local entry = reagents and reagents[itemID]
+    local entry = GuildieData and GuildieData.reagents and GuildieData.reagents[itemID]
     if not entry then return nil end
     local names, extra = {}, 0
     for _, user in ipairs(entry.users or {}) do
-        if not ns.isMine(user.name) then
+        if not isMine(user.name) then
             if #names < MAX_NAMES then
                 table.insert(names, string.format("%s (%s)", classColored(user.name, user.classId), user.profession))
             else

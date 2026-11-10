@@ -288,10 +288,4 @@ export default defineSchema({
 		token: v.string(),
 		expiresAt: v.number(),
 	}).index("by_region", ["region"]),
-
-	/** The last public bundle for the addon release (addon:bundle), JSON in file storage. At most one row. */
-	addonBundles: defineTable({
-		storageId: v.id("_storage"),
-		generatedAt: v.number(),
-	}),
 });

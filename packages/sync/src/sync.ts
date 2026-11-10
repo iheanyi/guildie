@@ -3,14 +3,12 @@
 // addon's GuildieData.lua fresh. The host (helper or desktop app) decides when
 // it's connected and calls tick() every couple of seconds while it is.
 
-import type { Api, GuildData } from "./api.ts";
+import type { Api } from "./api.ts";
 import type { Log } from "./config.ts";
 import { writeGuildData } from "./luaData.ts";
 import { findAddonFolders, findWowFolder, Watcher } from "./watcher.ts";
 
 export const GUILD_DATA_EVERY_MS = 15 * 60_000;
-/** How often to check GuildieData.lua is still there (an addon manager's update replaces the addon folder). */
-export const GUILD_DATA_CHECK_EVERY_MS = 30_000;
 
 export type LastUpload = { at: number; characters: string[] };
 
@@ -38,8 +36,6 @@ export class SyncEngine {
 	private readonly watcher: Watcher;
 	private readonly warnedUnmatched = new Set<string>();
 	private lastGuildDataTry = 0;
-	private lastGuildDataCheck = 0;
-	private guildData: GuildData | undefined;
 	private busy = false;
 
 	constructor(api: Api, wow: string | undefined, events: SyncEvents) {
@@ -67,11 +63,6 @@ export class SyncEngine {
 		try {
 			await this.watcher.tick();
 			if (this.api.token && Date.now() - this.lastGuildDataTry > GUILD_DATA_EVERY_MS) await this.refreshGuildData();
-			else if (this.guildData && Date.now() - this.lastGuildDataCheck > GUILD_DATA_CHECK_EVERY_MS) {
-				// Writes only where the file is missing or different, e.g. after CurseForge or WowUp updated the addon.
-				this.lastGuildDataCheck = Date.now();
-				writeGuildData(findAddonFolders(this.wowSetting), this.guildData, this.events.log);
-			}
 		} catch (e) {
 			this.events.log(`Sync failed: ${(e as Error).message}`);
 		} finally {
@@ -91,7 +82,6 @@ export class SyncEngine {
 		this.warnedUnmatched.clear();
 		this.lastUpload = undefined;
 		this.guildDataAt = undefined;
-		this.guildData = undefined;
 		this.lastGuildDataTry = 0;
 	}
 
@@ -138,8 +128,6 @@ export class SyncEngine {
 			return;
 		}
 		writeGuildData(folders, data, this.events.log);
-		this.guildData = data;
-		this.lastGuildDataCheck = Date.now();
 		this.guildDataAt = Date.now();
 		this.events.onGuildData?.(this.guildDataAt);
 	}

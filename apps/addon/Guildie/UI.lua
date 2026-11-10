@@ -1,12 +1,10 @@
--- Guildie's window and minimap button. The window shows your guild's tooltip
--- data (which guild, how fresh, where from), what's saved for this character
--- and when it reaches guildie.club; "Upload now" reloads the UI, which is when
--- the game writes addon data to disk for the Guildie app.
+-- Guildie's window and minimap button. The window shows what's saved for this
+-- character and when it reaches guildie.club; "Upload now" reloads the UI,
+-- which is when the game writes addon data to disk for the helper.
 
 local ADDON, ns = ...
 
 local GOLD = "|cffd9b45a"
-local SITE = "https://guildie.club"
 local AFK_INTERVAL = 20 * 60 -- seconds between automatic reloads, at most
 
 local function settings()
@@ -42,74 +40,8 @@ local function checkbox(parent, anchor, label, get, set)
     return cb, text
 end
 
-local function ago(ms)
-    local seconds = math.max(0, math.floor((ns.nowMs() - ms) / 1000))
-    if seconds < 90 then return "just now" end
-    local minutes = math.floor(seconds / 60)
-    if minutes < 60 then return minutes .. " min ago" end
-    local hours = math.floor(minutes / 60)
-    if hours < 48 then return hours .. (hours == 1 and " hour ago" or " hours ago") end
-    return math.floor(hours / 24) .. " days ago"
-end
-
-local function day(ms)
-    local t = math.floor(ms / 1000)
-    return date("%b ", t) .. tonumber(date("%d", t))
-end
-
---- "from the Guildie app, 2 min ago" / "shared by Brisket, 1 hour ago" / "bundled with the addon, Nov 10"
-local function sourceText(active)
-    local at = tonumber(active.entry.generatedAt) or 0
-    if active.kind == "app" then return "from the Guildie app, " .. ago(at) end
-    if active.kind == "shared" then return "shared by " .. (active.by or "a guildmate") .. ", " .. ago(at) end
-    return "bundled with the addon, " .. day(at)
-end
-
--- Lays out the lines that come and go, top to bottom, skipping hidden ones.
-local function stack(items)
-    local anchor = window.talents
-    for _, item in ipairs(items) do
-        if item.frame:IsShown() then
-            item.frame:ClearAllPoints()
-            item.frame:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", item.x or 0, item.gap)
-            if item.width then item.frame:SetWidth(item.width) else item.frame:SetPoint("RIGHT", window, "RIGHT", -16, 0) end
-            anchor = item.frame
-        end
-    end
-end
-
-local function refreshGuild()
-    local guild, active = ns.guild, ns.active
-    window.url:Hide()
-    window.guildData:SetText("")
-    if guild == nil then
-        window.guild:SetText("Looking up your guild...")
-    elseif guild == false then
-        window.guild:SetText("You're not in a guild, so there are no guild tooltips.")
-    elseif not active then
-        window.guild:SetText(guild.name .. " isn't on Guildie yet. Add it at guildie.club")
-        window.url:Show()
-    else
-        local count = 0
-        for _ in pairs(active.entry.reagents or {}) do count = count + 1 end
-        window.guild:SetText(guild.name)
-        window.guildData:SetText(string.format("Reagent tooltips %s (%d reagent%s).", sourceText(active), count, count == 1 and "" or "s"))
-    end
-    window.guildData:SetShown(window.guildData:GetText() ~= "")
-    window.sync:SetShown(ns.showSyncStatus and true or false)
-    if ns.showSyncStatus and ns.sync then window.sync:SetText(ns.sync.status()) end
-    stack({
-        { frame = window.guild, gap = -12 },
-        { frame = window.guildData, gap = -4 },
-        { frame = window.url, gap = -4, x = 6, width = 200 },
-        { frame = window.sync, gap = -4, x = window.url:IsShown() and -6 or 0 },
-        { frame = window.saved, gap = -12, x = window.url:IsShown() and not window.sync:IsShown() and -6 or 0 },
-    })
-end
-
 local function refresh()
     if not window or not window:IsShown() then return end
-    refreshGuild()
     local me = ns.current()
     if not me then
         window.character:SetText("No data yet for this character.")
@@ -120,6 +52,14 @@ local function refresh()
     window.character:SetText(string.format("%s, level %d", me.name or UnitName("player"), me.level or UnitLevel("player")))
     local points = ns.points(me)
     window.talents:SetText(string.format("%d talent point%s in %d talent%s", points, points == 1 and "" or "s", #me.talents, #me.talents == 1 and "" or "s"))
+    if GuildieData and GuildieData.generatedAt then
+        local count = 0
+        for _ in pairs(GuildieData.reagents or {}) do count = count + 1 end
+        window.guildData:SetText(string.format("Tooltips: %s, from %s (%d reagents)",
+            table.concat(GuildieData.guilds or {}, ", "), date("%b %d %H:%M", math.floor(GuildieData.generatedAt / 1000)), count))
+    else
+        window.guildData:SetText("Tooltips: no guild data yet. The helper downloads it; it loads at login or /reload.")
+    end
     if ns.dirty then
         window.saved:SetText(GOLD .. "Changed since your last upload.|r It goes to guildie.club when you log out, or now:")
     else
@@ -127,12 +67,10 @@ local function refresh()
     end
 end
 ns.onCapture = refresh
-ns.onSyncChange = refresh
-ns.onDataChange(refresh)
 
 local function buildWindow()
     window = CreateFrame("Frame", "GuildieWindow", UIParent, "BasicFrameTemplateWithInset")
-    window:SetSize(360, 340)
+    window:SetSize(340, 270)
     window:SetPoint("CENTER")
     window:SetMovable(true)
     window:EnableMouse(true)
@@ -153,31 +91,8 @@ local function buildWindow()
 
     window.character = line(window, top, 0, "GameFontNormalLarge")
     window.talents = line(window, window.character, -6)
-    window.guild = line(window, window.talents, -12, "GameFontNormal")
-    window.guildData = line(window, window.guild, -4, "GameFontHighlightSmall")
-    window.sync = line(window, window.guildData, -4, "GameFontDisableSmall")
-
-    -- Addons can't open a browser: the address, ready to copy (Ctrl+C).
-    local url = CreateFrame("EditBox", nil, window, "InputBoxTemplate")
-    url:SetSize(200, 20)
-    url:SetAutoFocus(false)
-    url:SetFontObject("GameFontHighlightSmall")
-    url:SetText(SITE)
-    url:SetCursorPosition(0)
-    url:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
-    url:SetScript("OnEditFocusLost", function(self) self:HighlightText(0, 0) end)
-    url:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    url:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
-    url:SetScript("OnTextChanged", function(self, userInput)
-        if userInput then
-            self:SetText(SITE)
-            self:HighlightText()
-        end
-    end)
-    url:Hide()
-    window.url = url
-
-    window.saved = line(window, window.sync, -12, "GameFontHighlightSmall")
+    window.guildData = line(window, window.talents, -6, "GameFontDisableSmall")
+    window.saved = line(window, window.guildData, -12, "GameFontHighlightSmall")
 
     local upload = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
     upload:SetSize(170, 24)
@@ -200,15 +115,9 @@ local function buildWindow()
         end)
 
     local foot = line(window, minimap, -10, "GameFontDisableSmall")
-    foot:SetText("Uploads need the Guildie app on this computer; tooltips work without it. guildie.club")
+    foot:SetText("Needs the Guildie helper running on this computer. guildie.club")
 
     window:SetScript("OnShow", refresh)
-end
-
-function ns.showWindow()
-    if not window then buildWindow() end
-    window:Show()
-    refresh()
 end
 
 function ns.toggleWindow()

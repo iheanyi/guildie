@@ -2,7 +2,6 @@ import { ConvexError, type Infer, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalQuery, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
-import { buildGuildEntries, byRecipes, type GuildDataV2, guildKey, type ReagentUser } from "./addon";
 import { sha256 } from "./claims";
 import type { vTalentTree } from "./schema";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
@@ -336,21 +335,30 @@ export const signOut = mutation({
 });
 
 // ---- Guild data for the addon's tooltips ------------------------------------
-// Built per guild by addon.ts, shared with the addon release's bundle.
 
-/** The original format: every guild's reagents merged. What Guildie app 0.2 and the helper ask for. */
-export type GuildDataV1 = {
+type GuildDataBase = {
+	mine: string[];
+	guilds: {
+		name: string;
+		region: string;
+		members: { name: string; slug: string; classId: number; professions: { name: string; skill?: number; knownRecipes: number[] }[] }[];
+	}[];
+};
+
+export type GuildData = {
 	version: 1;
 	generatedAt: number;
 	guilds: string[];
 	mine: string[];
-	reagents: Record<string, { name: string; users: ReagentUser[] }>;
+	recipesKnown: number;
+	recipesInCatalog: number;
+	reagents: Record<string, { name: string; users: { name: string; classId: number; profession: string; recipes: number }[] }>;
 };
 
-/** The token's guilds (those its claimed characters are in) and its characters' names. */
+/** The token's guilds (those its claimed characters are in) and their members. */
 export const guildDataBase = internalQuery({
 	args: { token: v.string() },
-	handler: async (ctx, { token }): Promise<{ mine: string[]; guildIds: Id<"guilds">[] } | null> => {
+	handler: async (ctx, { token }): Promise<GuildDataBase | null> => {
 		const row = await tokenOwner(ctx, token);
 		if (!row) return null;
 		const owned = await ctx.db
@@ -365,35 +373,79 @@ export const guildDataBase = internalQuery({
 				.first();
 			if (member?.inRoster) guildIds.add(member.guildId);
 		}
-		return { mine: owned.map((c) => c.name), guildIds: [...guildIds] };
+		const guilds = [];
+		for (const guildId of guildIds) {
+			const guild = await ctx.db.get(guildId);
+			if (!guild) continue;
+			const members = await ctx.db
+				.query("characters")
+				.withIndex("by_guild", (q) => q.eq("guildId", guildId).eq("inRoster", true))
+				.collect();
+			guilds.push({
+				name: guild.name,
+				region: guild.region,
+				members: members.map((m) => ({
+					name: m.name,
+					slug: m.slug,
+					classId: m.classId,
+					professions: (m.professions ?? []).map((p) => ({ name: p.name, skill: p.skill, knownRecipes: p.knownRecipes ?? [] })),
+				})),
+			});
+		}
+		return { mine: owned.map((c) => c.name), guilds };
 	},
 });
 
 /**
- * What the Guildie app writes to GuildieData.lua: the token's guilds, members-only
- * ones included. `version: 2` gives one entry per guild (what the addon keys
- * by guild); without it, the v1 shape older apps expect.
+ * What the addon shows on reagent tooltips: for each reagent, the guild
+ * members whose known recipes use it (most recipes first). Suggestions, not
+ * certainties: knowing a recipe doesn't mean someone is still making it.
  */
 export const guildData = action({
-	args: { token: v.string(), version: v.optional(v.number()) },
-	handler: async (ctx, { token, version }): Promise<GuildDataV1 | GuildDataV2 | null> => {
-		const base: { mine: string[]; guildIds: Id<"guilds">[] } | null = await ctx.runQuery(internal.helper.guildDataBase, { token });
+	args: { token: v.string() },
+	handler: async (ctx, { token }): Promise<GuildData | null> => {
+		const base: GuildDataBase | null = await ctx.runQuery(internal.helper.guildDataBase, { token });
 		if (!base) return null;
-		const entries = await buildGuildEntries(ctx, base.guildIds, false);
-		const generatedAt = Date.now();
-		if (version === 2) {
-			const guilds: GuildDataV2["guilds"] = {};
-			for (const e of entries) guilds[guildKey(e.region, e.slug)] = e;
-			return { version: 2, generatedAt, mine: base.mine, guilds };
-		}
-		const reagents: GuildDataV1["reagents"] = {};
-		for (const e of entries) {
-			for (const [itemId, r] of Object.entries(e.reagents)) {
-				const merged = (reagents[itemId] ??= { name: r.name, users: [] });
-				merged.users.push(...r.users);
+		const ids = [...new Set(base.guilds.flatMap((g) => g.members.flatMap((m) => m.professions.flatMap((p) => p.knownRecipes))))];
+		const reagentsByRecipe = new Map<number, { itemId: number; name: string }[]>();
+		for (let i = 0; i < ids.length; i += 400) {
+			for (const r of await ctx.runQuery(internal.recipes.byIds, { ids: ids.slice(i, i + 400) })) {
+				reagentsByRecipe.set(r.recipeId, r.reagents);
 			}
 		}
-		for (const r of Object.values(reagents)) r.users = r.users.sort(byRecipes).slice(0, 8);
-		return { version: 1, generatedAt, guilds: entries.map((e) => e.name), mine: base.mine, reagents };
+		// itemId -> member -> { profession, recipes using it }
+		const uses = new Map<number, { name: string; users: Map<string, { name: string; classId: number; profession: string; recipes: number }> }>();
+		for (const g of base.guilds) {
+			for (const m of g.members) {
+				for (const p of m.professions) {
+					for (const recipeId of p.knownRecipes) {
+						for (const reagent of reagentsByRecipe.get(recipeId) ?? []) {
+							let entry = uses.get(reagent.itemId);
+							if (!entry) uses.set(reagent.itemId, (entry = { name: reagent.name, users: new Map() }));
+							const key = `${g.region}:${m.slug}:${p.name}`;
+							const user = entry.users.get(key) ?? { name: m.name, classId: m.classId, profession: p.name, recipes: 0 };
+							user.recipes += 1;
+							entry.users.set(key, user);
+						}
+					}
+				}
+			}
+		}
+		const reagents: GuildData["reagents"] = {};
+		for (const [itemId, entry] of uses) {
+			reagents[itemId] = {
+				name: entry.name,
+				users: [...entry.users.values()].sort((a, b) => b.recipes - a.recipes || a.name.localeCompare(b.name)).slice(0, 8),
+			};
+		}
+		return {
+			version: 1,
+			generatedAt: Date.now(),
+			guilds: base.guilds.map((g) => g.name),
+			mine: base.mine,
+			recipesKnown: ids.length,
+			recipesInCatalog: reagentsByRecipe.size,
+			reagents,
+		};
 	},
 });

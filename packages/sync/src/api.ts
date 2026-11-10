@@ -3,10 +3,7 @@
 
 export type Me = { battletag: string | null; characters: string[] };
 export type UploadResult = { accepted?: string[]; unmatched?: string[]; error?: string };
-/** One guild's tooltip data, keyed `region/slug` in GuildDataV2. */
-export type GuildEntry = { name: string; region: string; slug: string; generatedAt: number; reagents: Record<string, unknown> };
-/** What GET /api/helper/guild-data?v=2 returns and GuildieData.lua holds. `mine`: the player's character names. */
-export type GuildData = { version: 2; generatedAt: number; mine?: string[]; guilds: Record<string, GuildEntry> };
+export type GuildData = { generatedAt: number; guilds: string[]; reagents: Record<string, unknown> };
 export type Pairing = { code: string; pollSecret: string; expiresInSeconds: number; connectUrl: string };
 export type PairingResult =
 	| { status: "pending" | "expired" }
@@ -69,9 +66,9 @@ export class Api {
 		return { ok: res.ok, status: res.status, body: (await res.json().catch(() => ({}))) as UploadResult };
 	}
 
-	/** The guild data the addon's tooltips use (v2: per guild); null when the token is unknown or revoked. */
+	/** The guild data the addon's tooltips use; null when the token is unknown or revoked. */
 	async guildData(): Promise<GuildData | null> {
-		const res = await this.fetch("/api/helper/guild-data?v=2");
+		const res = await this.fetch("/api/helper/guild-data");
 		if (res.status === 401) return null;
 		if (!res.ok) throw new Error(`Guildie answered ${res.status}`);
 		return (await res.json()) as GuildData;
