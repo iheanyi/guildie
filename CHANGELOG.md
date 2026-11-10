@@ -12,6 +12,8 @@ into that version's section.
 
 ## Unreleased
 
+## 0.3.8
+
 ### New
 
 - Links to Guildie show a proper preview when shared (Discord, messages, social sites), with the guild's or character's name where there is one.
