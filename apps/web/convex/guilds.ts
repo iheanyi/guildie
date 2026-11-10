@@ -6,6 +6,7 @@ import { internalMutation, mutation, type MutationCtx, type QueryCtx, query } fr
 import { vRegion, vVisibility } from "./schema";
 import { pickTalents } from "./helper";
 import { requireUserId } from "./users";
+import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { guildSlug } from "./shared/wow";
 
 /** Manual "sync now" is allowed once per this window. */
@@ -41,7 +42,7 @@ export async function setOwner(ctx: MutationCtx, guildId: Id<"guilds">, userId: 
 	if (guild && guild.ownerId !== userId) await ctx.db.patch(guildId, { ownerId: userId });
 }
 
-async function access(ctx: QueryCtx, guild: Doc<"guilds">) {
+export async function access(ctx: QueryCtx, guild: Doc<"guilds">) {
 	const userId = (await getAuthUserId(ctx)) as Id<"users"> | null;
 	const isOwner = userId !== null && guild.ownerId === userId;
 	const member = isOwner || (await isMember(ctx, guild, userId));
@@ -122,9 +123,28 @@ export const character = query({
 		const guild = await ctx.db.get(character.guildId);
 		if (!guild || !(await access(ctx, guild)).canView) return null;
 		const { talentTrees, source } = await pickTalents(ctx, character);
+		const equipment = await Promise.all(
+			(character.equipment ?? []).map(async (item) => {
+				const known = await itemRow(ctx, item.itemId);
+				return { ...item, icon: known?.icon };
+			}),
+		);
+		// All of the class's trees, so empty ones show too, in the game's order.
+		const layouts = await ctx.db
+			.query("talentLayouts")
+			.withIndex("by_classId", (q) => q.eq("classId", character.classId))
+			.collect();
 		return {
-			character: { ...character, talentTrees },
+			character: { ...character, equipment, talentTrees },
 			talentSource: source,
+			talentLayouts: layouts
+				.map(({ specId, name, nodes }) => ({
+					specId,
+					name,
+					nodes,
+					order: nodes.map((n) => TALENT_TREE_BY_ID.get(n.talentId)?.treeIndex).find((i) => i !== undefined) ?? specId,
+				}))
+				.sort((a, b) => a.order - b.order),
 			guild: { name: guild.name, slug: guild.slug, region: guild.region },
 		};
 	},
@@ -200,3 +220,10 @@ export const setVisibility = mutation({
 		await ctx.db.patch(guildId, { visibility });
 	},
 });
+
+export async function itemRow(ctx: QueryCtx, itemId: number) {
+	return await ctx.db
+		.query("items")
+		.withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+		.unique();
+}

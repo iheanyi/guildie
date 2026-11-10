@@ -29,7 +29,8 @@ export const syncedAt = internalQuery({
 	args: {},
 	handler: async (ctx) => {
 		const all = await ctx.db.query("recipes").collect();
-		return Object.fromEntries(all.map((r) => [r.recipeId, r.syncedAt]));
+		// Pairs, not an object: Convex objects are capped at 1,024 fields.
+		return all.map((r) => [r.recipeId, r.syncedAt] as [number, number]);
 	},
 });
 
@@ -40,7 +41,7 @@ export const syncCatalog = internalAction({
 		const token = await appToken(ctx, "us");
 		const index = await blizzardGet<Index>({ ...common, token, path: "/data/wow/profession/index" });
 		if (!index.ok) throw new Error("Profession index unavailable");
-		const known = await ctx.runQuery(internal.recipes.syncedAt, {});
+		const known = new Map<number, number>(await ctx.runQuery(internal.recipes.syncedAt, {}));
 		const due: { professionId: number; profession: string; id: number }[] = [];
 		for (const p of index.data.professions ?? []) {
 			// Blizzard lists a test profession; skip anything marked do-not-translate.
@@ -51,7 +52,7 @@ export const syncCatalog = internalAction({
 				const t = await blizzardGet<Tier>({ ...common, token, path: `/data/wow/profession/${p.id}/skill-tier/${tier.id}` });
 				if (!t.ok) continue;
 				for (const r of (t.data.categories ?? []).flatMap((c) => c.recipes ?? [])) {
-					const last = known[r.id];
+					const last = known.get(r.id);
 					if (force || !last || Date.now() - last > REFRESH_MS) due.push({ professionId: p.id, profession: p.name, id: r.id });
 				}
 			}
@@ -61,6 +62,11 @@ export const syncCatalog = internalAction({
 				recipes: due.slice(i, i + BATCH),
 			});
 		}
+		// Once the batches are in: icons and tooltips for crafted items and
+		// reagents, and the talent tree layouts (the other weekly static data).
+		const afterBatches = Math.ceil(due.length / BATCH) * BATCH_STAGGER_MS + 60_000;
+		await ctx.scheduler.runAfter(afterBatches, internal.items.syncRecipeItems, {});
+		await ctx.scheduler.runAfter(0, internal.talents.syncLayouts, {});
 		return { queued: due.length };
 	},
 });

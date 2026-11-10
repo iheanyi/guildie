@@ -10,12 +10,25 @@ export const vFlavor = v.literal("forever");
 export const vRegion = v.union(v.literal("us"), v.literal("eu"), v.literal("kr"), v.literal("tw"));
 export const vVisibility = v.union(v.literal("public"), v.literal("members"));
 
-const vEquippedItem = v.object({
+/**
+ * One line of an in-game item tooltip, built from Blizzard's display strings
+ * (convex/items.ts). `color` is a CSS hex color from Blizzard; white when
+ * absent.
+ */
+export const vTooltipLine = v.object({
+	left: v.string(),
+	right: v.optional(v.string()),
+	color: v.optional(v.string()),
+});
+
+export const vEquippedItem = v.object({
 	slot: v.string(),
 	itemId: v.number(),
 	name: v.string(),
 	quality: v.string(),
 	itemLevel: v.optional(v.number()),
+	/** The tooltip as worn (enchants included), name line excluded. */
+	tooltip: v.optional(v.array(vTooltipLine)),
 });
 
 /** A talent tree with points in it, from the active talent group. */
@@ -94,6 +107,8 @@ export default defineSchema({
 		/** When we first saw Blizzard's current talentTrees (compared with addon uploads). */
 		talentsChangedAt: v.optional(v.number()),
 		avatarUrl: v.optional(v.string()),
+		/** Full-body render on a transparent background ("main-raw"). */
+		renderUrl: v.optional(v.string()),
 		profileSyncedAt: v.optional(v.number()),
 		/** 404 from the profile endpoint: under level 10 or not logged out yet. */
 		profileMissing: v.optional(v.boolean()),
@@ -213,7 +228,53 @@ export default defineSchema({
 		craftedItemId: v.optional(v.number()),
 		reagents: v.array(v.object({ itemId: v.number(), name: v.string(), quantity: v.number() })),
 		syncedAt: v.number(),
-	}).index("by_recipeId", ["recipeId"]),
+	})
+		.index("by_recipeId", ["recipeId"])
+		.index("by_craftedItemId", ["craftedItemId"]),
+
+	/**
+	 * Forever items we show: equipped gear, crafted items and reagents. Name,
+	 * quality, icon and tooltip from Blizzard's static data (items.ts).
+	 */
+	items: defineTable({
+		itemId: v.number(),
+		name: v.string(),
+		quality: v.string(),
+		/** Icon URL on render.worldofwarcraft.com (56px). */
+		icon: v.optional(v.string()),
+		/** "Bag", "Cloth", "Two-Hand"...: item subclass, for search. */
+		kind: v.optional(v.string()),
+		tooltip: v.array(vTooltipLine),
+		syncedAt: v.number(),
+	}).index("by_itemId", ["itemId"]),
+
+	/**
+	 * Each talent tree's layout, from Blizzard's talent-tree data (talents.ts).
+	 * `specId` is the id characters' talentTrees use.
+	 */
+	talentLayouts: defineTable({
+		specId: v.number(),
+		classId: v.number(),
+		name: v.string(),
+		nodes: v.array(
+			v.object({
+				/** TraitDefinition id: matches characters' talents[].id. */
+				talentId: v.number(),
+				name: v.string(),
+				row: v.number(),
+				col: v.number(),
+				maxRank: v.number(),
+				icon: v.optional(v.string()),
+				/** Talents that need this one (arrows point to them). */
+				unlocks: v.array(v.number()),
+				/** Description per rank. */
+				ranks: v.array(v.string()),
+			}),
+		),
+		syncedAt: v.number(),
+	})
+		.index("by_specId", ["specId"])
+		.index("by_classId", ["classId"]),
 
 	/** Cached client-credentials tokens for the Blizzard API. */
 	apiTokens: defineTable({

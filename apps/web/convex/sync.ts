@@ -6,7 +6,8 @@ import { guildOfProfile } from "./claimRegions";
 import { setOwner } from "./guilds";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { appToken, blizzardGet } from "./blizzard";
-import { vTalentTree } from "./schema";
+import { type ItemPreview, tooltipLines } from "./items";
+import { vEquippedItem, vTalentTree } from "./schema";
 import { FLAVORS, type Region } from "./shared/wow";
 
 // Roster sync (hourly cron + on demand) and per-character profile sync.
@@ -185,13 +186,13 @@ type Profile = {
 	level?: number;
 };
 type Equipment = {
-	equipped_items?: {
+	equipped_items?: (ItemPreview & {
 		slot: { type: string };
 		item: { id: number };
 		name: string;
 		quality: { type: string };
 		level?: { value: number };
-	}[];
+	})[];
 };
 type ProfessionEntry = {
 	profession: { id: number; name: string };
@@ -296,12 +297,19 @@ export const syncCharacter = internalAction({
 						name: i.name,
 						quality: i.quality.type,
 						itemLevel: i.level?.value,
+						tooltip: tooltipLines(i),
 					}))
 				: undefined,
 			professions: professions.ok ? mapProfessions(professions.data) : undefined,
 			talentTrees: specializations.ok ? mapTalentTrees(specializations.data) : undefined,
 			avatarUrl: media.ok ? media.data.assets?.find((a) => a.key === "avatar")?.value : undefined,
+			renderUrl: media.ok ? media.data.assets?.find((a) => a.key === "main-raw")?.value : undefined,
 		});
+		// Icons and names for gear we haven't seen yet.
+		if (equipment.ok) {
+			const itemIds = (equipment.data.equipped_items ?? []).map((i) => i.item.id);
+			if (itemIds.length) await ctx.scheduler.runAfter(0, internal.items.ensure, { itemIds });
+		}
 	},
 });
 
@@ -312,17 +320,7 @@ export const applyProfile = internalMutation({
 		lastLoginAt: v.optional(v.number()),
 		averageItemLevel: v.optional(v.number()),
 		gender: v.optional(v.string()),
-		equipment: v.optional(
-			v.array(
-				v.object({
-					slot: v.string(),
-					itemId: v.number(),
-					name: v.string(),
-					quality: v.string(),
-					itemLevel: v.optional(v.number()),
-				}),
-			),
-		),
+		equipment: v.optional(v.array(vEquippedItem)),
 		professions: v.optional(
 			v.array(
 				v.object({
@@ -337,6 +335,7 @@ export const applyProfile = internalMutation({
 		),
 		talentTrees: v.optional(v.array(vTalentTree)),
 		avatarUrl: v.optional(v.string()),
+		renderUrl: v.optional(v.string()),
 	},
 	handler: async (ctx, { characterId, missing, ...data }) => {
 		const character = await ctx.db.get(characterId);

@@ -15,16 +15,19 @@ import type * as blizzard from "../blizzard.js";
 import type * as buildSite from "../buildSite.js";
 import type * as claimRegions from "../claimRegions.js";
 import type * as claims from "../claims.js";
+import type * as crafting from "../crafting.js";
 import type * as crons from "../crons.js";
 import type * as dev from "../dev.js";
 import type * as guilds from "../guilds.js";
 import type * as helper from "../helper.js";
 import type * as http from "../http.js";
+import type * as items from "../items.js";
 import type * as origins from "../origins.js";
 import type * as recipes from "../recipes.js";
 import type * as shared_foreverTalents from "../shared/foreverTalents.js";
 import type * as shared_wow from "../shared/wow.js";
 import type * as sync from "../sync.js";
+import type * as talents from "../talents.js";
 import type * as users from "../users.js";
 
 import type {
@@ -41,16 +44,19 @@ declare const fullApi: ApiFromModules<{
   buildSite: typeof buildSite;
   claimRegions: typeof claimRegions;
   claims: typeof claims;
+  crafting: typeof crafting;
   crons: typeof crons;
   dev: typeof dev;
   guilds: typeof guilds;
   helper: typeof helper;
   http: typeof http;
+  items: typeof items;
   origins: typeof origins;
   recipes: typeof recipes;
   "shared/foreverTalents": typeof shared_foreverTalents;
   "shared/wow": typeof shared_wow;
   sync: typeof sync;
+  talents: typeof talents;
   users: typeof users;
 }>;
 
