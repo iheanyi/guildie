@@ -49,8 +49,8 @@ function GuildPage() {
 	const { guild, members, isOwner } = data;
 	return (
 		<div className="py-10">
-			<h1 className="text-4xl">{guild.name}</h1>
-			<p className="num mt-2 text-muted-foreground">
+			<h1 className="text-3xl sm:text-4xl">{guild.name}</h1>
+			<p className="num mt-1.5 text-muted-foreground">
 				{[
 					guild.region.toUpperCase(),
 					guild.ruleset,
@@ -122,7 +122,7 @@ function Roster({ members }: { members: Member[] }) {
 		<TableHead className={cn(align === "right" && "text-right")}>
 			<button
 				type="button"
-				className={cn("hover:text-foreground", sort.key === key && "text-foreground")}
+				className={cn("hover:text-[#fff2b0]", sort.key === key && "text-[#fff2b0]")}
 				onClick={() =>
 					setSort((s) => ({ key, desc: s.key === key ? !s.desc : key === "level" || key === "ilvl" || key === "seen" }))
 				}
@@ -134,7 +134,7 @@ function Roster({ members }: { members: Member[] }) {
 	);
 
 	return (
-		<section className="mt-8">
+		<section className="mt-6">
 			<div className="flex flex-wrap items-center gap-x-5 gap-y-3">
 				<Input
 					value={search}
@@ -147,13 +147,14 @@ function Roster({ members }: { members: Member[] }) {
 					Level 60 only
 				</label>
 			</div>
-			<div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+			<div className="mt-3 flex flex-wrap gap-1.5 text-sm">
 				<button
 					type="button"
-					className={cn(classFilter === null ? "underline underline-offset-4" : "text-muted-foreground hover:text-foreground")}
+					className="chip"
+					data-active={classFilter === null}
 					onClick={() => setClassFilter(null)}
 				>
-					All {members.length}
+					All <span className="num">{members.length}</span>
 				</button>
 				{Object.entries(CLASSES)
 					.filter(([id]) => classCounts.has(Number(id)))
@@ -162,78 +163,81 @@ function Roster({ members }: { members: Member[] }) {
 							key={id}
 							type="button"
 							onClick={() => setClassFilter(classFilter === Number(id) ? null : Number(id))}
-							className={cn(classFilter === Number(id) && "underline underline-offset-4")}
+							className="chip"
+							data-active={classFilter === Number(id)}
 						>
-							<ClassText classId={Number(id)}>{c.name}</ClassText>{" "}
+							<ClassText classId={Number(id)}>{c.name}</ClassText>
 							<span className="num text-muted-foreground">{classCounts.get(Number(id))}</span>
 						</button>
 					))}
 			</div>
 
-			<Table className="mt-4 text-sm">
-				<TableHeader>
-					<TableRow className="text-muted-foreground">
-						{header("name", "Name")}
-						{header("level", "Level", "right")}
-						{header("class", "Class")}
-						<TableHead>Talents</TableHead>
-						<TableHead>Race</TableHead>
-						{header("rank", "Rank")}
-						<TableHead>Professions</TableHead>
-						{header("ilvl", "Item level", "right")}
-						{header("seen", "Last seen", "right")}
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{rows.map((m) => (
-						<TableRow key={m._id}>
-							<TableCell>
-								<Link
-									to="/c/$region/$slug"
-									params={(p) => ({ region: p.region ?? "us", slug: m.slug })}
-									className="hover:underline underline-offset-4"
-								>
-									<ClassText classId={m.classId} className="font-medium">
-										{m.name}
-									</ClassText>{" "}
-									<span className="text-muted-foreground">{m.surname}</span>
-								</Link>
-								{m.claimed && (
-									<span className="ml-2 text-xs text-muted-foreground" title="Claimed by a signed-in player">
-										claimed
-									</span>
-								)}
-							</TableCell>
-							<TableCell className="num text-right">{m.level}</TableCell>
-							<TableCell>
-								<ClassText classId={m.classId}>{className(m.classId)}</ClassText>
-							</TableCell>
-							<TableCell className="num whitespace-nowrap">
-								{m.talentTrees?.map((t, i) => (
-									<span key={t.id} className={cn(i > 0 && "text-muted-foreground")}>
-										{i > 0 && " · "}
-										{t.name} {t.points}
-									</span>
-								))}
-							</TableCell>
-							<TableCell className="text-muted-foreground">{raceName(m.raceId)}</TableCell>
-							<TableCell className="text-muted-foreground">{rankLabel(m.rank)}</TableCell>
-							<TableCell className="num">
-								{m.professions?.length ? (
-									m.professions
-										.filter((p) => !p.secondary)
-										.map((p) => `${p.name}${p.skill ? ` ${p.skill}` : ""}`)
-										.join(", ")
-								) : (
-									<span className="text-muted-foreground">{m.profileMissing ? "–" : ""}</span>
-								)}
-							</TableCell>
-							<TableCell className="num text-right">{m.averageItemLevel ?? ""}</TableCell>
-							<TableCell className="num text-right text-muted-foreground">{ago(m.lastLoginAt) ?? ""}</TableCell>
+			<div className="inset mt-4">
+				<Table className="text-sm">
+					<TableHeader>
+						<TableRow>
+							{header("name", "Name")}
+							{header("level", "Level", "right")}
+							{header("class", "Class")}
+							<TableHead>Talents</TableHead>
+							<TableHead>Race</TableHead>
+							{header("rank", "Rank")}
+							<TableHead>Professions</TableHead>
+							{header("ilvl", "Item level", "right")}
+							{header("seen", "Last seen", "right")}
 						</TableRow>
-					))}
-				</TableBody>
-			</Table>
+					</TableHeader>
+					<TableBody>
+						{rows.map((m) => (
+							<TableRow key={m._id}>
+								<TableCell>
+									<Link
+										to="/c/$region/$slug"
+										params={(p) => ({ region: p.region ?? "us", slug: m.slug })}
+										className="hover:underline underline-offset-4"
+									>
+										<ClassText classId={m.classId} className="font-medium">
+											{m.name}
+										</ClassText>{" "}
+										<span className="text-muted-foreground">{m.surname}</span>
+									</Link>
+									{m.claimed && (
+										<span className="ml-2 text-xs text-muted-foreground" title="Claimed by a signed-in player">
+											claimed
+										</span>
+									)}
+								</TableCell>
+								<TableCell className="num text-right">{m.level}</TableCell>
+								<TableCell>
+									<ClassText classId={m.classId}>{className(m.classId)}</ClassText>
+								</TableCell>
+								<TableCell className="num whitespace-nowrap">
+									{m.talentTrees?.map((t, i) => (
+										<span key={t.id} className={cn(i > 0 && "text-muted-foreground")}>
+											{i > 0 && " · "}
+											{t.name} {t.points}
+										</span>
+									))}
+								</TableCell>
+								<TableCell className="text-muted-foreground">{raceName(m.raceId)}</TableCell>
+								<TableCell className="text-muted-foreground">{rankLabel(m.rank)}</TableCell>
+								<TableCell className="num">
+									{m.professions?.length ? (
+										m.professions
+											.filter((p) => !p.secondary)
+											.map((p) => `${p.name}${p.skill ? ` ${p.skill}` : ""}`)
+											.join(", ")
+									) : (
+										<span className="text-muted-foreground">{m.profileMissing ? "–" : ""}</span>
+									)}
+								</TableCell>
+								<TableCell className="num text-right">{m.averageItemLevel ?? ""}</TableCell>
+								<TableCell className="num text-right text-muted-foreground">{ago(m.lastLoginAt) ?? ""}</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</div>
 			{rows.length === 0 && <p className="mt-4 text-muted-foreground">Nobody matches.</p>}
 			<p className="mt-4 text-xs text-muted-foreground">
 				Talents, professions, gear and last seen fill in once a character is level 10 and has logged out.
@@ -256,7 +260,7 @@ function GuildFooter({
 	const setVisibility = useMutation(api.guilds.setVisibility);
 	const [message, setMessage] = useState<string | null>(null);
 	return (
-		<div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-4 text-sm">
+		<div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-bronze-dark pt-4 text-sm">
 			<Button
 				variant="outline"
 				onClick={async () => {

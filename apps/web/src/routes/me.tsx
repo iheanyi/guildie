@@ -74,7 +74,7 @@ function ClaimCharacters() {
 					aria-label="Region"
 					value={region}
 					onChange={(e) => setRegion(e.target.value as Region)}
-					className="h-7 rounded-md border bg-transparent px-1.5 text-xs"
+					className="h-8 rounded-sm border px-1.5 text-sm"
 				>
 					{REGIONS.map((r) => (
 						<option key={r} value={r}>
