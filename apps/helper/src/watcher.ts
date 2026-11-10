@@ -36,6 +36,19 @@ export function findSavedVariables(wow?: string): string[] {
 	return found;
 }
 
+/** Every installed copy of the addon: <wow>/_*_/Interface/AddOns/Guildie. */
+export function findAddonFolders(wow?: string): string[] {
+	const found: string[] = [];
+	for (const root of wowCandidates(wow)) {
+		if (!existsSync(root)) continue;
+		for (const flavor of readdirSync(root).filter((d) => /^_.+_$/.test(d))) {
+			const folder = join(root, flavor, "Interface", "AddOns", "Guildie");
+			if (existsSync(join(folder, "Guildie.toc"))) found.push(folder);
+		}
+	}
+	return found;
+}
+
 /**
  * Watches the addon's saved files and calls `upload` with the payload whenever
  * it changes (the game rewrites the file on /reload and logout). `upload`

@@ -52,6 +52,14 @@ local function refresh()
     window.character:SetText(string.format("%s, level %d", me.name or UnitName("player"), me.level or UnitLevel("player")))
     local points = ns.points(me)
     window.talents:SetText(string.format("%d talent point%s in %d talent%s", points, points == 1 and "" or "s", #me.talents, #me.talents == 1 and "" or "s"))
+    if GuildieData and GuildieData.generatedAt then
+        local count = 0
+        for _ in pairs(GuildieData.reagents or {}) do count = count + 1 end
+        window.guildData:SetText(string.format("Tooltips: %s, from %s (%d reagents)",
+            table.concat(GuildieData.guilds or {}, ", "), date("%b %d %H:%M", math.floor(GuildieData.generatedAt / 1000)), count))
+    else
+        window.guildData:SetText("Tooltips: no guild data yet. The helper downloads it; it loads at login or /reload.")
+    end
     if ns.dirty then
         window.saved:SetText(GOLD .. "Changed since your last upload.|r It goes to guildie.club when you log out, or now:")
     else
@@ -62,7 +70,7 @@ ns.onCapture = refresh
 
 local function buildWindow()
     window = CreateFrame("Frame", "GuildieWindow", UIParent, "BasicFrameTemplateWithInset")
-    window:SetSize(340, 250)
+    window:SetSize(340, 270)
     window:SetPoint("CENTER")
     window:SetMovable(true)
     window:EnableMouse(true)
@@ -83,7 +91,8 @@ local function buildWindow()
 
     window.character = line(window, top, 0, "GameFontNormalLarge")
     window.talents = line(window, window.character, -6)
-    window.saved = line(window, window.talents, -12, "GameFontHighlightSmall")
+    window.guildData = line(window, window.talents, -6, "GameFontDisableSmall")
+    window.saved = line(window, window.guildData, -12, "GameFontHighlightSmall")
 
     local upload = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
     upload:SetSize(170, 24)

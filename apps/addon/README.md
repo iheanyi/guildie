@@ -16,6 +16,9 @@ reload the UI, and the helper, running on the same computer, uploads it then.
   you while you're flagged AFK and out of combat, if something changed, at most
   every 20 minutes. If the game doesn't allow addons to reload on their own, it
   turns itself off and tells you.
+- **Tooltips:** hover a reagent to see guildmates whose known recipes use it
+  ("Guildie might want this: …"). The helper downloads your guild's data into
+  `GuildieData.lua`; it loads at login and `/reload`.
 - Interface version 16001 is WoW: Forever 1.60.1.
 
 Talents are read with `C_ClassTalents` / `C_Traits`, the way the

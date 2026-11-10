@@ -18,6 +18,7 @@ import { Route as AuthSigninRouteImport } from './routes/auth/signin'
 import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
 import { Route as ClaimCallbackRouteImport } from './routes/claim/callback'
 import { Route as HelperConnectRouteImport } from './routes/helper/connect'
+import { Route as ApiHelperGuildDataRouteImport } from './routes/api/helper/guild-data'
 import { Route as ApiHelperMeRouteImport } from './routes/api/helper/me'
 import { Route as ApiHelperPairRouteImport } from './routes/api/helper/pair'
 import { Route as ApiHelperSignoutRouteImport } from './routes/api/helper/signout'
@@ -71,6 +72,11 @@ const HelperConnectRoute = HelperConnectRouteImport.update({
   path: '/helper/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHelperGuildDataRoute = ApiHelperGuildDataRouteImport.update({
+  id: '/api/helper/guild-data',
+  path: '/api/helper/guild-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHelperMeRoute = ApiHelperMeRouteImport.update({
   id: '/api/helper/me',
   path: '/api/helper/me',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
   '/helper/connect': typeof HelperConnectRoute
+  '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
   '/api/helper/signout': typeof ApiHelperSignoutRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
   '/helper/connect': typeof HelperConnectRoute
+  '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
   '/api/helper/signout': typeof ApiHelperSignoutRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
   '/helper/connect': typeof HelperConnectRoute
+  '/api/helper/guild-data': typeof ApiHelperGuildDataRoute
   '/api/helper/me': typeof ApiHelperMeRoute
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
   '/api/helper/signout': typeof ApiHelperSignoutRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/auth/signout'
     | '/claim/callback'
     | '/helper/connect'
+    | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
     | '/api/helper/signout'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/auth/signout'
     | '/claim/callback'
     | '/helper/connect'
+    | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
     | '/api/helper/signout'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/auth/signout'
     | '/claim/callback'
     | '/helper/connect'
+    | '/api/helper/guild-data'
     | '/api/helper/me'
     | '/api/helper/pair'
     | '/api/helper/signout'
@@ -229,6 +241,7 @@ export interface RootRouteChildren {
   AuthSignoutRoute: typeof AuthSignoutRoute
   ClaimCallbackRoute: typeof ClaimCallbackRoute
   HelperConnectRoute: typeof HelperConnectRoute
+  ApiHelperGuildDataRoute: typeof ApiHelperGuildDataRoute
   ApiHelperMeRoute: typeof ApiHelperMeRoute
   ApiHelperPairRoute: typeof ApiHelperPairRouteWithChildren
   ApiHelperSignoutRoute: typeof ApiHelperSignoutRoute
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/helper/connect'
       fullPath: '/helper/connect'
       preLoaderRoute: typeof HelperConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/helper/guild-data': {
+      id: '/api/helper/guild-data'
+      path: '/api/helper/guild-data'
+      fullPath: '/api/helper/guild-data'
+      preLoaderRoute: typeof ApiHelperGuildDataRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/helper/me': {
@@ -376,6 +396,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthSignoutRoute: AuthSignoutRoute,
   ClaimCallbackRoute: ClaimCallbackRoute,
   HelperConnectRoute: HelperConnectRoute,
+  ApiHelperGuildDataRoute: ApiHelperGuildDataRoute,
   ApiHelperMeRoute: ApiHelperMeRoute,
   ApiHelperPairRoute: ApiHelperPairRouteWithChildren,
   ApiHelperSignoutRoute: ApiHelperSignoutRoute,

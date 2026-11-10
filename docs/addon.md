@@ -49,6 +49,24 @@ A character is accepted only if the token's owner claimed it: matched by
 Blizzard's character id (the hex number at the end of the in-game GUID), or by
 first name if exactly one claimed character has it.
 
+## Guild data in game (reagent tooltips)
+
+The other direction: the helper downloads `GET /api/helper/guild-data` every
+15 minutes (and on connect and "Upload now") and writes it to
+`Interface/AddOns/Guildie/GuildieData.lua` in each installed copy of the
+addon. The game loads it at login and `/reload`, so tooltips are as fresh as
+your last login or reload.
+
+- Only guilds the token's claimed characters are in (so members-only guilds
+  work, and nobody else's guild is downloaded).
+- For each reagent: guild members whose known recipes use it, most recipes
+  first (top 8). Built from Blizzard's recipe catalog (`apps/web/convex/recipes.ts`,
+  weekly) and each member's known recipes (with their profile, hourly).
+- The addon adds one line to item tooltips, skipping your own characters:
+  "**Guildie** might want this: Brenna (Tailoring), Corwin (Alchemy) +2".
+- The file is generated as data literals only (`apps/helper/src/luaData.ts`,
+  tested), since the game runs addon files as code.
+
 ## Which data wins
 
 Per character, the addon's talents are shown only while its snapshot is newer

@@ -1,12 +1,14 @@
 ## Interface: 16001
 ## Title: Guildie
-## Notes: Saves your character's talents for the Guildie desktop helper to upload to guildie.club.
+## Notes: Sends your talents to guildie.club and suggests guildmates on item tooltips (with the Guildie helper).
 ## Author: Guildie
-## Version: 0.2.0
+## Version: 0.3.0
 ## SavedVariables: GuildieDB
 ## IconTexture: Interface\AddOns\Guildie\icon
 ## AddonCompartmentFunc: Guildie_OnAddonCompartmentClick
 ## X-Website: https://guildie.club
 
+GuildieData.lua
 Guildie.lua
 UI.lua
+Tooltip.lua

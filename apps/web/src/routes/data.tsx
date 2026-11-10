@@ -11,6 +11,7 @@ export const Route = createFileRoute("/data")({
 const SOURCES = [
 	["Blizzard's API, Forever namespaces", "Rosters, character profiles, gear, talents, professions and known recipes, item and recipe data, auction houses. Refreshed hourly."],
 	["Wowhead (Forever)", "Item links and tooltips."],
+	["Recipes and reagents", "Every Forever recipe and its reagents, and each member's known recipes, from Blizzard. The addon uses them to suggest who might want an item. Refreshed weekly (recipes) and hourly (members)."],
 	["The Guildie addon (optional)", "Players who install it and its desktop helper can show talent changes after a /reload, before Blizzard's data updates. Shown only while it's newer than Blizzard's."],
 ];
 
@@ -23,6 +24,7 @@ const GAPS = [
 	["Talents", "Only the active talent group. Trees with no points aren't listed."],
 	["Guild crests and achievements", "Not provided for Forever yet."],
 	["Item data", "Blizzard's item data for Forever is incomplete: a good share of items return nothing."],
+	["Recipes", "A few known recipes aren't in Blizzard's recipe lists, so their reagents aren't suggested."],
 	["Documentation", "Blizzard hasn't documented the Forever API. Everything here works, but was found by testing, and can change."],
 ];
 

@@ -33,6 +33,8 @@ const vProfession = v.object({
 	skill: v.optional(v.number()),
 	maxSkill: v.optional(v.number()),
 	secondary: v.boolean(),
+	/** Recipe ids this character knows (see the recipes table). */
+	knownRecipes: v.optional(v.array(v.number())),
 });
 
 export default defineSchema({
@@ -179,6 +181,17 @@ export default defineSchema({
 		blizzardId: v.number(),
 		name: v.string(),
 	}).index("by_class_tree", ["classToken", "treeIndex"]),
+
+	/** Forever's recipes and their reagents, from Blizzard's static data (recipes.ts). */
+	recipes: defineTable({
+		recipeId: v.number(),
+		professionId: v.number(),
+		profession: v.string(),
+		name: v.string(),
+		craftedItemId: v.optional(v.number()),
+		reagents: v.array(v.object({ itemId: v.number(), name: v.string(), quantity: v.number() })),
+		syncedAt: v.number(),
+	}).index("by_recipeId", ["recipeId"]),
 
 	/** Cached client-credentials tokens for the Blizzard API. */
 	apiTokens: defineTable({

@@ -48,6 +48,14 @@ export class Api {
 		return { ok: res.ok, status: res.status, body: (await res.json().catch(() => ({}))) as UploadResult };
 	}
 
+	/** The guild data the addon's tooltips use; null when the token is unknown or revoked. */
+	async guildData(): Promise<{ generatedAt: number; guilds: string[]; reagents: Record<string, unknown> } | null> {
+		const res = await this.fetch("/api/helper/guild-data");
+		if (res.status === 401) return null;
+		if (!res.ok) throw new Error(`Guildie answered ${res.status}`);
+		return (await res.json()) as { generatedAt: number; guilds: string[]; reagents: Record<string, unknown> };
+	}
+
 	async signOut() {
 		await this.fetch("/api/helper/signout", { method: "POST" }).catch(() => undefined);
 	}

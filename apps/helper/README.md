@@ -2,7 +2,8 @@
 
 Uploads what the Guildie addon (`apps/addon`) saves in game to guildie.club,
 so your talents update as soon as you log out (or `/reload`), instead of
-whenever Blizzard's data catches up.
+whenever Blizzard's data catches up. It also downloads your guild's data into
+the addon (`GuildieData.lua`) for its tooltips, every 15 minutes.
 
 It only reads one file, `WTF/Account/<account>/SavedVariables/Guildie.lua`
 under your World of Warcraft folder. It doesn't touch the game, its memory or

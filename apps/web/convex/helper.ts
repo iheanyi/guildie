@@ -1,6 +1,7 @@
 import { ConvexError, type Infer, v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
-import { mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import { action, internalQuery, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 import { sha256 } from "./claims";
 import type { vTalentTree } from "./schema";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
@@ -296,5 +297,120 @@ export const signOut = mutation({
 	handler: async (ctx, { token }) => {
 		const row = await tokenOwner(ctx, token);
 		if (row) await ctx.db.delete(row._id);
+	},
+});
+
+// ---- Guild data for the addon's tooltips ------------------------------------
+
+type GuildDataBase = {
+	mine: string[];
+	guilds: {
+		name: string;
+		region: string;
+		members: { name: string; slug: string; professions: { name: string; skill?: number; knownRecipes: number[] }[] }[];
+	}[];
+};
+
+export type GuildData = {
+	version: 1;
+	generatedAt: number;
+	guilds: string[];
+	mine: string[];
+	recipesKnown: number;
+	recipesInCatalog: number;
+	reagents: Record<string, { name: string; users: { name: string; profession: string; recipes: number }[] }>;
+};
+
+/** The token's guilds (those its claimed characters are in) and their members. */
+export const guildDataBase = internalQuery({
+	args: { token: v.string() },
+	handler: async (ctx, { token }): Promise<GuildDataBase | null> => {
+		const row = await tokenOwner(ctx, token);
+		if (!row) return null;
+		const owned = await ctx.db
+			.query("ownedCharacters")
+			.withIndex("by_user", (q) => q.eq("userId", row.userId))
+			.collect();
+		const guildIds = new Set<Id<"guilds">>();
+		for (const c of owned) {
+			const member = await ctx.db
+				.query("characters")
+				.withIndex("by_slug", (q) => q.eq("flavor", c.flavor).eq("region", c.region).eq("slug", c.slug))
+				.first();
+			if (member?.inRoster) guildIds.add(member.guildId);
+		}
+		const guilds = [];
+		for (const guildId of guildIds) {
+			const guild = await ctx.db.get(guildId);
+			if (!guild) continue;
+			const members = await ctx.db
+				.query("characters")
+				.withIndex("by_guild", (q) => q.eq("guildId", guildId).eq("inRoster", true))
+				.collect();
+			guilds.push({
+				name: guild.name,
+				region: guild.region,
+				members: members.map((m) => ({
+					name: m.name,
+					slug: m.slug,
+					professions: (m.professions ?? []).map((p) => ({ name: p.name, skill: p.skill, knownRecipes: p.knownRecipes ?? [] })),
+				})),
+			});
+		}
+		return { mine: owned.map((c) => c.name), guilds };
+	},
+});
+
+/**
+ * What the addon shows on reagent tooltips: for each reagent, the guild
+ * members whose known recipes use it (most recipes first). Suggestions, not
+ * certainties: knowing a recipe doesn't mean someone is still making it.
+ */
+export const guildData = action({
+	args: { token: v.string() },
+	handler: async (ctx, { token }): Promise<GuildData | null> => {
+		const base: GuildDataBase | null = await ctx.runQuery(internal.helper.guildDataBase, { token });
+		if (!base) return null;
+		const ids = [...new Set(base.guilds.flatMap((g) => g.members.flatMap((m) => m.professions.flatMap((p) => p.knownRecipes))))];
+		const reagentsByRecipe = new Map<number, { itemId: number; name: string }[]>();
+		for (let i = 0; i < ids.length; i += 400) {
+			for (const r of await ctx.runQuery(internal.recipes.byIds, { ids: ids.slice(i, i + 400) })) {
+				reagentsByRecipe.set(r.recipeId, r.reagents);
+			}
+		}
+		// itemId -> member -> { profession, recipes using it }
+		const uses = new Map<number, { name: string; users: Map<string, { name: string; profession: string; recipes: number }> }>();
+		for (const g of base.guilds) {
+			for (const m of g.members) {
+				for (const p of m.professions) {
+					for (const recipeId of p.knownRecipes) {
+						for (const reagent of reagentsByRecipe.get(recipeId) ?? []) {
+							let entry = uses.get(reagent.itemId);
+							if (!entry) uses.set(reagent.itemId, (entry = { name: reagent.name, users: new Map() }));
+							const key = `${g.region}:${m.slug}:${p.name}`;
+							const user = entry.users.get(key) ?? { name: m.name, profession: p.name, recipes: 0 };
+							user.recipes += 1;
+							entry.users.set(key, user);
+						}
+					}
+				}
+			}
+		}
+		const reagents: GuildData["reagents"] = {};
+		for (const [itemId, entry] of uses) {
+			reagents[itemId] = {
+				name: entry.name,
+				users: [...entry.users.values()].sort((a, b) => b.recipes - a.recipes || a.name.localeCompare(b.name)).slice(0, 8),
+			};
+		}
+		return {
+			version: 1,
+			generatedAt: Date.now(),
+			guilds: base.guilds.map((g) => g.name),
+			mine: base.mine,
+			recipesKnown: ids.length,
+			recipesInCatalog: reagentsByRecipe.size,
+			reagents,
+		};
 	},
 });

@@ -40,8 +40,9 @@ export const getGuild = internalQuery({
 });
 
 export const syncGuild = internalAction({
-	args: { guildId: v.id("guilds") },
-	handler: async (ctx, { guildId }) => {
+	/** `force`: refetch every member's profile now, not just stale ones (e.g. after adding a field). */
+	args: { guildId: v.id("guilds"), force: v.optional(v.boolean()) },
+	handler: async (ctx, { guildId, force }) => {
 		const guild = await ctx.runQuery(internal.sync.getGuild, { guildId });
 		if (!guild) return;
 		const flavor = FLAVORS[guild.flavor];
@@ -72,6 +73,7 @@ export const syncGuild = internalAction({
 			}));
 			const due = await ctx.runMutation(internal.sync.applyRoster, {
 				guildId,
+				force,
 				name: info.ok ? info.data.name : roster.data.guild.name,
 				ruleset: info.ok ? info.data.ruleset?.name : undefined,
 				faction: info.ok ? info.data.faction?.type : roster.data.guild.faction?.type,
@@ -112,12 +114,13 @@ const vMember = v.object({
 export const applyRoster = internalMutation({
 	args: {
 		guildId: v.id("guilds"),
+		force: v.optional(v.boolean()),
 		name: v.string(),
 		ruleset: v.optional(v.string()),
 		faction: v.optional(v.string()),
 		members: v.array(vMember),
 	},
-	handler: async (ctx, { guildId, members, ...info }) => {
+	handler: async (ctx, { guildId, members, force, ...info }) => {
 		const guild = await ctx.db.get(guildId);
 		if (!guild) return [];
 		const minLevel = FLAVORS[guild.flavor].minProfileLevel;
@@ -144,7 +147,7 @@ export const applyRoster = internalMutation({
 					inRoster: true,
 				});
 			}
-			const stale = !row?.profileSyncedAt || now - row.profileSyncedAt > PROFILE_TTL_MS;
+			const stale = force || !row?.profileSyncedAt || now - row.profileSyncedAt > PROFILE_TTL_MS;
 			// A character that leveled since the last sync may have a profile now.
 			const leveled = row?.profileMissing && row.level !== member.level;
 			if (member.level >= minLevel && (stale || leveled)) due.push(id);
@@ -183,7 +186,8 @@ type ProfessionEntry = {
 	profession: { id: number; name: string };
 	skill_points?: number;
 	max_skill_points?: number;
-	tiers?: { skill_points?: number; max_skill_points?: number }[];
+	known_recipes?: { id: number }[];
+	tiers?: { skill_points?: number; max_skill_points?: number; known_recipes?: { id: number }[] }[];
 };
 type Professions = { primaries?: ProfessionEntry[]; secondaries?: ProfessionEntry[] };
 type Media = { assets?: { key: string; value: string }[] };
@@ -228,6 +232,7 @@ function mapProfessions(data: Professions | undefined) {
 			skill: entry.skill_points ?? tier?.skill_points,
 			maxSkill: entry.max_skill_points ?? tier?.max_skill_points,
 			secondary,
+			knownRecipes: [...(entry.known_recipes ?? []), ...(entry.tiers ?? []).flatMap((t) => t.known_recipes ?? [])].map((r) => r.id),
 		};
 	};
 	return [
@@ -315,6 +320,7 @@ export const applyProfile = internalMutation({
 					skill: v.optional(v.number()),
 					maxSkill: v.optional(v.number()),
 					secondary: v.boolean(),
+					knownRecipes: v.optional(v.array(v.number())),
 				}),
 			),
 		),
@@ -361,13 +367,13 @@ async function learnTreeInfo(ctx: MutationCtx, trees: Infer<typeof vTalentTree>[
 	}
 }
 
-/** Cron: refresh every guild's roster. */
+/** Cron: refresh every guild's roster. `force` refetches every profile too. */
 export const syncAll = internalAction({
-	args: {},
-	handler: async (ctx) => {
+	args: { force: v.optional(v.boolean()) },
+	handler: async (ctx, { force }) => {
 		const ids = await ctx.runQuery(internal.sync.allGuildIds, {});
 		await Promise.all(
-			ids.map((guildId, i) => ctx.scheduler.runAfter(i * 30_000, internal.sync.syncGuild, { guildId })),
+			ids.map((guildId, i) => ctx.scheduler.runAfter(i * 30_000, internal.sync.syncGuild, { guildId, force })),
 		);
 	},
 });

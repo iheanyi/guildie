@@ -14,13 +14,14 @@
 
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { guildDataFile } from "./luaData";
 import { hostname } from "node:os";
 import { join } from "node:path";
 import iconFile from "../assets/guildie.ico" with { type: "file" };
 import { Api } from "./api";
 import { configDir, DEFAULT_API, loadConfig, logPath, makeLogger, saveConfig } from "./config";
 import { type TrayItem, WindowsTray } from "./tray-windows";
-import { Watcher } from "./watcher";
+import { findAddonFolders, Watcher } from "./watcher";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => {
@@ -199,13 +200,45 @@ const watcher = new Watcher(
 	log,
 );
 
+// ---- Downloading guild data for the addon's tooltips -------------------------
+// Written to GuildieData.lua in the addon's folder; the game loads it at login
+// and /reload, so tooltips are as fresh as your last login or reload.
+
+const GUILD_DATA_EVERY_MS = 15 * 60_000;
+let lastGuildData = 0;
+
+async function refreshGuildData() {
+	lastGuildData = Date.now();
+	const folders = findAddonFolders(config.wow);
+	if (!folders.length) return;
+	const data = await api.guildData().catch((e: Error) => {
+		log(`Guild data download failed: ${e.message}`);
+		return undefined;
+	});
+	if (!data) return;
+	const content = Buffer.from(guildDataFile(data), "latin1");
+	for (const folder of folders) {
+		const file = join(folder, "GuildieData.lua");
+		try {
+			if (existsSync(file) && readFileSync(file).equals(content)) continue;
+			writeFileSync(file, content);
+			log(`Wrote guild data for ${data.guilds.join(", ") || "no guilds"} (${Object.keys(data.reagents).length} reagents) to ${file}`);
+		} catch (e) {
+			log(`Couldn't write ${file}: ${(e as Error).message}`);
+		}
+	}
+}
+
 // ---- Start ------------------------------------------------------------------
 
 async function onClick(item: TrayItem) {
 	if (item === "open") openExternal(new URL("/me", base).toString());
 	if (item === "log") openExternal(logPath());
 	if (item === "connect") void connect();
-	if (item === "upload") watcher.forget();
+	if (item === "upload") {
+		watcher.forget();
+		void refreshGuildData();
+	}
 	if (item === "signout") await signOut();
 	if (item === "quit") quit();
 }
@@ -229,7 +262,10 @@ if (!connected) void connect();
 
 let lastRetry = Date.now();
 while (true) {
-	if (account) await watcher.tick();
+	if (account) {
+		await watcher.tick();
+		if (Date.now() - lastGuildData > GUILD_DATA_EVERY_MS) await refreshGuildData();
+	}
 	// Offline at start (or since): try the saved token again every minute.
 	else if (api.token && !pairing && Date.now() - lastRetry > 60_000) {
 		lastRetry = Date.now();

@@ -20,6 +20,7 @@ import type * as guilds from "../guilds.js";
 import type * as helper from "../helper.js";
 import type * as http from "../http.js";
 import type * as origins from "../origins.js";
+import type * as recipes from "../recipes.js";
 import type * as shared_foreverTalents from "../shared/foreverTalents.js";
 import type * as shared_wow from "../shared/wow.js";
 import type * as sync from "../sync.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   helper: typeof helper;
   http: typeof http;
   origins: typeof origins;
+  recipes: typeof recipes;
   "shared/foreverTalents": typeof shared_foreverTalents;
   "shared/wow": typeof shared_wow;
   sync: typeof sync;
