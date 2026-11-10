@@ -15,6 +15,8 @@ into that version's section.
 
 ## Unreleased
 
+## 0.3.9
+
 ### New
 
 - **Web:** Guild requests: ask your guild for reagents or a craft (open an item, or Request on Crafting), and claim what you can provide or make. The requester marks it done; requests over a week old ask "Still need this?", and close after 30 days.
