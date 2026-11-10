@@ -6,6 +6,15 @@ changed on the site since the last one. The release workflow uses the section
 for its version as the GitHub release notes, and the app shows them under
 Settings → App.
 
+## 0.3.5
+
+### New
+- Gear suggestions: hover an item in game and Guildie says which guildmates it would help ("upgrade for…", "maybe…"), a best guess from their spec and what they wear. The item panel on the site shows the same, with the reason. Addon 0.5.0; restart WoW once to load it.
+- Check for updates, in the tray and in Settings → App, which also shows when an update is downloading.
+
+### Improvements
+- No more accent-colored outline around the window on Windows 11.
+
 ## 0.3.4
 
 ### New

@@ -1,9 +1,14 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { type QueryCtx, query } from "./_generated/server";
 import { access, itemRow } from "./guilds";
 import { pickProfile } from "./helper";
 import { vRegion } from "./schema";
+import { CLASS_TOKENS } from "./shared/weights";
+import { type ItemInfo, itemInfoFromTooltip } from "./shared/itemInfo";
+import { explain, suggest, upgradeRules } from "./shared/upgrades";
+import { memberForUpgrades } from "./upgradeProfiles";
 
 // What characters can craft: their professions' known recipes (Blizzard's
 // profiles, with newer reads from the Guildie addon on top: pickProfile),
@@ -119,11 +124,58 @@ export const guildCrafting = query({
 	},
 });
 
+/** Most names the item panel's "Upgrade for" lists (the addon's tooltip line shows 3). */
+const PANEL_UPGRADES = 5;
+
+/**
+ * Who in the guild an item might be an upgrade for (shared/upgrades.ts), with
+ * a short why each, leaving out the viewer's own characters. Empty when we
+ * can't read the item's stats.
+ */
+async function upgradesFor(ctx: QueryCtx, item: Doc<"items"> | null, members: Doc<"characters">[], profiles: Awaited<ReturnType<typeof pickProfile>>[]) {
+	const info = item ? itemInfoFromTooltip(item.tooltip) : undefined;
+	if (!item || !info) return [];
+	const userId = (await getAuthUserId(ctx)) as Id<"users"> | null;
+	const own = userId
+		? new Set(
+				(await ctx.db
+					.query("ownedCharacters")
+					.withIndex("by_user", (q) => q.eq("userId", userId))
+					.collect()).map((c) => `${c.region}:${c.slug}`),
+			)
+		: new Set<string>();
+	const rules = upgradeRules();
+	const cache = new Map<number, ItemInfo | undefined>();
+	const found: (NonNullable<Awaited<ReturnType<typeof memberForUpgrades>>> & { character: Doc<"characters"> })[] = [];
+	for (const [i, m] of members.entries()) {
+		if (own.has(`${m.region}:${m.slug}`)) continue;
+		const f = await memberForUpgrades(ctx, m, profiles[i], rules, cache);
+		if (f) found.push({ ...f, character: m });
+	}
+	const picks = suggest(info, found.map((f) => f.member), rules, { now: Date.now() / 1000, itemId: item.itemId, max: PANEL_UPGRADES });
+	return picks.map(({ member, verdict }) => {
+		const f = found.find((x) => x.member === member)!;
+		return {
+			name: member.name,
+			slug: f.character.slug,
+			region: f.character.region,
+			classId: member.classId,
+			level: member.level,
+			kind: verdict.kind,
+			gain: verdict.gain,
+			spec: rules.specs[verdict.spec]?.name ?? CLASS_TOKENS[member.classId],
+			at: verdict.at,
+			why: explain(info, verdict, f.worn, rules),
+		};
+	});
+}
+
 /**
  * One item, for the item panel: its tooltip, the recipes that make it (with
- * who in the guild knows them) and the recipes it's a reagent in. `guild` is
- * the guild in view (a guild page, or the character's guild on a character
- * page); without it, crafters are left out.
+ * who in the guild knows them), the recipes it's a reagent in, and who in the
+ * guild it might be an upgrade for. `guild` is the guild in view (a guild
+ * page, or the character's guild on a character page); without it, crafters
+ * and upgrades are left out.
  */
 export const itemDetail = query({
 	args: {
@@ -186,6 +238,7 @@ export const itemDetail = query({
 			guild: guild ? { name: guild.name, region: guild.region, slug: guild.slug } : null,
 			craftedBy,
 			usedIn,
+			upgrades: await upgradesFor(ctx, item, members, profiles),
 		};
 	},
 });

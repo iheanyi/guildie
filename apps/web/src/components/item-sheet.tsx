@@ -12,7 +12,8 @@ import { ItemIcon, ItemTooltipBody, QUALITY_COLORS, wowheadItemUrl } from "@/com
 
 // The item panel: click any item and it slides in from the right over the
 // page you're on (`?item=<id>`, so Back closes it). What the item is, who in
-// the guild can make it, and what it's used for; Wowhead is one click on.
+// the guild can make it, who it might be an upgrade for, and what it's used
+// for; Wowhead is one click on.
 
 /** The guild the page is about, so the panel can list its crafters. */
 function useGuildContext() {
@@ -125,6 +126,30 @@ function ItemPanel({ itemId, onClose }: { itemId: number; onClose: () => void })
 								)}
 							</div>
 						))}
+					</Section>
+				)}
+
+				{data && data.upgrades.length > 0 && (
+					<Section title="Upgrade for">
+						<div className="divide-y divide-border rounded-md border border-border">
+							{data.upgrades.map((u) => (
+								<div key={`${u.region}:${u.slug}`} className="space-y-0.5 px-3 py-2 text-[13px]">
+									<div className="flex items-baseline gap-2">
+										<Link to="/c/$region/$slug" params={{ region: u.region, slug: u.slug }} className="font-medium hover:underline">
+											<ClassText classId={u.classId}>{u.name}</ClassText>
+										</Link>
+										<span className="text-xs text-muted-foreground">
+											<span className="num">{u.level}</span> {u.spec}
+										</span>
+										<span className={u.kind === "upgrade" ? "ml-auto text-xs" : "ml-auto text-xs text-muted-foreground"}>
+											{u.kind === "upgrade" ? "Upgrade" : u.at ? `Maybe, at ${u.at}` : "Maybe"}
+										</span>
+									</div>
+									<p className="text-xs text-muted-foreground">{u.why}</p>
+								</div>
+							))}
+						</div>
+						<p className="text-xs text-muted-foreground">A best guess from stat weights and what they wear, not a sim.</p>
 					</Section>
 				)}
 

@@ -31,3 +31,17 @@ test("writes UTF-8 bytes, and only when the content changes", () => {
 	assert.deepEqual(writeGuildData([folder], data, () => {}), []);
 	assert.equal(statSync(join(folder, "GuildieData.lua")).mtimeMs, mtime);
 });
+
+test("gear-upgrade data: numeric keys as Lua numbers, decimals and spec keys kept", () => {
+	const lua = toLua({
+		upgrades: {
+			version: 1,
+			rules: { upgrade: 0.15, specs: { "DRUID:1": { name: "Feral", w: { AGILITY: 1, ARMOR: 0.08 } } }, classes: { 11: { armor: { 1: 1, 2: 1 } } } },
+			members: [{ name: "Brisket", classId: 11, slots: { 10: 8.5, 16: 12 }, worn: [5001] }],
+		},
+	});
+	assert.equal(
+		lua,
+		'{["upgrades"]={["version"]=1,["rules"]={["upgrade"]=0.15,["specs"]={["DRUID:1"]={["name"]="Feral",["w"]={["AGILITY"]=1,["ARMOR"]=0.08}}},["classes"]={[11]={["armor"]={[1]=1,[2]=1}}}},["members"]={{["name"]="Brisket",["classId"]=11,["slots"]={[10]=8.5,[16]=12},["worn"]={5001}}}}}',
+	);
+});

@@ -1,0 +1,101 @@
+// Writes apps/addon/tests/upgrade_vectors.json: shared cases for the
+// gear-upgrade rules, run by both apps/web/convex/upgrades.test.ts and the
+// addon's Lua port (apps/addon/tests/upgrades_test.lua). Inputs are written
+// here by hand (test rules, not the real weights); expected values come from
+// shared/upgrades.ts. After changing the rules: change both implementations,
+// run this, review the diff, and run both test suites.
+//   node scripts/gen-upgrade-vectors.ts
+import { writeFileSync } from "node:fs";
+import { judge, type Rules, scoreItem, suggest, usableAt } from "../convex/shared/upgrades.ts";
+const rules = {
+	upgrade: 0.15, maybe: 0.03, levelsAhead: 3, activeDays: 14, minFit: 0.3, preferBestFrom: 40, preferBestFactor: 0.8, minBase: 1,
+	points: { ATTACK_POWER: 0.5, EXTRA_ARMOR: 0.1 },
+	specs: {
+		"DRUID:1": { name: "Feral", w: { AGILITY: 1, STRENGTH: 0.9, STAMINA: 0.6, ARMOR: 0.05, ATTACK_POWER: 0.4 } },
+		"DRUID:2": { name: "Restoration", w: { INTELLECT: 1, SPIRIT: 0.8, STAMINA: 0.5, ARMOR: 0.02 } },
+		"WARRIOR:0": { name: "Arms", w: { STRENGTH: 1, AGILITY: 0.7, STAMINA: 0.6, ARMOR: 0.02, DPS: 8 } },
+		"WARRIOR:1": { name: "Fury", w: { STRENGTH: 1, AGILITY: 0.8, STAMINA: 0.6, ARMOR: 0.02, ATTACK_POWER: 0.45, DPS: 4.5, OFFHAND_DPS: 1.4 } },
+		"MAGE:2": { name: "Frost", w: { INTELLECT: 1, SPIRIT: 0.5, STAMINA: 0.6, SPELL_POWER: 1.3, ARMOR: 0.02 } },
+		"HUNTER:0": { name: "Beast Mastery", w: { AGILITY: 1, STAMINA: 0.5, INTELLECT: 0.3, RANGED_DPS: 3, DPS: 0.5 } },
+	},
+	classes: {
+		"1": { armor: { "1": 1, "2": 1, "3": 1, "4": 40, "6": 1 }, weapons: { "0": 1, "1": 1, "2": 1, "7": 1, "8": 1, "15": 1 }, dualWield: 20 },
+		"3": { armor: { "1": 1, "2": 1, "3": 40 }, weapons: { "0": 1, "1": 1, "2": 1, "15": 1 }, dualWield: 20 },
+		"8": { armor: { "1": 1 }, weapons: { "10": 1, "15": 1, "19": 1 } },
+		"11": { armor: { "1": 1, "2": 1, "8": 1 }, weapons: { "4": 1, "5": 1, "10": 1, "15": 1 } },
+	},
+} as unknown as Rules;
+const items: Record<string, any> = {
+	leatherAgiGloves: { invType: "HAND", cls: 4, subclass: 2, stats: { AGILITY: 6, STAMINA: 4 }, armor: 60, reqLevel: 20 },
+	clothIntHead: { invType: "HEAD", cls: 4, subclass: 1, stats: { INTELLECT: 8, SPELL_POWER: 5 }, armor: 30, reqLevel: 24 },
+	greatsword: { invType: "2HWEAPON", cls: 2, subclass: 8, stats: { STRENGTH: 10, STAMINA: 6 }, dps: 20.5, reqLevel: 25 },
+	agiRing: { invType: "FINGER", cls: 4, subclass: 0, stats: { AGILITY: 5, STAMINA: 3 }, unique: true },
+	mailChest: { invType: "CHEST", cls: 4, subclass: 3, stats: { AGILITY: 8, STAMINA: 8 }, armor: 200, reqLevel: 40 },
+	leatherChest: { invType: "CHEST", cls: 4, subclass: 2, stats: { STRENGTH: 8, STAMINA: 8 }, armor: 100, reqLevel: 40 },
+	dagger: { invType: "WEAPON", cls: 2, subclass: 15, stats: { AGILITY: 4 }, dps: 12 },
+	shield: { invType: "SHIELD", cls: 4, subclass: 6, stats: { STAMINA: 5 }, armor: 300 },
+	bow: { invType: "RANGED", cls: 2, subclass: 2, stats: { AGILITY: 3 }, dps: 15, reqLevel: 21 },
+	paladinRing: { invType: "FINGER", cls: 4, subclass: 0, stats: { STRENGTH: 6 }, classes: [2] },
+	fireCloak: { invType: "CLOAK", cls: 4, subclass: 1, stats: { FIRE_RESISTANCE: 10 }, armor: 20 },
+	plainCloak: { invType: "CLOAK", cls: 4, subclass: 0, stats: {}, armor: 20 },
+	apMace: { invType: "2HWEAPON", cls: 2, subclass: 5, stats: { ATTACK_POWER: 32, EXTRA_ARMOR: 60 }, dps: 27.7 },
+	spiritRobe: { invType: "ROBE", cls: 4, subclass: 1, stats: { SPIRIT: 9, INTELLECT: 3 }, armor: 40 },
+};
+const SEEN = 2_000_000;
+const members: Record<string, any> = {
+	Brisket: { name: "Brisket", classId: 11, level: 30, spec: "DRUID:1", spec2: "DRUID:2", seen: SEEN, slots: { 1: 10, 5: 20, 10: 8, 11: 12, 12: 6 }, slots2: { 1: 5, 5: 4, 10: 3, 11: 2, 12: 2 }, worn: [5001] },
+	Miller: { name: "Miller", classId: 1, level: 22, spec: "WARRIOR:0", seen: SEEN, slots: { 5: 18, 10: 2, 16: 150 }, th: true },
+	Rage: { name: "Rage", classId: 1, level: 45, spec: "WARRIOR:1", seen: SEEN, slots: { 5: 10, 16: 60, 17: 10 } },
+	Frosty: { name: "Frosty", classId: 8, level: 30, spec: "MAGE:2", seen: SEEN, slots: { 1: 5, 10: 4 } },
+	Arrow: { name: "Arrow", classId: 3, level: 39, spec: "HUNTER:0", seen: SEEN, slots: { 5: 8, 18: 40, 16: 10 } },
+	Stale: { name: "Stale", classId: 11, level: 30, spec: "DRUID:1", seen: 0, slots: {} },
+};
+const verdictOut = (v: any) => (v ? { kind: v.kind, gain: v.gain, spec: v.spec, at: v.at ?? null, second: v.second ?? false, against: v.against } : null);
+const judgeCases: [string, string, string, number?][] = [
+	["leather agility gloves: feral upgrade", "leatherAgiGloves", "Brisket"],
+	["leather agility gloves: mage can't wear leather", "leatherAgiGloves", "Frosty"],
+	["leather agility gloves: warrior, small agility use", "leatherAgiGloves", "Miller"],
+	["cloth int head: mage upgrade", "clothIntHead", "Frosty"],
+	["cloth int head: feral doesn't suit, resto second spec", "clothIntHead", "Brisket"],
+	["two-hander vs main hand plus off hand", "greatsword", "Rage"],
+	["two-hander for a level 22: at 25", "greatsword", "Miller"],
+	["unique ring already worn", "agiRing", "Brisket", 5001],
+	["ring vs the weaker ring", "agiRing", "Brisket", 5002],
+	["mail at 40: hunter at 39 is a maybe at 40", "mailChest", "Arrow"],
+	["leather on a level 45 warrior is worth less", "leatherChest", "Rage"],
+	["mail on a level 45 warrior, too", "mailChest", "Rage"],
+	["one-hander can go in the off hand for dual wielders", "dagger", "Rage"],
+	["shield with a two-hander means losing it", "shield", "Miller"],
+	["bow: hunter's ranged slot", "bow", "Arrow"],
+	["class-restricted ring", "paladinRing", "Miller"],
+	["resistance cloak suits nobody", "fireCloak", "Brisket"],
+	["plain cloak over an empty slot", "plainCloak", "Frosty"],
+	["spirit robe only fits the second spec", "spiritRobe", "Brisket"],
+	["attack power and bonus armor count as fewer stat points", "apMace", "Brisket"],
+];
+const cases = judgeCases.map(([name, item, member, itemId]) => ({
+	name, item, member, ...(itemId ? { itemId } : {}),
+	expect: verdictOut(judge(items[item], members[member], rules, itemId)),
+}));
+const scoreCases: [string, string, number, boolean][] = [
+	["leatherAgiGloves", "DRUID:1", 30, false], ["greatsword", "WARRIOR:1", 45, false], ["leatherChest", "WARRIOR:1", 45, false],
+	["dagger", "WARRIOR:1", 45, true], ["apMace", "WARRIOR:1", 45, false], ["bow", "HUNTER:0", 39, false], ["clothIntHead", "MAGE:2", 30, false],
+];
+const scores = scoreCases.map(([item, spec, level, offHand]) => {
+	const classId = { DRUID: 11, WARRIOR: 1, HUNTER: 3, MAGE: 8 }[spec.split(":")[0]]!;
+	return { item, spec, classId, level, offHand, expect: scoreItem(items[item], rules.specs[spec].w, level, rules.classes[classId], rules, offHand) };
+});
+const usable = [["greatsword", "Miller"], ["mailChest", "Arrow"], ["mailChest", "Frosty"], ["bow", "Miller"], ["dagger", "Brisket"]].map(([item, member]) => ({ item, member, expect: usableAt(items[item], members[member], rules) ?? null }));
+const suggestCases = [
+	{ name: "agility gloves, everyone", item: "leatherAgiGloves", now: SEEN + 3600, skip: [], max: 3 },
+	{ name: "own characters skipped", item: "leatherAgiGloves", now: SEEN + 3600, skip: ["Arrow"], max: 3 },
+	{ name: "inactive members skipped", item: "plainCloak", now: SEEN + 20 * 86400, skip: [], max: 3 },
+	{ name: "plain cloak", item: "plainCloak", now: SEEN + 3600, skip: [], max: 3 },
+	{ name: "two-hander: upgrades before maybes", item: "greatsword", now: SEEN + 3600, skip: [], max: 3 },
+].map((c) => ({ ...c, expect: suggest(items[c.item], Object.values(members), rules, { now: c.now, skip: c.skip, max: c.max }).map((p) => `${p.member.name}:${p.verdict.kind}`) }));
+const out = {
+	_comment: "Shared cases for the gear-upgrade rules: apps/web/convex/upgrades.test.ts runs them against shared/upgrades.ts, apps/addon/tests/upgrades_test.lua against Guildie/Upgrades.lua. Rules and weights here are test values, not the real table (shared/weights.ts). Expected values come from the TypeScript: apps/web/scripts/gen-upgrade-vectors.ts writes this file.",
+	rules, items, members, judge: cases, scores, usable, suggest: suggestCases,
+};
+writeFileSync(new URL("../../addon/tests/upgrade_vectors.json", import.meta.url), `${JSON.stringify(out, null, "\t")}\n`);
+console.log(`Wrote ${cases.length} judge, ${scores.length} score, ${usable.length} usable and ${suggestCases.length} suggest cases.`);

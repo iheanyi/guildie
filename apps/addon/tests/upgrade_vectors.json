@@ -1,0 +1,796 @@
+{
+	"_comment": "Shared cases for the gear-upgrade rules: apps/web/convex/upgrades.test.ts runs them against shared/upgrades.ts, apps/addon/tests/upgrades_test.lua against Guildie/Upgrades.lua. Rules and weights here are test values, not the real table (shared/weights.ts). Expected values come from the TypeScript: apps/web/scripts/gen-upgrade-vectors.ts writes this file.",
+	"rules": {
+		"upgrade": 0.15,
+		"maybe": 0.03,
+		"levelsAhead": 3,
+		"activeDays": 14,
+		"minFit": 0.3,
+		"preferBestFrom": 40,
+		"preferBestFactor": 0.8,
+		"minBase": 1,
+		"points": {
+			"ATTACK_POWER": 0.5,
+			"EXTRA_ARMOR": 0.1
+		},
+		"specs": {
+			"DRUID:1": {
+				"name": "Feral",
+				"w": {
+					"AGILITY": 1,
+					"STRENGTH": 0.9,
+					"STAMINA": 0.6,
+					"ARMOR": 0.05,
+					"ATTACK_POWER": 0.4
+				}
+			},
+			"DRUID:2": {
+				"name": "Restoration",
+				"w": {
+					"INTELLECT": 1,
+					"SPIRIT": 0.8,
+					"STAMINA": 0.5,
+					"ARMOR": 0.02
+				}
+			},
+			"WARRIOR:0": {
+				"name": "Arms",
+				"w": {
+					"STRENGTH": 1,
+					"AGILITY": 0.7,
+					"STAMINA": 0.6,
+					"ARMOR": 0.02,
+					"DPS": 8
+				}
+			},
+			"WARRIOR:1": {
+				"name": "Fury",
+				"w": {
+					"STRENGTH": 1,
+					"AGILITY": 0.8,
+					"STAMINA": 0.6,
+					"ARMOR": 0.02,
+					"ATTACK_POWER": 0.45,
+					"DPS": 4.5,
+					"OFFHAND_DPS": 1.4
+				}
+			},
+			"MAGE:2": {
+				"name": "Frost",
+				"w": {
+					"INTELLECT": 1,
+					"SPIRIT": 0.5,
+					"STAMINA": 0.6,
+					"SPELL_POWER": 1.3,
+					"ARMOR": 0.02
+				}
+			},
+			"HUNTER:0": {
+				"name": "Beast Mastery",
+				"w": {
+					"AGILITY": 1,
+					"STAMINA": 0.5,
+					"INTELLECT": 0.3,
+					"RANGED_DPS": 3,
+					"DPS": 0.5
+				}
+			}
+		},
+		"classes": {
+			"1": {
+				"armor": {
+					"1": 1,
+					"2": 1,
+					"3": 1,
+					"4": 40,
+					"6": 1
+				},
+				"weapons": {
+					"0": 1,
+					"1": 1,
+					"2": 1,
+					"7": 1,
+					"8": 1,
+					"15": 1
+				},
+				"dualWield": 20
+			},
+			"3": {
+				"armor": {
+					"1": 1,
+					"2": 1,
+					"3": 40
+				},
+				"weapons": {
+					"0": 1,
+					"1": 1,
+					"2": 1,
+					"15": 1
+				},
+				"dualWield": 20
+			},
+			"8": {
+				"armor": {
+					"1": 1
+				},
+				"weapons": {
+					"10": 1,
+					"15": 1,
+					"19": 1
+				}
+			},
+			"11": {
+				"armor": {
+					"1": 1,
+					"2": 1,
+					"8": 1
+				},
+				"weapons": {
+					"4": 1,
+					"5": 1,
+					"10": 1,
+					"15": 1
+				}
+			}
+		}
+	},
+	"items": {
+		"leatherAgiGloves": {
+			"invType": "HAND",
+			"cls": 4,
+			"subclass": 2,
+			"stats": {
+				"AGILITY": 6,
+				"STAMINA": 4
+			},
+			"armor": 60,
+			"reqLevel": 20
+		},
+		"clothIntHead": {
+			"invType": "HEAD",
+			"cls": 4,
+			"subclass": 1,
+			"stats": {
+				"INTELLECT": 8,
+				"SPELL_POWER": 5
+			},
+			"armor": 30,
+			"reqLevel": 24
+		},
+		"greatsword": {
+			"invType": "2HWEAPON",
+			"cls": 2,
+			"subclass": 8,
+			"stats": {
+				"STRENGTH": 10,
+				"STAMINA": 6
+			},
+			"dps": 20.5,
+			"reqLevel": 25
+		},
+		"agiRing": {
+			"invType": "FINGER",
+			"cls": 4,
+			"subclass": 0,
+			"stats": {
+				"AGILITY": 5,
+				"STAMINA": 3
+			},
+			"unique": true
+		},
+		"mailChest": {
+			"invType": "CHEST",
+			"cls": 4,
+			"subclass": 3,
+			"stats": {
+				"AGILITY": 8,
+				"STAMINA": 8
+			},
+			"armor": 200,
+			"reqLevel": 40
+		},
+		"leatherChest": {
+			"invType": "CHEST",
+			"cls": 4,
+			"subclass": 2,
+			"stats": {
+				"STRENGTH": 8,
+				"STAMINA": 8
+			},
+			"armor": 100,
+			"reqLevel": 40
+		},
+		"dagger": {
+			"invType": "WEAPON",
+			"cls": 2,
+			"subclass": 15,
+			"stats": {
+				"AGILITY": 4
+			},
+			"dps": 12
+		},
+		"shield": {
+			"invType": "SHIELD",
+			"cls": 4,
+			"subclass": 6,
+			"stats": {
+				"STAMINA": 5
+			},
+			"armor": 300
+		},
+		"bow": {
+			"invType": "RANGED",
+			"cls": 2,
+			"subclass": 2,
+			"stats": {
+				"AGILITY": 3
+			},
+			"dps": 15,
+			"reqLevel": 21
+		},
+		"paladinRing": {
+			"invType": "FINGER",
+			"cls": 4,
+			"subclass": 0,
+			"stats": {
+				"STRENGTH": 6
+			},
+			"classes": [
+				2
+			]
+		},
+		"fireCloak": {
+			"invType": "CLOAK",
+			"cls": 4,
+			"subclass": 1,
+			"stats": {
+				"FIRE_RESISTANCE": 10
+			},
+			"armor": 20
+		},
+		"plainCloak": {
+			"invType": "CLOAK",
+			"cls": 4,
+			"subclass": 0,
+			"stats": {},
+			"armor": 20
+		},
+		"apMace": {
+			"invType": "2HWEAPON",
+			"cls": 2,
+			"subclass": 5,
+			"stats": {
+				"ATTACK_POWER": 32,
+				"EXTRA_ARMOR": 60
+			},
+			"dps": 27.7
+		},
+		"spiritRobe": {
+			"invType": "ROBE",
+			"cls": 4,
+			"subclass": 1,
+			"stats": {
+				"SPIRIT": 9,
+				"INTELLECT": 3
+			},
+			"armor": 40
+		}
+	},
+	"members": {
+		"Brisket": {
+			"name": "Brisket",
+			"classId": 11,
+			"level": 30,
+			"spec": "DRUID:1",
+			"spec2": "DRUID:2",
+			"seen": 2000000,
+			"slots": {
+				"1": 10,
+				"5": 20,
+				"10": 8,
+				"11": 12,
+				"12": 6
+			},
+			"slots2": {
+				"1": 5,
+				"5": 4,
+				"10": 3,
+				"11": 2,
+				"12": 2
+			},
+			"worn": [
+				5001
+			]
+		},
+		"Miller": {
+			"name": "Miller",
+			"classId": 1,
+			"level": 22,
+			"spec": "WARRIOR:0",
+			"seen": 2000000,
+			"slots": {
+				"5": 18,
+				"10": 2,
+				"16": 150
+			},
+			"th": true
+		},
+		"Rage": {
+			"name": "Rage",
+			"classId": 1,
+			"level": 45,
+			"spec": "WARRIOR:1",
+			"seen": 2000000,
+			"slots": {
+				"5": 10,
+				"16": 60,
+				"17": 10
+			}
+		},
+		"Frosty": {
+			"name": "Frosty",
+			"classId": 8,
+			"level": 30,
+			"spec": "MAGE:2",
+			"seen": 2000000,
+			"slots": {
+				"1": 5,
+				"10": 4
+			}
+		},
+		"Arrow": {
+			"name": "Arrow",
+			"classId": 3,
+			"level": 39,
+			"spec": "HUNTER:0",
+			"seen": 2000000,
+			"slots": {
+				"5": 8,
+				"16": 10,
+				"18": 40
+			}
+		},
+		"Stale": {
+			"name": "Stale",
+			"classId": 11,
+			"level": 30,
+			"spec": "DRUID:1",
+			"seen": 0,
+			"slots": {}
+		}
+	},
+	"judge": [
+		{
+			"name": "leather agility gloves: feral upgrade",
+			"item": "leatherAgiGloves",
+			"member": "Brisket",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 0.42500000000000004,
+				"spec": "DRUID:1",
+				"at": null,
+				"second": false,
+				"against": [
+					10
+				]
+			}
+		},
+		{
+			"name": "leather agility gloves: mage can't wear leather",
+			"item": "leatherAgiGloves",
+			"member": "Frosty",
+			"expect": null
+		},
+		{
+			"name": "leather agility gloves: warrior, small agility use",
+			"item": "leatherAgiGloves",
+			"member": "Miller",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 2.9,
+				"spec": "WARRIOR:0",
+				"at": null,
+				"second": false,
+				"against": [
+					10
+				]
+			}
+		},
+		{
+			"name": "cloth int head: mage upgrade",
+			"item": "clothIntHead",
+			"member": "Frosty",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 2.02,
+				"spec": "MAGE:2",
+				"at": null,
+				"second": false,
+				"against": [
+					1
+				]
+			}
+		},
+		{
+			"name": "cloth int head: feral doesn't suit, resto second spec",
+			"item": "clothIntHead",
+			"member": "Brisket",
+			"expect": {
+				"kind": "maybe",
+				"gain": 0.72,
+				"spec": "DRUID:2",
+				"at": null,
+				"second": true,
+				"against": [
+					1
+				]
+			}
+		},
+		{
+			"name": "two-hander vs main hand plus off hand",
+			"item": "greatsword",
+			"member": "Rage",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 0.512142857142857,
+				"spec": "WARRIOR:1",
+				"at": null,
+				"second": false,
+				"against": [
+					16,
+					17
+				]
+			}
+		},
+		{
+			"name": "two-hander for a level 22: at 25",
+			"item": "greatsword",
+			"member": "Miller",
+			"expect": {
+				"kind": "maybe",
+				"gain": 0.18399999999999997,
+				"spec": "WARRIOR:0",
+				"at": 25,
+				"second": false,
+				"against": [
+					16,
+					17
+				]
+			}
+		},
+		{
+			"name": "unique ring already worn",
+			"item": "agiRing",
+			"member": "Brisket",
+			"itemId": 5001,
+			"expect": null
+		},
+		{
+			"name": "ring vs the weaker ring",
+			"item": "agiRing",
+			"member": "Brisket",
+			"itemId": 5002,
+			"expect": {
+				"kind": "maybe",
+				"gain": 0.1333333333333333,
+				"spec": "DRUID:1",
+				"at": null,
+				"second": false,
+				"against": [
+					12
+				]
+			}
+		},
+		{
+			"name": "mail at 40: hunter at 39 is a maybe at 40",
+			"item": "mailChest",
+			"member": "Arrow",
+			"expect": {
+				"kind": "maybe",
+				"gain": 0.5,
+				"spec": "HUNTER:0",
+				"at": 40,
+				"second": false,
+				"against": [
+					5
+				]
+			}
+		},
+		{
+			"name": "leather on a level 45 warrior is worth less",
+			"item": "leatherChest",
+			"member": "Rage",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 0.18400000000000016,
+				"spec": "WARRIOR:1",
+				"at": null,
+				"second": false,
+				"against": [
+					5
+				]
+			}
+		},
+		{
+			"name": "mail on a level 45 warrior, too",
+			"item": "mailChest",
+			"member": "Rage",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 0.21600000000000003,
+				"spec": "WARRIOR:1",
+				"at": null,
+				"second": false,
+				"against": [
+					5
+				]
+			}
+		},
+		{
+			"name": "one-hander can go in the off hand for dual wielders",
+			"item": "dagger",
+			"member": "Rage",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 0.9999999999999997,
+				"spec": "WARRIOR:1",
+				"at": null,
+				"second": false,
+				"against": [
+					17
+				]
+			}
+		},
+		{
+			"name": "shield with a two-hander means losing it",
+			"item": "shield",
+			"member": "Miller",
+			"expect": null
+		},
+		{
+			"name": "bow: hunter's ranged slot",
+			"item": "bow",
+			"member": "Arrow",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 0.2,
+				"spec": "HUNTER:0",
+				"at": null,
+				"second": false,
+				"against": [
+					18
+				]
+			}
+		},
+		{
+			"name": "class-restricted ring",
+			"item": "paladinRing",
+			"member": "Miller",
+			"expect": null
+		},
+		{
+			"name": "resistance cloak suits nobody",
+			"item": "fireCloak",
+			"member": "Brisket",
+			"expect": null
+		},
+		{
+			"name": "plain cloak over an empty slot",
+			"item": "plainCloak",
+			"member": "Frosty",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 0.4,
+				"spec": "MAGE:2",
+				"at": null,
+				"second": false,
+				"against": [
+					15
+				]
+			}
+		},
+		{
+			"name": "spirit robe only fits the second spec",
+			"item": "spiritRobe",
+			"member": "Brisket",
+			"expect": {
+				"kind": "maybe",
+				"gain": 1.75,
+				"spec": "DRUID:2",
+				"at": null,
+				"second": true,
+				"against": [
+					5
+				]
+			}
+		},
+		{
+			"name": "attack power and bonus armor count as fewer stat points",
+			"item": "apMace",
+			"member": "Brisket",
+			"expect": {
+				"kind": "upgrade",
+				"gain": 12.8,
+				"spec": "DRUID:1",
+				"at": null,
+				"second": false,
+				"against": [
+					16,
+					17
+				]
+			}
+		}
+	],
+	"scores": [
+		{
+			"item": "leatherAgiGloves",
+			"spec": "DRUID:1",
+			"classId": 11,
+			"level": 30,
+			"offHand": false,
+			"expect": {
+				"score": 11.4,
+				"stat": 8.4,
+				"total": 10
+			}
+		},
+		{
+			"item": "greatsword",
+			"spec": "WARRIOR:1",
+			"classId": 1,
+			"level": 45,
+			"offHand": false,
+			"expect": {
+				"score": 105.85,
+				"stat": 13.6,
+				"total": 16
+			}
+		},
+		{
+			"item": "leatherChest",
+			"spec": "WARRIOR:1",
+			"classId": 1,
+			"level": 45,
+			"offHand": false,
+			"expect": {
+				"score": 11.840000000000002,
+				"stat": 10.240000000000002,
+				"total": 16
+			}
+		},
+		{
+			"item": "dagger",
+			"spec": "WARRIOR:1",
+			"classId": 1,
+			"level": 45,
+			"offHand": true,
+			"expect": {
+				"score": 19.999999999999996,
+				"stat": 3.2,
+				"total": 4
+			}
+		},
+		{
+			"item": "apMace",
+			"spec": "WARRIOR:1",
+			"classId": 1,
+			"level": 45,
+			"offHand": false,
+			"expect": {
+				"score": 139.04999999999998,
+				"stat": 14.4,
+				"total": 22
+			}
+		},
+		{
+			"item": "bow",
+			"spec": "HUNTER:0",
+			"classId": 3,
+			"level": 39,
+			"offHand": false,
+			"expect": {
+				"score": 48,
+				"stat": 3,
+				"total": 3
+			}
+		},
+		{
+			"item": "clothIntHead",
+			"spec": "MAGE:2",
+			"classId": 8,
+			"level": 30,
+			"offHand": false,
+			"expect": {
+				"score": 15.1,
+				"stat": 14.5,
+				"total": 13
+			}
+		}
+	],
+	"usable": [
+		{
+			"item": "greatsword",
+			"member": "Miller",
+			"expect": 25
+		},
+		{
+			"item": "mailChest",
+			"member": "Arrow",
+			"expect": 40
+		},
+		{
+			"item": "mailChest",
+			"member": "Frosty",
+			"expect": null
+		},
+		{
+			"item": "bow",
+			"member": "Miller",
+			"expect": 21
+		},
+		{
+			"item": "dagger",
+			"member": "Brisket",
+			"expect": 1
+		}
+	],
+	"suggest": [
+		{
+			"name": "agility gloves, everyone",
+			"item": "leatherAgiGloves",
+			"now": 2003600,
+			"skip": [],
+			"max": 3,
+			"expect": [
+				"Arrow:upgrade",
+				"Rage:upgrade",
+				"Miller:upgrade"
+			]
+		},
+		{
+			"name": "own characters skipped",
+			"item": "leatherAgiGloves",
+			"now": 2003600,
+			"skip": [
+				"Arrow"
+			],
+			"max": 3,
+			"expect": [
+				"Rage:upgrade",
+				"Miller:upgrade",
+				"Brisket:upgrade"
+			]
+		},
+		{
+			"name": "inactive members skipped",
+			"item": "plainCloak",
+			"now": 3728000,
+			"skip": [],
+			"max": 3,
+			"expect": []
+		},
+		{
+			"name": "plain cloak",
+			"item": "plainCloak",
+			"now": 2003600,
+			"skip": [],
+			"max": 3,
+			"expect": [
+				"Brisket:upgrade",
+				"Frosty:upgrade",
+				"Miller:upgrade"
+			]
+		},
+		{
+			"name": "two-hander: upgrades before maybes",
+			"item": "greatsword",
+			"now": 2003600,
+			"skip": [],
+			"max": 3,
+			"expect": [
+				"Rage:upgrade",
+				"Miller:maybe"
+			]
+		}
+	]
+}

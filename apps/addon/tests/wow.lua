@@ -144,7 +144,7 @@ end
 function wow.load(state)
     wow.reset(state)
     local ns = {}
-    for _, file in ipairs({ "GuildieData.lua", "Capture.lua", "Guildie.lua", "UI.lua", "Tooltip.lua" }) do
+    for _, file in ipairs({ "GuildieData.lua", "Capture.lua", "Guildie.lua", "UI.lua", "Upgrades.lua", "Tooltip.lua" }) do
         local chunk = assert(loadfile(ROOT .. file))
         chunk("Guildie", ns)
     end
@@ -226,7 +226,8 @@ function wow.decode(text)
             local word = text:match("^[%w%.%-+]+", pos)
             pos = pos + #word
             if word == "true" then return true elseif word == "false" then return false elseif word == "null" then return nil end
-            return assert(tonumber(word), "bad number " .. word)
+            -- One value: assert would also return its message (table.insert(arr, n, msg)).
+            return (assert(tonumber(word), "bad number " .. word))
         end
     end
     local out = value()

@@ -50,7 +50,10 @@ export function writeGuildData(folders: string[], data: GuildData, log: Log): st
 			if (existsSync(file) && readFileSync(file).equals(content)) continue;
 			writeFileSync(file, content);
 			written.push(file);
-			log(`Wrote guild data for ${data.guilds.join(", ") || "no guilds"} (${Object.keys(data.reagents).length} reagents) to ${file}`);
+			const upgrades = data.upgrades?.members?.length ?? 0;
+			log(
+				`Wrote guild data for ${data.guilds.join(", ") || "no guilds"} (${Object.keys(data.reagents).length} reagents, ${upgrades} guildmates for upgrades) to ${file}`,
+			);
 		} catch (e) {
 			log(`Couldn't write ${file}: ${(e as Error).message}`);
 		}

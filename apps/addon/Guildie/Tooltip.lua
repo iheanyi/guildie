@@ -1,5 +1,6 @@
--- Adds a line to item tooltips: guildmates whose known recipes use this item.
--- A suggestion, not a certainty: knowing a recipe doesn't mean they're still
+-- Adds lines to item tooltips: guildmates whose known recipes use this item
+-- (reagents), and guildmates it might be a gear upgrade for (Upgrades.lua).
+-- Suggestions, not certainties: knowing a recipe doesn't mean they're still
 -- making it. Data comes from GuildieData.lua, which the helper downloads.
 
 local ADDON, ns = ...
@@ -49,19 +50,38 @@ local function suggestion(itemID)
 end
 ns.reagentSuggestion = suggestion
 
-local function addTo(tooltip, itemID)
+--- The gear-upgrade line for the item in this tooltip, if any.
+local function upgradeLine(tooltip, itemID, data)
+    if not ns.upgrades or not tooltip.GetItem then return nil end
+    local _, link = tooltip:GetItem()
+    local item = ns.upgrades.readItem(link, ns.upgrades.tooltipLines(tooltip, data))
+    return ns.upgrades.line(item, itemID, classColored)
+end
+ns.upgradeLine = upgradeLine
+
+local function addTo(tooltip, itemID, data)
     if not itemID then return end
+    -- Not our own hidden tooltip, which reads worn gear (Capture.lua).
+    if tooltip.GetName and tooltip:GetName() == "GuildieScanTooltip" then return end
+    local added = false
     local line = suggestion(itemID)
     if line then
         tooltip:AddLine(line, 1, 1, 1, true)
-        tooltip:Show()
+        added = true
     end
+    local ok, upgrade = pcall(upgradeLine, tooltip, itemID, data)
+    if ok and upgrade then
+        tooltip:AddLine(upgrade, 1, 1, 1, true)
+        added = true
+    end
+    if added then tooltip:Show() end
 end
+ns.addToTooltip = addTo
 
 if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and Enum.TooltipDataType then
     -- Modern client (WoW: Forever runs on it).
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-        if data and data.id then addTo(tooltip, data.id) end
+        if data and data.id then addTo(tooltip, data.id, data) end
     end)
 else
     -- Older clients.

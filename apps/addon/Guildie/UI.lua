@@ -76,8 +76,10 @@ local function refresh()
     if GuildieData and GuildieData.generatedAt then
         local count = 0
         for _ in pairs(GuildieData.reagents or {}) do count = count + 1 end
-        window.guildData:SetText(string.format("Tooltips: %s, from %s (%d reagents)",
-            table.concat(GuildieData.guilds or {}, ", "), date("%b %d %H:%M", math.floor(GuildieData.generatedAt / 1000)), count))
+        local upgrades = GuildieData.upgrades and GuildieData.upgrades.members
+        window.guildData:SetText(string.format("Tooltips: %s, from %s (%d reagents, %d guildmates for upgrades)",
+            table.concat(GuildieData.guilds or {}, ", "), date("%b %d %H:%M", math.floor(GuildieData.generatedAt / 1000)), count,
+            type(upgrades) == "table" and #upgrades or 0))
     else
         window.guildData:SetText("Tooltips: no guild data yet. The helper downloads it; it loads at login or /reload.")
     end

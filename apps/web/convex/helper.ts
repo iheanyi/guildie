@@ -7,6 +7,9 @@ import { sha256 } from "./claims";
 import { mergeProfile } from "./profile";
 import type { vTalentTree } from "./schema";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
+import type { ItemInfo } from "./shared/itemInfo";
+import { type Rules, type UpgradeMember, upgradeRules } from "./shared/upgrades";
+import { memberForUpgrades } from "./upgradeProfiles";
 import { requireUserId } from "./users";
 
 // The desktop helper (apps/helper) uploads what the Guildie addon
@@ -435,6 +438,8 @@ type GuildDataBase = {
 		region: string;
 		members: { name: string; slug: string; classId: number; professions: { name: string; skill?: number; knownRecipes: number[] }[] }[];
 	}[];
+	/** Active guildmates (not the token owner's own characters) for gear-upgrade suggestions. */
+	upgradeMembers: UpgradeMember[];
 };
 
 export type GuildData = {
@@ -445,6 +450,12 @@ export type GuildData = {
 	recipesKnown: number;
 	recipesInCatalog: number;
 	reagents: Record<string, { name: string; users: { name: string; classId: number; profession: string; recipes: number }[] }>;
+	/**
+	 * Gear-upgrade suggestions (addon 0.5.0+; older addons ignore it): the
+	 * rules and weights once (shared/upgrades.ts, shared/weights.ts), and each
+	 * active guildmate with the scores of what they wear.
+	 */
+	upgrades: { version: 1; rules: Rules; members: UpgradeMember[] };
 };
 
 /** The token's guilds (those its claimed characters are in) and their members. */
@@ -466,6 +477,11 @@ export const guildDataBase = internalQuery({
 			if (member?.inRoster) guildIds.add(member.guildId);
 		}
 		const guilds = [];
+		const rules = upgradeRules();
+		const itemCache = new Map<number, ItemInfo | undefined>();
+		const ownSlugs = new Set(owned.map((c) => `${c.region}:${c.slug}`));
+		const upgradeMembers: UpgradeMember[] = [];
+		const now = Date.now();
 		for (const guildId of guildIds) {
 			const guild = await ctx.db.get(guildId);
 			if (!guild) continue;
@@ -474,6 +490,12 @@ export const guildDataBase = internalQuery({
 				.withIndex("by_guild", (q) => q.eq("guildId", guildId).eq("inRoster", true))
 				.collect();
 			const profiles = await Promise.all(members.map((m) => pickProfile(ctx, m)));
+			for (const [i, m] of members.entries()) {
+				if (ownSlugs.has(`${m.region}:${m.slug}`)) continue;
+				const found = await memberForUpgrades(ctx, m, profiles[i], rules, itemCache);
+				// Only who's been around lately; the addon checks again as time passes.
+				if (found && now - found.member.seen * 1000 <= rules.activeDays * 86_400_000) upgradeMembers.push(found.member);
+			}
 			guilds.push({
 				name: guild.name,
 				region: guild.region,
@@ -485,13 +507,14 @@ export const guildDataBase = internalQuery({
 				})),
 			});
 		}
-		return { mine: owned.map((c) => c.name), guilds };
+		return { mine: owned.map((c) => c.name), guilds, upgradeMembers };
 	},
 });
 
 /**
- * What the addon shows on reagent tooltips: for each reagent, the guild
- * members whose known recipes use it (most recipes first). Suggestions, not
+ * What the addon shows on item tooltips. Reagents: for each, the guild
+ * members whose known recipes use it (most recipes first). Gear: who it
+ * might be an upgrade for (`upgrades`, judged in game). Suggestions, not
  * certainties: knowing a recipe doesn't mean someone is still making it.
  */
 export const guildData = action({
@@ -539,6 +562,7 @@ export const guildData = action({
 			recipesKnown: ids.length,
 			recipesInCatalog: reagentsByRecipe.size,
 			reagents,
+			upgrades: { version: 1, rules: upgradeRules(), members: base.upgradeMembers },
 		};
 	},
 });

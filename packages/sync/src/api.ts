@@ -4,7 +4,13 @@
 export type Me = { battletag: string | null; characters: string[] };
 /** `rejected`: characters the site refused as malformed (names; the site logs why). */
 export type UploadResult = { accepted?: string[]; unmatched?: string[]; rejected?: string[]; error?: string };
-export type GuildData = { generatedAt: number; guilds: string[]; reagents: Record<string, unknown> };
+/** `upgrades`: gear-upgrade suggestions (addon 0.5.0); written to GuildieData.lua as is. */
+export type GuildData = {
+	generatedAt: number;
+	guilds: string[];
+	reagents: Record<string, unknown>;
+	upgrades?: { members?: unknown[] };
+};
 export type Pairing = { code: string; pollSecret: string; expiresInSeconds: number; connectUrl: string };
 export type PairingResult =
 	| { status: "pending" | "expired" }

@@ -174,7 +174,7 @@ mounted in `__root.tsx`):
   from the first render when the user agent says so, and once mounted when only
   the bridge does (app builds before 0.2).
 
-## Guild data in game (reagent tooltips)
+## Guild data in game (reagent and gear-upgrade tooltips)
 
 The other direction: the helper downloads `GET /api/helper/guild-data` every
 15 minutes (and on connect and "Upload now") and writes it to
@@ -189,6 +189,22 @@ your last login or reload.
   weekly) and each member's known recipes (with their profile, hourly).
 - The addon adds one line to item tooltips, skipping your own characters:
   "**Guildie** might want this: Brenna (Tailoring), Corwin (Alchemy) +2".
+- Gear upgrades (addon 0.5.0): `upgrades` holds the rules and stat weights
+  once (`apps/web/convex/shared/weights.ts`, seeded from WowSims' EP weights)
+  and each guildmate seen in the last 14 days (not your own characters):
+  class, level, main and second spec, and the score of what they wear in each
+  slot, worked out on the site from their gear's tooltips. On an equippable
+  item's tooltip the addon reads the item (`GetItemInfoInstant`,
+  `GetItemInfo`, `GetItemStats`, its tooltip lines for "Classes:", Unique and
+  Soulbound), scores it for each of them the same way
+  (`Guildie/Upgrades.lua`, a port of `convex/shared/upgrades.ts`; both run
+  `apps/addon/tests/upgrade_vectors.json`) and adds at most one line:
+  "**Guildie**: upgrade for Brisket (Feral), maybe Miller (at 24)". Upgrade:
+  15%+ better than what they wear there, usable now, main spec. Maybe: 3-15%,
+  their second spec, or usable within 3 levels. Nothing for items soulbound to
+  you. The site's item panel lists the same, with why ("+6 Agility, +4
+  Stamina over Embossed Leather Gloves"). About 20 KB of the file for a guild
+  of 60.
 - The file is generated as data literals only (`packages/sync/src/luaData.ts`,
   tested), since the game runs addon files as code.
 
@@ -231,6 +247,13 @@ Addon data is player-provided; Blizzard's can't be edited by the player.
   and recipe reading (`GetTradeSkillInfo`, `C_TradeSkillUI`, or the Craft
   API for Enchanting) with their events. Each falls back to the other API and
   keeps the last good read.
+
+- The 0.5.0 gear-upgrade reads in Forever: `GetItemStats` (or
+  `C_Item.GetItemStats`) and its key names (`ITEM_MOD_<STAT>_SHORT`, armor as
+  `RESISTANCE0_NAME`, DPS as `ITEM_MOD_DAMAGE_PER_SECOND_SHORT`; without it
+  the addon reads the English tooltip), `GetItemInfoInstant`'s equip location
+  and subclass, and the tooltip lines it scans (`ITEM_SOULBOUND`,
+  `ITEM_UNIQUE*`, `ITEM_CLASSES_ALLOWED`).
 
 - The desktop app on Windows (built from macOS and smoke-tested there; see
   apps/desktop/README.md).

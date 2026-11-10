@@ -22,8 +22,10 @@ reload the UI, and the helper, running on the same computer, uploads it then.
   every 20 minutes. If the game doesn't allow addons to reload on their own, it
   turns itself off and tells you.
 - **Tooltips:** hover a reagent to see guildmates whose known recipes use it
-  ("Guildie might want this: …"). The helper downloads your guild's data into
-  `GuildieData.lua`; it loads at login and `/reload`.
+  ("Guildie might want this: …"), and a piece of gear to see who it might be
+  an upgrade for ("Guildie: upgrade for Brisket (Feral), maybe Miller (at
+  24)"; `Upgrades.lua`, docs/addon.md). The helper downloads your guild's data
+  into `GuildieData.lua`; it loads at login and `/reload`.
 - Interface version 16001 is WoW: Forever 1.60.1.
 
 ## What's saved, and when
@@ -62,7 +64,12 @@ uploads it when the game writes the file.
 ## Tests
 
 `luajit apps/addon/tests/capture_test.lua` loads the addon with a stubbed WoW
-API (`tests/wow.lua`) and checks what each read saves and the JSON. With a
+API (`tests/wow.lua`) and checks what each read saves and the JSON.
+`luajit apps/addon/tests/upgrades_test.lua` checks the gear-upgrade
+suggestions: the cases in `upgrade_vectors.json` (shared with the site's
+TypeScript, written by `apps/web/scripts/gen-upgrade-vectors.ts`), reading a
+hovered item, and the tooltip line; given a `GuildieData.lua` and a JSON list
+of items, it prints the line for each. With a
 path it also writes a SavedVariables file like the game's, for trying the
 app and the site end to end. Tests live outside `Guildie/` so they don't ship.
 

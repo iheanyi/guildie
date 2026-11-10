@@ -27,9 +27,13 @@ import type * as origins from "../origins.js";
 import type * as profile from "../profile.js";
 import type * as recipes from "../recipes.js";
 import type * as shared_foreverTalents from "../shared/foreverTalents.js";
+import type * as shared_itemInfo from "../shared/itemInfo.js";
+import type * as shared_upgrades from "../shared/upgrades.js";
+import type * as shared_weights from "../shared/weights.js";
 import type * as shared_wow from "../shared/wow.js";
 import type * as sync from "../sync.js";
 import type * as talents from "../talents.js";
+import type * as upgradeProfiles from "../upgradeProfiles.js";
 import type * as users from "../users.js";
 
 import type {
@@ -58,9 +62,13 @@ declare const fullApi: ApiFromModules<{
   profile: typeof profile;
   recipes: typeof recipes;
   "shared/foreverTalents": typeof shared_foreverTalents;
+  "shared/itemInfo": typeof shared_itemInfo;
+  "shared/upgrades": typeof shared_upgrades;
+  "shared/weights": typeof shared_weights;
   "shared/wow": typeof shared_wow;
   sync: typeof sync;
   talents: typeof talents;
+  upgradeProfiles: typeof upgradeProfiles;
   users: typeof users;
 }>;
 
