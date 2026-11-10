@@ -8,12 +8,14 @@ import { ConvexError } from "convex/values";
 import { useState } from "react";
 import { ClassText } from "@/components/class-name";
 import { Button } from "@/components/ui/button";
+import { isAuthReturn } from "@/lib/auth-return";
 import { CLAIM_STATE_KEY } from "@/lib/claim";
 
 
 export const Route = createFileRoute("/me")({
-	beforeLoad: ({ context }) => {
-		if (!context.token) throw redirect({ to: "/sign-in" });
+	beforeLoad: ({ context, location }) => {
+		// Not while a sign-in is finishing on this page (see isAuthReturn).
+		if (!context.token && !isAuthReturn(location.searchStr)) throw redirect({ to: "/sign-in" });
 	},
 	head: () => ({ meta: [{ title: "Your account · guildie" }] }),
 	component: Me,

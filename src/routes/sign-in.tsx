@@ -8,8 +8,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/sign-in")({
+	// Battle.net returns here (never guarded for signed-out visitors), the
+	// browser finishes the sign-in, and the next load forwards to /me.
 	beforeLoad: ({ context }) => {
-		if (context.token) throw redirect({ to: "/" });
+		if (context.token) throw redirect({ to: "/me" });
 	},
 	head: () => ({ meta: [{ title: "Sign in · guildie" }] }),
 	component: SignIn,
@@ -40,7 +42,7 @@ function SignIn() {
 				onClick={async () => {
 					setPending(true);
 					setStartError(false);
-					const result = await signIn({ redirectTo: `${window.location.origin}/me` });
+					const result = await signIn({ redirectTo: `${window.location.origin}/sign-in` });
 					if (result.status === "error") {
 						setPending(false);
 						setStartError(true);
