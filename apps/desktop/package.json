@@ -1,0 +1,27 @@
+{
+	"name": "@guildie/desktop",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Guildie for Windows: the site in its own window, plus the addon uploader.",
+	"author": "Guildie",
+	"license": "MIT",
+	"main": "dist/main.cjs",
+	"scripts": {
+		"build": "node scripts/build.mjs",
+		"dev": "node scripts/build.mjs && electron .",
+		"smoke": "node scripts/build.mjs && electron . --smoke-test",
+		"build:win": "node scripts/build.mjs && electron-builder --win --x64",
+		"build:win-cross": "node scripts/build.mjs && electron-builder --win zip --x64",
+		"build:mac": "node scripts/build.mjs && electron-builder --mac dir",
+		"check": "tsc --noEmit",
+		"test": "node --test src/*.test.ts"
+	},
+	"devDependencies": {
+		"@guildie/sync": "workspace:*",
+		"@types/node": "^26.6.6",
+		"electron": "45.2.3",
+		"electron-builder": "26.18.0",
+		"esbuild": "0.28.2",
+		"typescript": "~5.9.3"
+	}
+}

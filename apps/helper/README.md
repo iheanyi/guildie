@@ -1,5 +1,9 @@
 # Guildie helper
 
+> The desktop app (`apps/desktop`) does all of this too, inside a Guildie
+> window, and connects when you sign in there. The helper stays for now; both
+> use the same code for the actual work (`packages/sync`).
+
 Uploads what the Guildie addon (`apps/addon`) saves in game to guildie.club,
 so your talents update as soon as you log out (or `/reload`), instead of
 whenever Blizzard's data catches up. It also downloads your guild's data into
@@ -27,8 +31,13 @@ Settings and the log live in `%APPDATA%\guildie`. One helper runs at a time.
 pnpm --filter @guildie/helper build:win        # on Windows: hidden console, exe icon
 pnpm --filter @guildie/helper build:win-cross  # from macOS/Linux: hidden console, generic exe icon
 pnpm --filter @guildie/helper dev              # run from source in the terminal (any OS)
-pnpm --filter @guildie/helper test
+pnpm --filter @guildie/helper test            # packages/sync's tests, under Bun
 ```
+
+What it shares with the desktop app (reading `Guildie.lua`, uploading,
+writing `GuildieData.lua`, finding the WoW folder, settings paths) is in
+`packages/sync`; `src/main.ts` is the Bun program around it and
+`src/tray-windows.ts` its PowerShell tray.
 
 Flags: `--api <url>` (another guildie: a preview or
 `https://guildie.localhost:1355`; tokens are kept per site), `--wow <folder>`

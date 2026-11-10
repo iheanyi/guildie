@@ -1,9 +1,10 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { extractPayload } from "./savedVariables";
+import type { Log } from "./config.ts";
+import { extractPayload } from "./savedVariables.ts";
 
 /** Default World of Warcraft folders, most likely first. */
-function wowCandidates(wow?: string) {
+export function wowCandidates(wow?: string) {
 	if (wow) return [wow];
 	if (process.platform === "win32") {
 		return [
@@ -16,14 +17,29 @@ function wowCandidates(wow?: string) {
 	return ["/Applications/World of Warcraft"];
 }
 
+/** A game install's flavor folders: _classic_, _retail_, _forever_... */
+const flavorFolders = (root: string) => readdirSync(root).filter((d) => /^_.+_$/.test(d));
+
+/** Whether a folder looks like a World of Warcraft install (has a _flavor_ folder). */
+export function isWowFolder(folder: string) {
+	try {
+		return flavorFolders(folder).length > 0;
+	} catch {
+		return false;
+	}
+}
+
+/** The WoW folder in use: the chosen one, or the first default that looks like an install. */
+export function findWowFolder(wow?: string): string | undefined {
+	return wowCandidates(wow).find(isWowFolder);
+}
+
 /** Every Guildie.lua under <wow>/_*_/WTF/Account/<account>/SavedVariables/, Forever's folder first. */
 export function findSavedVariables(wow?: string): string[] {
 	const found: string[] = [];
 	for (const root of wowCandidates(wow)) {
 		if (!existsSync(root)) continue;
-		const flavors = readdirSync(root)
-			.filter((d) => /^_.+_$/.test(d))
-			.sort((a, b) => Number(b.includes("forever")) - Number(a.includes("forever")));
+		const flavors = flavorFolders(root).sort((a, b) => Number(b.includes("forever")) - Number(a.includes("forever")));
 		for (const flavor of flavors) {
 			const accounts = join(root, flavor, "WTF", "Account");
 			if (!existsSync(accounts)) continue;
@@ -41,7 +57,7 @@ export function findAddonFolders(wow?: string): string[] {
 	const found: string[] = [];
 	for (const root of wowCandidates(wow)) {
 		if (!existsSync(root)) continue;
-		for (const flavor of readdirSync(root).filter((d) => /^_.+_$/.test(d))) {
+		for (const flavor of flavorFolders(root)) {
 			const folder = join(root, flavor, "Interface", "AddOns", "Guildie");
 			if (existsSync(join(folder, "Guildie.toc"))) found.push(folder);
 		}
@@ -59,14 +75,26 @@ export class Watcher {
 	private lastScan = 0;
 	private seen = new Map<string, { mtime: number; payload: string | null; retryAt?: number }>();
 
-	constructor(
-		private wow: string | undefined,
-		private upload: (file: string, payload: string) => Promise<boolean>,
-		private log: (...parts: unknown[]) => void,
-	) {}
+	private wow: string | undefined;
+	private readonly upload: (file: string, payload: string) => Promise<boolean>;
+	private readonly log: Log;
+
+	constructor(wow: string | undefined, upload: (file: string, payload: string) => Promise<boolean>, log: Log) {
+		this.wow = wow;
+		this.upload = upload;
+		this.log = log;
+	}
 
 	/** Upload the current files again, even if nothing changed. */
 	forget() {
+		this.seen.clear();
+	}
+
+	/** Watch another WoW folder (undefined: find it again). */
+	setWow(wow: string | undefined) {
+		this.wow = wow;
+		this.files = [];
+		this.lastScan = 0;
 		this.seen.clear();
 	}
 
@@ -93,7 +121,13 @@ export class Watcher {
 			const before = this.seen.get(file);
 			if (before && before.mtime === mtime) continue;
 			if (before?.retryAt && Date.now() < before.retryAt) continue;
-			const payload = extractPayload(readFileSync(file, "utf8"));
+			let text: string;
+			try {
+				text = readFileSync(file, "utf8");
+			} catch {
+				continue;
+			}
+			const payload = extractPayload(text);
 			if (payload && payload !== before?.payload) {
 				const ok = await this.upload(file, payload).catch((e: Error) => {
 					this.log(`Upload failed: ${e.message}`);

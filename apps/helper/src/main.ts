@@ -14,14 +14,11 @@
 
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
-import { guildDataFile } from "./luaData";
 import { hostname } from "node:os";
 import { join } from "node:path";
+import { Api, configDir, DEFAULT_API, displayName, loadConfig, logPath, makeLogger, saveConfig, SyncEngine } from "@guildie/sync";
 import iconFile from "../assets/guildie.ico" with { type: "file" };
-import { Api } from "./api";
-import { configDir, DEFAULT_API, loadConfig, logPath, makeLogger, saveConfig } from "./config";
 import { type TrayItem, WindowsTray } from "./tray-windows";
-import { findAddonFolders, Watcher } from "./watcher";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => {
@@ -36,7 +33,10 @@ if (flag("--wow")) {
 	config.wow = flag("--wow");
 	saveConfig(config);
 }
-const api = new Api(base, config.tokens[base]?.token);
+// Local dev servers (*.localhost) use a self-signed certificate (Bun's fetch option).
+const api = new Api(base, config.tokens[base]?.token, (url, init) =>
+	fetch(url, new URL(url).hostname.endsWith(".localhost") ? { ...init, tls: { rejectUnauthorized: false } } : init),
+);
 
 // ---- One helper at a time ----------------------------------------------------
 
@@ -163,71 +163,28 @@ async function signOut() {
 	saveConfig(config);
 	api.token = undefined;
 	account = null;
+	sync.reset();
 	ui.status("Signed out");
 	ui.connected(null);
 	ui.last("No uploads yet");
 }
 
-// ---- Uploading ----------------------------------------------------------------
+// ---- Uploading, and downloading guild data for the addon's tooltips ---------
+// (packages/sync: the same engine as the desktop app)
 
-const warnedUnmatched = new Set<string>();
-const displayName = (slug: string) => slug.split("-")[0].replace(/^./, (c) => c.toUpperCase());
-
-const watcher = new Watcher(
-	config.wow,
-	async (file, payload) => {
-		const { ok, status, body } = await api.upload(payload);
-		if (status === 401) {
-			await signOut();
-			ui.notify("Guildie", "This helper was disconnected. Connect again from the tray icon.");
-			return false;
-		}
-		if (!ok) {
-			log(`Upload failed (${status}): ${body.error ?? "unknown error"}`);
-			return false;
-		}
-		log(`Uploaded ${file}: updated ${body.accepted?.join(", ") || "nothing"}`);
-		if (body.accepted?.length) {
-			ui.last(`Last upload: ${body.accepted.map(displayName).join(", ")} at ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
-		}
-		const newlyUnmatched = (body.unmatched ?? []).filter((n) => !warnedUnmatched.has(n));
-		if (newlyUnmatched.length) {
-			newlyUnmatched.forEach((n) => warnedUnmatched.add(n));
-			ui.notify("Guildie", `Not claimed on Guildie yet: ${newlyUnmatched.join(", ")}. Claim them on your account page.`);
-		}
-		return true;
-	},
+const sync = new SyncEngine(api, config.wow, {
 	log,
-);
-
-// ---- Downloading guild data for the addon's tooltips -------------------------
-// Written to GuildieData.lua in the addon's folder; the game loads it at login
-// and /reload, so tooltips are as fresh as your last login or reload.
-
-const GUILD_DATA_EVERY_MS = 15 * 60_000;
-let lastGuildData = 0;
-
-async function refreshGuildData() {
-	lastGuildData = Date.now();
-	const folders = findAddonFolders(config.wow);
-	if (!folders.length) return;
-	const data = await api.guildData().catch((e: Error) => {
-		log(`Guild data download failed: ${e.message}`);
-		return undefined;
-	});
-	if (!data) return;
-	const content = Buffer.from(guildDataFile(data), "latin1");
-	for (const folder of folders) {
-		const file = join(folder, "GuildieData.lua");
-		try {
-			if (existsSync(file) && readFileSync(file).equals(content)) continue;
-			writeFileSync(file, content);
-			log(`Wrote guild data for ${data.guilds.join(", ") || "no guilds"} (${Object.keys(data.reagents).length} reagents) to ${file}`);
-		} catch (e) {
-			log(`Couldn't write ${file}: ${(e as Error).message}`);
-		}
-	}
-}
+	async onUnauthorized() {
+		await signOut();
+		ui.notify("Guildie", "This helper was disconnected. Connect again from the tray icon.");
+	},
+	onUpload({ at, characters }) {
+		ui.last(`Last upload: ${characters.map(displayName).join(", ")} at ${new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
+	},
+	onUnmatched(names) {
+		ui.notify("Guildie", `Not claimed on Guildie yet: ${names.join(", ")}. Claim them on your account page.`);
+	},
+});
 
 // ---- Start ------------------------------------------------------------------
 
@@ -235,10 +192,7 @@ async function onClick(item: TrayItem) {
 	if (item === "open") openExternal(new URL("/me", base).toString());
 	if (item === "log") openExternal(logPath());
 	if (item === "connect") void connect();
-	if (item === "upload") {
-		watcher.forget();
-		void refreshGuildData();
-	}
+	if (item === "upload") sync.now();
 	if (item === "signout") await signOut();
 	if (item === "quit") quit();
 }
@@ -262,10 +216,7 @@ if (!connected) void connect();
 
 let lastRetry = Date.now();
 while (true) {
-	if (account) {
-		await watcher.tick();
-		if (Date.now() - lastGuildData > GUILD_DATA_EVERY_MS) await refreshGuildData();
-	}
+	if (account) await sync.tick();
 	// Offline at start (or since): try the saved token again every minute.
 	else if (api.token && !pairing && Date.now() - lastRetry > 60_000) {
 		lastRetry = Date.now();
