@@ -61,7 +61,7 @@ function SidebarNav() {
 			<div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-2 pt-1 pb-4">
 				<div>
 					<NavLink to="/" activeOptions={{ exact: true }}>
-						All guilds
+						Home
 					</NavLink>
 				</div>
 

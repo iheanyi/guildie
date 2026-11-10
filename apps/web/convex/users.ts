@@ -82,7 +82,14 @@ export const viewer = query({
 			.withIndex("by_user", (q) => q.eq("userId", user._id))
 			.collect();
 		// The guilds their characters are in: header link, home page, where sign-in lands.
-		const guilds = (await guildsOf(ctx, user._id)).map((g) => ({ _id: g._id, name: g.name, region: g.region, slug: g.slug }));
+		const guilds = (await guildsOf(ctx, user._id)).map((g) => ({
+			_id: g._id,
+			name: g.name,
+			region: g.region,
+			slug: g.slug,
+			memberCount: g.memberCount,
+			faction: g.faction,
+		}));
 		return { ...user, characters, guilds };
 	},
 });

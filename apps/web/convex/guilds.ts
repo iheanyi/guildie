@@ -49,13 +49,20 @@ export async function access(ctx: QueryCtx, guild: Doc<"guilds">) {
 	return { canView: guild.visibility === "public" || member, isOwner, isMember: member };
 }
 
-export const list = query({
-	args: {},
-	handler: async (ctx) => {
-		const guilds = await ctx.db.query("guilds").collect();
-		return guilds
-			.filter((g) => g.visibility === "public")
-			.map((g) => ({ _id: g._id, name: g.name, slug: g.slug, region: g.region, memberCount: g.memberCount, faction: g.faction }));
+/**
+ * Find a guild by name (the home page's search). Public guilds only: there's
+ * no list of every guild, and members-only guilds don't turn up for anyone.
+ */
+export const search = query({
+	args: { q: v.string() },
+	handler: async (ctx, { q }) => {
+		const text = q.trim().slice(0, 64);
+		if (text.length < 2) return [];
+		const guilds = await ctx.db
+			.query("guilds")
+			.withSearchIndex("search_name", (s) => s.search("name", text).eq("visibility", "public"))
+			.take(8);
+		return guilds.map((g) => ({ _id: g._id, name: g.name, slug: g.slug, region: g.region, memberCount: g.memberCount, faction: g.faction }));
 	},
 });
 

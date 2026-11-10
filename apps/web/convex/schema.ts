@@ -78,7 +78,9 @@ export default defineSchema({
 		memberCount: v.number(),
 		rosterSyncedAt: v.optional(v.number()),
 		lastSyncError: v.optional(v.string()),
-	}).index("by_key", ["flavor", "region", "slug"]),
+	})
+		.index("by_key", ["flavor", "region", "slug"])
+		.searchIndex("search_name", { searchField: "name", filterFields: ["visibility"] }),
 
 	/** One row per guild member, from the roster plus each character's profile. */
 	characters: defineTable({

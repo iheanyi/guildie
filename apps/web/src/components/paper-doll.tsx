@@ -91,10 +91,12 @@ function Figure({ character }: { character: Character }) {
 function Slot({ slot, item, align }: { slot: string; item?: Item; align: Align }) {
 	// Each alignment applies on wide panes only; narrow panes list every slot
 	// icon-first so the two columns read the same way.
+	// Rows are only as wide as their content (not the whole column), so an
+	// item's tooltip opens beside it rather than over the character.
 	const layout = cn(
-		"flex min-w-0 items-center gap-2.5 text-left",
-		align === "end" && "@2xl:flex-row-reverse @2xl:text-right",
-		align === "center" && "@2xl:flex-col @2xl:gap-1 @2xl:text-center",
+		"flex min-w-0 max-w-full items-center gap-2.5 self-start justify-self-start text-left",
+		align === "end" && "@2xl:flex-row-reverse @2xl:self-end @2xl:justify-self-end @2xl:text-right",
+		align === "center" && "@2xl:flex-col @2xl:gap-1 @2xl:self-center @2xl:justify-self-center @2xl:text-center",
 	);
 	if (!item) {
 		return (

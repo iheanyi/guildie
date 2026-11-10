@@ -7,7 +7,7 @@ export function usePageTitle() {
 			for (const match of [...s.matches].reverse()) {
 				const meta = (match as { meta?: Array<{ title?: string } | undefined> }).meta;
 				const title = meta?.find((m) => m?.title)?.title;
-				if (title) return title === "Guildie" ? "Guilds" : title.replace(/ · Guildie$/, "");
+				if (title) return title === "Guildie" ? "Home" : title.replace(/ · Guildie$/, "");
 			}
 			return "Guildie";
 		},
