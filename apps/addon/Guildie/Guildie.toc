@@ -2,8 +2,11 @@
 ## Title: guildie
 ## Notes: Saves your character's talents for the guildie desktop helper to upload to guildie.club.
 ## Author: guildie
-## Version: 0.1.0
+## Version: 0.2.0
 ## SavedVariables: GuildieDB
+## IconTexture: Interface\AddOns\Guildie\icon
+## AddonCompartmentFunc: Guildie_OnAddonCompartmentClick
 ## X-Website: https://guildie.club
 
 Guildie.lua
+UI.lua

@@ -1,22 +1,25 @@
 # guildie addon
 
 Saves your character's talents (and level) for the guildie desktop helper
-(`apps/helper`) to upload to guildie.club. Addons can't use the internet: the
-game writes `GuildieDB` to `WTF/Account/<account>/SavedVariables/Guildie.lua`
-on `/reload` and logout, and the helper watches that file.
+(`apps/helper`) to upload to guildie.club.
 
-- Install: copy the `Guildie` folder into your WoW: Forever `Interface/AddOns`.
-- Nothing to do in game: the game writes the addon's data when you log out,
-  and the helper uploads it then. `/reload` does it sooner, if you want.
-- `/guildie` saves now and says how many talent points it read.
-- Interface version 16001 is WoW: Forever 1.60.1 (as the WowSims exporter uses).
+Addons can't use the internet. The game writes the addon's data
+(`WTF/Account/<account>/SavedVariables/Guildie.lua`) when you log out or
+reload the UI, and the helper, running on the same computer, uploads it then.
+
+- **Install:** copy the `Guildie` folder into your WoW: Forever
+  `Interface/AddOns`.
+- **Minimap button** (drag it around the minimap) or `/guildie`: opens the
+  window: what's saved, whether it changed since your last upload, and
+  **Upload now**, which reloads the UI so it goes right away.
+- **Upload while I'm AFK** (off by default, experimental): reloads the UI for
+  you while you're flagged AFK and out of combat, if something changed, at most
+  every 20 minutes. If the game doesn't allow addons to reload on their own, it
+  turns itself off and tells you.
+- Interface version 16001 is WoW: Forever 1.60.1.
 
 Talents are read with `C_ClassTalents` / `C_Traits`, the way the
-[WowSims exporter](https://github.com/wowsims/exporter) (MIT) does for Forever,
-and sent as TraitDefinition IDs: the same IDs as Blizzard's web API, which is
-how guildie.club places them in their trees.
-
-**Not tested in game yet.** Things to confirm on first run:
-- `/guildie` reports a talent count that matches your character.
-- `UnitGUID("player")`'s last part, read as hex, equals Blizzard's character id
-  (that's how uploads match your claimed characters; first name is the fallback).
+[WowSims exporter](https://github.com/wowsims/exporter) (MIT) reads them in
+Forever, and sent as TraitDefinition IDs: the same IDs as Blizzard's web API,
+which is how guildie.club places them in their trees. Confirmed in game: talent
+reading, and that the in-game GUID's number is Blizzard's character id.

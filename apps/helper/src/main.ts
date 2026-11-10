@@ -1,179 +1,239 @@
 // guildie helper: uploads what the guildie addon saves in game to guildie.club.
 //
 // The addon can't use the internet. The game writes its data to
-// WTF/Account/<account>/SavedVariables/Guildie.lua on /reload and logout; this
+// WTF/Account/<account>/SavedVariables/Guildie.lua on logout and /reload; this
 // watches that file and uploads it when it changes. It only reads files: it
 // never touches the game, its memory or your input.
 //
-//   guildie-helper                 run (asks for a token the first time)
-//   guildie-helper --token         enter a new token
-//   guildie-helper --wow <folder>  your World of Warcraft folder, if not found
-//   guildie-helper --api <url>     another guildie, e.g. https://guildie.localhost:1355
+// On Windows it lives in the notification area (tray), with no console window.
+// Elsewhere, or with --console, it runs in the terminal.
+//
+//   --api <url>     another guildie (a preview, or https://guildie.localhost:1355)
+//   --wow <folder>  your World of Warcraft folder, if it isn't found
+//   --console       run in the terminal, even on Windows
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
-import { createInterface } from "node:readline/promises";
-import { extractPayload } from "./savedVariables";
-
-const POLL_MS = 2_000;
-const RESCAN_MS = 30_000;
-
-type Config = { api: string; token?: string; wow?: string };
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { hostname } from "node:os";
+import { join } from "node:path";
+import iconFile from "../assets/guildie.ico" with { type: "file" };
+import { Api } from "./api";
+import { configDir, DEFAULT_API, loadConfig, logPath, makeLogger, saveConfig } from "./config";
+import { type TrayItem, WindowsTray } from "./tray-windows";
+import { Watcher } from "./watcher";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => {
 	const i = args.indexOf(name);
-	return i === -1 ? undefined : (args[i + 1] ?? "");
+	return i === -1 ? undefined : args[i + 1];
+};
+const base = flag("--api") ?? DEFAULT_API;
+const useTray = process.platform === "win32" && !args.includes("--console");
+const log = makeLogger(!useTray);
+const config = loadConfig();
+if (flag("--wow")) {
+	config.wow = flag("--wow");
+	saveConfig(config);
+}
+const api = new Api(base, config.tokens[base]?.token);
+
+// ---- One helper at a time ----------------------------------------------------
+
+const lockPath = join(configDir(), "helper.lock");
+function alreadyRunning() {
+	try {
+		const pid = Number(readFileSync(lockPath, "utf8"));
+		if (pid && pid !== process.pid) {
+			process.kill(pid, 0);
+			return true;
+		}
+	} catch {}
+	return false;
+}
+if (alreadyRunning()) {
+	log("Another guildie helper is already running; exiting.");
+	if (!useTray) console.log("Another guildie helper is already running.");
+	process.exit(0);
+}
+writeFileSync(lockPath, String(process.pid));
+function quit() {
+	try {
+		unlinkSync(lockPath);
+	} catch {}
+	tray?.close();
+	process.exit(0);
+}
+process.on("SIGINT", quit);
+process.on("SIGTERM", quit);
+
+// ---- What the user sees: tray on Windows, the terminal elsewhere -------------
+
+function openExternal(target: string) {
+	if (process.platform === "win32") {
+		spawn("rundll32", ["url.dll,FileProtocolHandler", target], { windowsHide: true, detached: true, stdio: "ignore" }).unref();
+	} else {
+		spawn(process.platform === "darwin" ? "open" : "xdg-open", [target], { detached: true, stdio: "ignore" }).unref();
+	}
+}
+
+let tray: WindowsTray | undefined;
+
+const ui = {
+	status(text: string) {
+		log(text);
+		tray?.set("status", "disabled", text);
+		tray?.tip(`guildie: ${text}`);
+	},
+	last(text: string) {
+		tray?.set("last", "disabled", text);
+	},
+	connected(account: string | null) {
+		tray?.set("connect", account ? "hidden" : "enabled", "Connect to guildie...");
+		tray?.set("upload", account ? "enabled" : "hidden", "Upload now");
+		tray?.set("signout", account ? "enabled" : "hidden", `Sign out${account ? ` (${account})` : ""}`);
+	},
+	notify(title: string, text: string) {
+		if (tray) tray.balloon(title, text);
+		else console.log(`\n${title}: ${text}\n`);
+	},
 };
 
-function configPath() {
-	if (process.platform === "win32") return join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), "guildie", "helper.json");
-	if (process.platform === "darwin") return join(homedir(), "Library", "Application Support", "guildie", "helper.json");
-	return join(homedir(), ".config", "guildie", "helper.json");
-}
+// ---- Connecting and signing out ---------------------------------------------
 
-function loadConfig(): Config {
-	try {
-		return { api: "https://guildie.club", ...JSON.parse(readFileSync(configPath(), "utf8")) };
-	} catch {
-		return { api: "https://guildie.club" };
-	}
-}
+let account: string | null = null;
+let pairing = false;
 
-function saveConfig(config: Config) {
-	mkdirSync(dirname(configPath()), { recursive: true });
-	writeFileSync(configPath(), JSON.stringify(config, null, 2));
-}
-
-const log = (...parts: unknown[]) => console.log(`[${new Date().toLocaleTimeString()}]`, ...parts);
-
-function request(config: Config, path: string, init: RequestInit = {}) {
-	const url = new URL(path, config.api);
-	return fetch(url, {
-		...init,
-		headers: { ...init.headers, Authorization: `Bearer ${config.token}`, "Content-Type": "application/json" },
-		// Local dev servers (*.localhost) use a self-signed certificate.
-		...(url.hostname.endsWith(".localhost") ? { tls: { rejectUnauthorized: false } } : {}),
-	});
-}
-
-/** Default World of Warcraft folders, most likely first. */
-function wowCandidates(config: Config) {
-	if (config.wow) return [config.wow];
-	if (process.platform === "win32") {
-		return ["C:\\Program Files (x86)\\World of Warcraft", "C:\\Program Files\\World of Warcraft", "D:\\World of Warcraft", "D:\\Games\\World of Warcraft"];
-	}
-	return ["/Applications/World of Warcraft"];
-}
-
-/** Every Guildie.lua under <wow>/_*_/WTF/Account/<account>/SavedVariables/, Forever's folder first. */
-function findSavedVariables(config: Config): string[] {
-	const found: string[] = [];
-	for (const root of wowCandidates(config)) {
-		if (!existsSync(root)) continue;
-		// Each game version has its own folder (_retail_, _classic_, ...). We don't
-		// know Forever's folder name for sure, so look in all of them.
-		const flavors = readdirSync(root)
-			.filter((d) => /^_.+_$/.test(d))
-			.sort((a, b) => Number(b.includes("forever")) - Number(a.includes("forever")));
-		for (const flavor of flavors) {
-			const accounts = join(root, flavor, "WTF", "Account");
-			if (!existsSync(accounts)) continue;
-			for (const account of readdirSync(accounts)) {
-				const file = join(accounts, account, "SavedVariables", "Guildie.lua");
-				if (existsSync(file)) found.push(file);
-			}
-		}
-	}
-	return found;
-}
-
-async function ensureToken(config: Config) {
-	const prompt = createInterface({ input: process.stdin, output: process.stdout });
-	let ask = args.includes("--token");
-	while (true) {
-		if (!config.token || ask) {
-			console.log(`\nMake a token on your guildie account page (${new URL("/me", config.api)}), then paste it here.`);
-			config.token = (await prompt.question("Token: ")).trim();
-			ask = false;
-		}
-		const res = await request(config, "/api/helper/me").catch((e: Error) => e);
-		if (res instanceof Error) {
-			log(`Can't reach ${config.api}: ${res.message}. Retrying in 30s.`);
-			await Bun.sleep(RESCAN_MS);
-			continue;
-		}
-		if (res.ok) {
-			const me = (await res.json()) as { battletag: string | null; characters: string[] };
-			prompt.close();
-			saveConfig(config);
-			log(`Signed in as ${me.battletag ?? "you"}. Claimed characters: ${me.characters.join(", ") || "none yet (claim them on your account page)"}.`);
-			return;
-		}
-		log("That token didn't work. Make a new one on your account page.");
-		config.token = undefined;
-	}
-}
-
-async function upload(config: Config, file: string, payload: string) {
-	const res = await request(config, "/api/helper/snapshot", { method: "POST", body: payload });
-	const body = (await res.json().catch(() => ({}))) as { accepted?: string[]; unmatched?: string[]; error?: string };
-	if (!res.ok) {
-		log(`Upload failed (${res.status}): ${body.error ?? "unknown error"}`);
+async function checkToken() {
+	if (!api.token) return false;
+	const me = await api.me();
+	if (!me) {
+		log("The saved token no longer works; connect again.");
+		delete config.tokens[base];
+		saveConfig(config);
+		api.token = undefined;
 		return false;
 	}
-	log(`Uploaded from ${file}`);
-	if (body.accepted?.length) log(`  updated: ${body.accepted.join(", ")}`);
-	if (body.unmatched?.length) log(`  not claimed on guildie (skipped): ${body.unmatched.join(", ")}`);
+	account = me.battletag ?? "you";
+	config.tokens[base] = { token: api.token, account };
+	saveConfig(config);
+	ui.status(`Connected as ${account}`);
+	ui.connected(account);
+	if (!me.characters.length) ui.notify("guildie", "No claimed characters yet. Claim them on your guildie account page.");
 	return true;
 }
 
-async function main() {
-	const config = loadConfig();
-	if (flag("--api")) config.api = flag("--api")!;
-	if (flag("--wow")) config.wow = flag("--wow")!;
-	console.log(`guildie helper: uploads the guildie addon's data to ${config.api}`);
-	await ensureToken(config);
-
-	const seen = new Map<string, { mtime: number; payload: string | null; retryAt?: number }>();
-	let files: string[] = [];
-	let lastScan = 0;
-	while (true) {
-		if (Date.now() - lastScan > RESCAN_MS || files.length === 0) {
-			const next = findSavedVariables(config);
-			if (next.join() !== files.join()) {
-				files = next;
-				if (files.length) log(`Watching:\n  ${files.join("\n  ")}`);
-				else log("No Guildie.lua yet. Install the addon, log in, and /reload (or pass --wow <folder>).");
+async function connect() {
+	if (pairing || account) return;
+	pairing = true;
+	try {
+		const { code, pollSecret, expiresInSeconds, connectUrl } = await api.startPairing(hostname() || "Helper");
+		ui.status(`Waiting for you to approve ${code} in your browser`);
+		ui.notify("Connect guildie", `Approve the code ${code} in your browser.`);
+		if (!tray) console.log(`Open ${connectUrl} and approve the code ${code}.`);
+		openExternal(connectUrl);
+		const until = Date.now() + expiresInSeconds * 1000;
+		while (Date.now() < until) {
+			await Bun.sleep(2_000);
+			const result = await api.pollPairing(code, pollSecret).catch(() => ({ status: "pending" as const }));
+			if (result.status === "approved") {
+				api.token = result.token;
+				config.tokens[base] = { token: result.token };
+				saveConfig(config);
+				if (await checkToken()) ui.notify("guildie", `Connected as ${account}. Your addon data uploads when you log out of WoW.`);
+				return;
 			}
-			lastScan = Date.now();
+			if (result.status === "expired") break;
 		}
-		for (const file of files) {
-			let mtime: number;
-			try {
-				mtime = statSync(file).mtimeMs;
-			} catch {
-				continue;
-			}
-			const before = seen.get(file);
-			if (before && before.mtime === mtime) continue;
-			if (before?.retryAt && Date.now() < before.retryAt) continue;
-			const payload = extractPayload(readFileSync(file, "utf8"));
-			// Upload whenever the saved data differs from what we last sent (also on
-			// startup; the server keeps only the newest snapshot per character).
-			if (payload && payload !== before?.payload) {
-				const ok = await upload(config, file, payload).catch((e: Error) => {
-					log(`Upload failed: ${e.message}`);
-					return false;
-				});
-				seen.set(file, ok ? { mtime, payload } : { mtime: 0, payload: before?.payload ?? null, retryAt: Date.now() + RESCAN_MS });
-			} else {
-				seen.set(file, { mtime, payload: before?.payload ?? payload });
-			}
-		}
-		await Bun.sleep(POLL_MS);
+		ui.status("Not connected");
+		ui.connected(null);
+		ui.notify("guildie", 'Connecting timed out. Choose "Connect to guildie" to try again.');
+	} catch (e) {
+		ui.status(`Can't reach ${base}`);
+		log((e as Error).message);
+		ui.connected(null);
+	} finally {
+		pairing = false;
 	}
 }
 
-await main();
+async function signOut() {
+	await api.signOut();
+	delete config.tokens[base];
+	saveConfig(config);
+	api.token = undefined;
+	account = null;
+	ui.status("Signed out");
+	ui.connected(null);
+	ui.last("No uploads yet");
+}
+
+// ---- Uploading ----------------------------------------------------------------
+
+const warnedUnmatched = new Set<string>();
+const displayName = (slug: string) => slug.split("-")[0].replace(/^./, (c) => c.toUpperCase());
+
+const watcher = new Watcher(
+	config.wow,
+	async (file, payload) => {
+		const { ok, status, body } = await api.upload(payload);
+		if (status === 401) {
+			await signOut();
+			ui.notify("guildie", "This helper was disconnected. Connect again from the tray icon.");
+			return false;
+		}
+		if (!ok) {
+			log(`Upload failed (${status}): ${body.error ?? "unknown error"}`);
+			return false;
+		}
+		log(`Uploaded ${file}: updated ${body.accepted?.join(", ") || "nothing"}`);
+		if (body.accepted?.length) {
+			ui.last(`Last upload: ${body.accepted.map(displayName).join(", ")} at ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
+		}
+		const newlyUnmatched = (body.unmatched ?? []).filter((n) => !warnedUnmatched.has(n));
+		if (newlyUnmatched.length) {
+			newlyUnmatched.forEach((n) => warnedUnmatched.add(n));
+			ui.notify("guildie", `Not claimed on guildie yet: ${newlyUnmatched.join(", ")}. Claim them on your account page.`);
+		}
+		return true;
+	},
+	log,
+);
+
+// ---- Start ------------------------------------------------------------------
+
+async function onClick(item: TrayItem) {
+	if (item === "open") openExternal(new URL("/me", base).toString());
+	if (item === "log") openExternal(logPath());
+	if (item === "connect") void connect();
+	if (item === "upload") watcher.forget();
+	if (item === "signout") await signOut();
+	if (item === "quit") quit();
+}
+
+if (useTray) {
+	// The icon is embedded in the .exe; PowerShell needs a real file.
+	const iconPath = join(configDir(), "guildie.ico");
+	if (!existsSync(iconPath)) await Bun.write(iconPath, Bun.file(iconFile));
+	tray = new WindowsTray(configDir(), iconPath, (item) => void onClick(item), quit);
+}
+
+log(`guildie helper for ${base}`);
+ui.status("Starting");
+ui.connected(null);
+const connected = await checkToken().catch((e: Error) => {
+	ui.status(`Can't reach ${base}`);
+	log(e.message);
+	return false;
+});
+if (!connected) void connect();
+
+let lastRetry = Date.now();
+while (true) {
+	if (account) await watcher.tick();
+	// Offline at start (or since): try the saved token again every minute.
+	else if (api.token && !pairing && Date.now() - lastRetry > 60_000) {
+		lastRetry = Date.now();
+		await checkToken().catch(() => undefined);
+	}
+	await Bun.sleep(2_000);
+}

@@ -7,17 +7,26 @@ import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
+/** Only same-site paths, so `next` can't send anyone elsewhere. */
+const safeNext = (next: unknown) =>
+	typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : undefined;
+
 export const Route = createFileRoute("/sign-in")({
+	validateSearch: (search: Record<string, unknown>): { next?: string } => ({ next: safeNext(search.next) }),
 	// Battle.net returns here (never guarded for signed-out visitors), the
-	// browser finishes the sign-in, and the next load forwards to /me.
-	beforeLoad: ({ context }) => {
-		if (context.token) throw redirect({ to: "/me" });
+	// browser finishes the sign-in, and the next load forwards to `next` or /me.
+	beforeLoad: ({ context, search }) => {
+		if (context.token) {
+			if (search.next) throw redirect({ href: search.next });
+			throw redirect({ to: "/me" });
+		}
 	},
 	head: () => ({ meta: [{ title: "Sign in · guildie" }] }),
 	component: SignIn,
 });
 
 function SignIn() {
+	const { next } = Route.useSearch();
 	const { signIn } = useOauthSignIn({
 		providerName: "battlenet",
 		startSignIn: api.auth.startSignInWithBattlenet,
@@ -42,7 +51,9 @@ function SignIn() {
 				onClick={async () => {
 					setPending(true);
 					setStartError(false);
-					const result = await signIn({ redirectTo: `${window.location.origin}/sign-in` });
+					const back = new URL("/sign-in", window.location.origin);
+					if (next) back.searchParams.set("next", next);
+					const result = await signIn({ redirectTo: back.toString() });
 					if (result.status === "error") {
 						setPending(false);
 						setStartError(true);

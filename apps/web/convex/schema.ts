@@ -137,6 +137,22 @@ export default defineSchema({
 		.index("by_user", ["userId"]),
 
 	/**
+	 * "Connect the helper" in the browser: the helper shows a short code, the
+	 * signed-in player approves it at /helper/connect, and the helper picks up
+	 * its token by polling with a secret only it has. Single use, 10 minutes.
+	 */
+	helperPairings: defineTable({
+		code: v.string(),
+		pollSecretHash: v.string(),
+		/** A name for the device, from the helper (e.g. the PC's name). */
+		label: v.string(),
+		expiresAt: v.number(),
+		/** Set when approved; handed to the helper once, then the row is deleted. */
+		token: v.optional(v.string()),
+		userId: v.optional(v.id("users")),
+	}).index("by_code", ["code"]),
+
+	/**
 	 * The latest in-game snapshot per character, uploaded by the helper from
 	 * the guildie addon. Shown instead of Blizzard's data only while it's newer.
 	 */

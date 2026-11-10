@@ -25,9 +25,19 @@ game ── addon saves GuildieDB ──▶ SavedVariables/Guildie.lua (on /relo
 
 ## API
 
-Both take `Authorization: Bearer gld_…` (a token from the account page; only
-its hash is stored, 10 per account, revocable).
+Connecting (no token to copy):
 
+- `POST /api/helper/pair` `{ label }` → `{ code, pollSecret, connectUrl, expiresInSeconds }`.
+  The helper opens `connectUrl` (`/helper/connect?code=…`); the signed-in player
+  clicks Connect.
+- `POST /api/helper/pair/poll` `{ code, pollSecret }` → `pending`, `expired`, or
+  `approved` with the token (handed over once). Codes last 10 minutes.
+
+The rest take `Authorization: Bearer gld_…`. Only the token's hash is stored;
+an account keeps up to 10 (connecting an 11th retires the least recently
+used); the account page lists them with Disconnect.
+
+- `POST /api/helper/signout` → the token stops working.
 - `GET /api/helper/me` → `{ battletag, characters }` or 401.
 - `POST /api/helper/snapshot`, body (≤ 256 KB):
   `{ "version": 1, "characters": [ { "guid", "name", "level", "classToken", "capturedAt", "talents": [ { "id", "rank", "name" } ] } ] }`
@@ -52,10 +62,14 @@ hourly sync). So:
 
 Addon data is player-provided; Blizzard's can't be edited by the player.
 
-## Not verified yet (needs a real Forever client)
+## Verified in game
 
-- The addon's talent reading in game (`/guildie` prints how many it saved).
-- That the GUID's number equals Blizzard's character id (first name is the
-  fallback).
-- Forever's game folder name on Windows (the helper checks every `_*_` folder).
+- Talent reading (names and ranks) in WoW: Forever.
+- The GUID's number equals Blizzard's character id, so uploads match on id.
+
+## Not verified yet
+
+- The tray icon and browser connect on Windows (built, not run there yet).
+- The addon's window, minimap button, and whether "Upload while I'm AFK" is
+  allowed by the game.
 - Whether `/reload` alone also makes Blizzard refresh the profile.

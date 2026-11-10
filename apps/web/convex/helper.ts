@@ -25,27 +25,6 @@ function newToken() {
 	return `gld_${b64}`;
 }
 
-export const createToken = mutation({
-	args: { label: v.string() },
-	handler: async (ctx, { label }) => {
-		const userId = await requireUserId(ctx);
-		const existing = await ctx.db
-			.query("helperTokens")
-			.withIndex("by_user", (q) => q.eq("userId", userId))
-			.collect();
-		if (existing.length >= 10) throw new ConvexError("You have 10 helper tokens. Revoke one first.");
-		const token = newToken();
-		await ctx.db.insert("helperTokens", {
-			userId,
-			tokenHash: await sha256(token),
-			label: label.trim().slice(0, 40) || "Helper",
-			createdAt: Date.now(),
-		});
-		// Shown once; we keep only the hash.
-		return token;
-	},
-});
-
 export const listTokens = query({
 	args: {},
 	handler: async (ctx) => {
@@ -215,3 +194,107 @@ export async function pickTalents(ctx: QueryCtx, character: Doc<"characters">) {
 		source: { kind: "blizzard", at: character.profileSyncedAt } as TalentSource,
 	};
 }
+
+// ---- Connecting the helper from the browser ---------------------------------
+
+const PAIRING_TTL_MS = 10 * 60_000;
+// No look-alike characters (0/O, 1/I/L), since people may type it.
+const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
+function pairingCode() {
+	const bytes = crypto.getRandomValues(new Uint8Array(8));
+	const chars = Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+	return `${chars.slice(0, 4)}-${chars.slice(4)}`;
+}
+
+async function insertToken(ctx: MutationCtx, userId: Doc<"users">["_id"], label: string) {
+	const existing = await ctx.db
+		.query("helperTokens")
+		.withIndex("by_user", (q) => q.eq("userId", userId))
+		.collect();
+	// Keep at most 10: connecting an 11th device retires the least recently used.
+	if (existing.length >= 10) {
+		const oldest = existing.sort((a, b) => (a.lastUsedAt ?? a.createdAt) - (b.lastUsedAt ?? b.createdAt))[0];
+		await ctx.db.delete(oldest._id);
+	}
+	const token = newToken();
+	await ctx.db.insert("helperTokens", {
+		userId,
+		tokenHash: await sha256(token),
+		label: label.trim().slice(0, 40) || "Helper",
+		createdAt: Date.now(),
+	});
+	return token;
+}
+
+/** The helper starts connecting: returns the code to show and the secret to poll with. */
+export const startPairing = mutation({
+	args: { label: v.string() },
+	handler: async (ctx, { label }) => {
+		const pollSecret = newToken();
+		const code = pairingCode();
+		await ctx.db.insert("helperPairings", {
+			code,
+			pollSecretHash: await sha256(pollSecret),
+			label: label.trim().slice(0, 40) || "Helper",
+			expiresAt: Date.now() + PAIRING_TTL_MS,
+		});
+		return { code, pollSecret, expiresInSeconds: PAIRING_TTL_MS / 1000 };
+	},
+});
+
+/** The connect page: what's asking to connect. */
+export const pairing = query({
+	args: { code: v.string() },
+	handler: async (ctx, { code }) => {
+		const row = await ctx.db
+			.query("helperPairings")
+			.withIndex("by_code", (q) => q.eq("code", code.trim().toUpperCase()))
+			.unique();
+		if (!row || row.expiresAt < Date.now()) return { state: "unknown" as const };
+		return { state: row.token ? ("approved" as const) : ("pending" as const), label: row.label };
+	},
+});
+
+/** The signed-in player approves the code on /helper/connect. */
+export const approvePairing = mutation({
+	args: { code: v.string() },
+	handler: async (ctx, { code }) => {
+		const userId = await requireUserId(ctx);
+		const row = await ctx.db
+			.query("helperPairings")
+			.withIndex("by_code", (q) => q.eq("code", code.trim().toUpperCase()))
+			.unique();
+		if (!row || row.expiresAt < Date.now()) throw new ConvexError("That code expired. Start again from the helper.");
+		if (row.token) return;
+		await ctx.db.patch(row._id, { userId, token: await insertToken(ctx, userId, row.label) });
+	},
+});
+
+/** The helper polls: pending, expired, or its token (once). */
+export const pollPairing = mutation({
+	args: { code: v.string(), pollSecret: v.string() },
+	handler: async (ctx, { code, pollSecret }) => {
+		const row = await ctx.db
+			.query("helperPairings")
+			.withIndex("by_code", (q) => q.eq("code", code))
+			.unique();
+		if (!row || row.pollSecretHash !== (await sha256(pollSecret))) return { status: "expired" as const };
+		if (row.expiresAt < Date.now()) {
+			await ctx.db.delete(row._id);
+			return { status: "expired" as const };
+		}
+		if (!row.token) return { status: "pending" as const };
+		await ctx.db.delete(row._id);
+		return { status: "approved" as const, token: row.token };
+	},
+});
+
+/** The helper signs out: its token stops working. */
+export const signOut = mutation({
+	args: { token: v.string() },
+	handler: async (ctx, { token }) => {
+		const row = await tokenOwner(ctx, token);
+		if (row) await ctx.db.delete(row._id);
+	},
+});

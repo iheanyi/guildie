@@ -17,10 +17,14 @@ import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
 import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
 import { Route as ClaimCallbackRouteImport } from './routes/claim/callback'
+import { Route as HelperConnectRouteImport } from './routes/helper/connect'
 import { Route as ApiHelperMeRouteImport } from './routes/api/helper/me'
+import { Route as ApiHelperPairRouteImport } from './routes/api/helper/pair'
+import { Route as ApiHelperSignoutRouteImport } from './routes/api/helper/signout'
 import { Route as ApiHelperSnapshotRouteImport } from './routes/api/helper/snapshot'
 import { Route as CRegionSlugRouteImport } from './routes/c/$region/$slug'
 import { Route as GRegionSlugRouteImport } from './routes/g/$region/$slug'
+import { Route as ApiHelperPairPollRouteImport } from './routes/api/helper/pair/poll'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -62,9 +66,24 @@ const ClaimCallbackRoute = ClaimCallbackRouteImport.update({
   path: '/claim/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelperConnectRoute = HelperConnectRouteImport.update({
+  id: '/helper/connect',
+  path: '/helper/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHelperMeRoute = ApiHelperMeRouteImport.update({
   id: '/api/helper/me',
   path: '/api/helper/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHelperPairRoute = ApiHelperPairRouteImport.update({
+  id: '/api/helper/pair',
+  path: '/api/helper/pair',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHelperSignoutRoute = ApiHelperSignoutRouteImport.update({
+  id: '/api/helper/signout',
+  path: '/api/helper/signout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHelperSnapshotRoute = ApiHelperSnapshotRouteImport.update({
@@ -82,6 +101,11 @@ const GRegionSlugRoute = GRegionSlugRouteImport.update({
   path: '/g/$region/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHelperPairPollRoute = ApiHelperPairPollRouteImport.update({
+  id: '/poll',
+  path: '/poll',
+  getParentRoute: () => ApiHelperPairRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -92,10 +116,14 @@ export interface FileRoutesByFullPath {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
+  '/helper/connect': typeof HelperConnectRoute
   '/api/helper/me': typeof ApiHelperMeRoute
+  '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
+  '/api/helper/signout': typeof ApiHelperSignoutRoute
   '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
   '/c/$region/$slug': typeof CRegionSlugRoute
   '/g/$region/$slug': typeof GRegionSlugRoute
+  '/api/helper/pair/poll': typeof ApiHelperPairPollRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,10 +134,14 @@ export interface FileRoutesByTo {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
+  '/helper/connect': typeof HelperConnectRoute
   '/api/helper/me': typeof ApiHelperMeRoute
+  '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
+  '/api/helper/signout': typeof ApiHelperSignoutRoute
   '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
   '/c/$region/$slug': typeof CRegionSlugRoute
   '/g/$region/$slug': typeof GRegionSlugRoute
+  '/api/helper/pair/poll': typeof ApiHelperPairPollRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -121,10 +153,14 @@ export interface FileRoutesById {
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
   '/claim/callback': typeof ClaimCallbackRoute
+  '/helper/connect': typeof HelperConnectRoute
   '/api/helper/me': typeof ApiHelperMeRoute
+  '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
+  '/api/helper/signout': typeof ApiHelperSignoutRoute
   '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
   '/c/$region/$slug': typeof CRegionSlugRoute
   '/g/$region/$slug': typeof GRegionSlugRoute
+  '/api/helper/pair/poll': typeof ApiHelperPairPollRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,10 +173,14 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signout'
     | '/claim/callback'
+    | '/helper/connect'
     | '/api/helper/me'
+    | '/api/helper/pair'
+    | '/api/helper/signout'
     | '/api/helper/snapshot'
     | '/c/$region/$slug'
     | '/g/$region/$slug'
+    | '/api/helper/pair/poll'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,10 +191,14 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signout'
     | '/claim/callback'
+    | '/helper/connect'
     | '/api/helper/me'
+    | '/api/helper/pair'
+    | '/api/helper/signout'
     | '/api/helper/snapshot'
     | '/c/$region/$slug'
     | '/g/$region/$slug'
+    | '/api/helper/pair/poll'
   id:
     | '__root__'
     | '/'
@@ -165,10 +209,14 @@ export interface FileRouteTypes {
     | '/auth/signin'
     | '/auth/signout'
     | '/claim/callback'
+    | '/helper/connect'
     | '/api/helper/me'
+    | '/api/helper/pair'
+    | '/api/helper/signout'
     | '/api/helper/snapshot'
     | '/c/$region/$slug'
     | '/g/$region/$slug'
+    | '/api/helper/pair/poll'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -180,7 +228,10 @@ export interface RootRouteChildren {
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignoutRoute: typeof AuthSignoutRoute
   ClaimCallbackRoute: typeof ClaimCallbackRoute
+  HelperConnectRoute: typeof HelperConnectRoute
   ApiHelperMeRoute: typeof ApiHelperMeRoute
+  ApiHelperPairRoute: typeof ApiHelperPairRouteWithChildren
+  ApiHelperSignoutRoute: typeof ApiHelperSignoutRoute
   ApiHelperSnapshotRoute: typeof ApiHelperSnapshotRoute
   CRegionSlugRoute: typeof CRegionSlugRoute
   GRegionSlugRoute: typeof GRegionSlugRoute
@@ -244,11 +295,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClaimCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/helper/connect': {
+      id: '/helper/connect'
+      path: '/helper/connect'
+      fullPath: '/helper/connect'
+      preLoaderRoute: typeof HelperConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/helper/me': {
       id: '/api/helper/me'
       path: '/api/helper/me'
       fullPath: '/api/helper/me'
       preLoaderRoute: typeof ApiHelperMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/helper/pair': {
+      id: '/api/helper/pair'
+      path: '/api/helper/pair'
+      fullPath: '/api/helper/pair'
+      preLoaderRoute: typeof ApiHelperPairRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/helper/signout': {
+      id: '/api/helper/signout'
+      path: '/api/helper/signout'
+      fullPath: '/api/helper/signout'
+      preLoaderRoute: typeof ApiHelperSignoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/helper/snapshot': {
@@ -272,8 +344,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GRegionSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/helper/pair/poll': {
+      id: '/api/helper/pair/poll'
+      path: '/poll'
+      fullPath: '/api/helper/pair/poll'
+      preLoaderRoute: typeof ApiHelperPairPollRouteImport
+      parentRoute: typeof ApiHelperPairRoute
+    }
   }
 }
+
+interface ApiHelperPairRouteChildren {
+  ApiHelperPairPollRoute: typeof ApiHelperPairPollRoute
+}
+
+const ApiHelperPairRouteChildren: ApiHelperPairRouteChildren = {
+  ApiHelperPairPollRoute: ApiHelperPairPollRoute,
+}
+
+const ApiHelperPairRouteWithChildren = ApiHelperPairRoute._addFileChildren(
+  ApiHelperPairRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -284,7 +375,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthSigninRoute: AuthSigninRoute,
   AuthSignoutRoute: AuthSignoutRoute,
   ClaimCallbackRoute: ClaimCallbackRoute,
+  HelperConnectRoute: HelperConnectRoute,
   ApiHelperMeRoute: ApiHelperMeRoute,
+  ApiHelperPairRoute: ApiHelperPairRouteWithChildren,
+  ApiHelperSignoutRoute: ApiHelperSignoutRoute,
   ApiHelperSnapshotRoute: ApiHelperSnapshotRoute,
   CRegionSlugRoute: CRegionSlugRoute,
   GRegionSlugRoute: GRegionSlugRoute,

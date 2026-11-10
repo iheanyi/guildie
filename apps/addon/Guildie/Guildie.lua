@@ -8,7 +8,7 @@
 -- is sent as its TraitDefinition ID, which is the same ID Blizzard's web API
 -- uses, so guildie.club knows its class and tree.
 
-local ADDON = ...
+local ADDON, ns = ...
 local VERSION = 1
 
 GuildieDB = GuildieDB or {}
@@ -86,6 +86,14 @@ local function encode(value)
     return "null"
 end
 
+--- A short fingerprint of what we'd upload, to tell whether it changed.
+local function fingerprint(character)
+    local parts = { tostring(character.level) }
+    for _, t in ipairs(character.talents) do table.insert(parts, t.id .. ":" .. t.rank) end
+    table.sort(parts)
+    return table.concat(parts, ",")
+end
+
 local function capture(reason)
     local guid = UnitGUID("player")
     if not guid then return end
@@ -108,6 +116,24 @@ local function capture(reason)
     GuildieDB.version = VERSION
     GuildieDB.payload = encode({ version = VERSION, characters = list })
     GuildieDB.lastReason = reason
+    -- The game wrote GuildieDB to disk when this session's UI loaded; anything
+    -- different since then reaches the helper only at the next /reload or logout.
+    local now = fingerprint(GuildieDB.characters[guid])
+    ns.loadedFingerprint = ns.loadedFingerprint or now
+    ns.dirty = now ~= ns.loadedFingerprint
+    if ns.onCapture then ns.onCapture() end
+end
+ns.capture = capture
+
+--- What the window shows for the current character.
+function ns.current()
+    return GuildieDB.characters and GuildieDB.characters[UnitGUID("player")]
+end
+
+function ns.points(character)
+    local points = 0
+    for _, t in ipairs(character and character.talents or {}) do points = points + t.rank end
+    return points
 end
 
 local frame = CreateFrame("Frame")
@@ -132,9 +158,5 @@ end)
 SLASH_GUILDIE1 = "/guildie"
 SlashCmdList.GUILDIE = function()
     capture("slash")
-    local me = GuildieDB.characters and GuildieDB.characters[UnitGUID("player")]
-    local points = 0
-    for _, t in ipairs(me and me.talents or {}) do points = points + t.rank end
-    -- The game only writes addon data to disk on logout or /reload; that's when the helper uploads.
-    print(string.format("|cffd9b45aguildie|r: %d talent points saved. They'll upload when you log out (or now, with /reload).", points))
+    if ns.toggleWindow then ns.toggleWindow() end
 end

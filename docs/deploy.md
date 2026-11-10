@@ -5,10 +5,11 @@ Worker `guildie` has two build triggers, the same model as Kino:
 
 | Trigger | Branches | Deploy command | `CONVEX_DEPLOY_KEY` | Result |
 |---|---|---|---|---|
-| Deploy default branch | `main` | `sh apps/web/scripts/cloudflare-deploy.sh` | prod deploy key | Convex prod `scintillating-gnat-539`, then `https://guildie.club` |
-| Deploy non-production branches | everything else | `sh apps/web/scripts/preview-deploy.sh` | preview deploy key | a Convex preview named after the branch, then a Worker Preview at `https://<branch>.preview.guildie.club` |
+| Deploy default branch | `main` | `sh scripts/cloudflare-deploy.sh` | prod deploy key | Convex prod `scintillating-gnat-539`, then `https://guildie.club` |
+| Deploy non-production branches | everything else | `sh scripts/preview-deploy.sh` | preview deploy key | a Convex preview named after the branch, then a Worker Preview at `https://<branch>.preview.guildie.club` |
 
-Both have an empty build command; the deploy scripts build. Each trigger has
+Both run with root directory `apps/web` and an empty build command; the
+deploy scripts build. Each trigger has
 exactly one build variable, `CONVEX_DEPLOY_KEY` (secret), with a different
 key on each. That split is the whole per-environment setup. Each script
 refuses the other's key, and the production script refuses to run from any
