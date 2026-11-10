@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AddonRouteImport } from './routes/addon'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as MeRouteImport } from './routes/me'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
@@ -52,6 +53,11 @@ const DataRoute = DataRouteImport.update({
 const MeRoute = MeRouteImport.update({
   id: '/me',
   path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignInRoute = SignInRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/addon'
     | '/data'
     | '/me'
+    | '/settings'
     | '/sign-in'
     | '/auth/refresh'
     | '/auth/signin'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/addon'
     | '/data'
     | '/me'
+    | '/settings'
     | '/sign-in'
     | '/auth/refresh'
     | '/auth/signin'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/addon'
     | '/data'
     | '/me'
+    | '/settings'
     | '/sign-in'
     | '/auth/refresh'
     | '/auth/signin'
@@ -316,6 +328,7 @@ export interface RootRouteChildren {
   AddonRoute: typeof AddonRoute
   DataRoute: typeof DataRoute
   MeRoute: typeof MeRoute
+  SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
   AuthRefreshRoute: typeof AuthRefreshRoute
   AuthSigninRoute: typeof AuthSigninRoute
@@ -360,6 +373,13 @@ declare module '@tanstack/react-router' {
       path: '/me'
       fullPath: '/me'
       preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-in': {
@@ -552,6 +572,7 @@ const rootRouteChildren: RootRouteChildren = {
   AddonRoute: AddonRoute,
   DataRoute: DataRoute,
   MeRoute: MeRoute,
+  SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
   AuthRefreshRoute: AuthRefreshRoute,
   AuthSigninRoute: AuthSigninRoute,

@@ -24,7 +24,7 @@ function ClaimCallback() {
 	const convex = useConvex();
 	const router = useRouter();
 	const started = useRef(false);
-	const [next, setNext] = useState("/me");
+	const [next, setNext] = useState("/settings");
 	const [result, setResult] = useState<
 		{ status: "working" } | { status: "done"; total: number; inGuilds: number } | { status: "error"; message: string }
 	>({ status: "working" });

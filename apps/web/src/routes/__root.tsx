@@ -40,7 +40,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ name: "theme-color", content: "#111113" },
+			{ name: "theme-color", content: "#13110e" },
 			{ title: "Guildie" },
 			{ name: "description", content: "A home base for World of Warcraft guilds." },
 		],

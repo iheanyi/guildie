@@ -17,15 +17,13 @@ export const safeNext = (next: unknown) =>
 
 type Viewer = { guilds: { region: string; slug: string }[] } | null | undefined;
 
-/** Where a signed-in player lands: `next`, else their guild if they're in exactly one, else their account. */
+/** Where a signed-in player lands: `next`, else their first guild, else "/" (which explains). */
 export function landingPath(viewer: Viewer, next?: string, guilds = viewer?.guilds ?? []) {
 	if (next) return next;
-	const unique = new Map(guilds.map((g) => [`${g.region}/${g.slug}`, g]));
-	if (unique.size === 1) {
-		const [g] = unique.values();
-		return `/g/${g.region}/${encodeURIComponent(g.slug)}`;
-	}
-	return "/me";
+	// Straight to your (first) guild; the sidebar has the others. No guild
+	// found yet: "/" explains why and offers search.
+	const [g] = guilds;
+	return g ? `/g/${g.region}/${encodeURIComponent(g.slug)}` : "/";
 }
 
 type StartClaim = (args: { origin: string }) => Promise<{ url: string; state: string }>;

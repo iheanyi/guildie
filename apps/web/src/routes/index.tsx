@@ -2,19 +2,24 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { REGIONS, type Region } from "@convex/shared/wow";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Page, PageHeader } from "@/components/page-header";
 
-// Home is about your guilds, not a directory: signed in, it lists the guilds
-// your characters are in; anyone can search for a guild by name (public
-// guilds only), and signing in shows yours.
+// No home page for signed-in players: "/" opens your guild (the sidebar
+// switches between guilds). It shows a page only to signed-out visitors (sign
+// in, or look a guild up), and to players whose guild Guildie hasn't found
+// yet (characters under level 10, or not logged out since joining).
 export const Route = createFileRoute("/")({
+	loader: async ({ context }) => {
+		const viewer = await context.queryClient.ensureQueryData(convexQuery(api.users.viewer, {}));
+		const first = viewer?.guilds[0];
+		if (first) throw redirect({ to: "/g/$region/$slug", params: { region: first.region, slug: first.slug }, replace: true });
+	},
 	component: Home,
 });
 
@@ -36,43 +41,11 @@ function Home() {
 	}
 	return (
 		<Page width="medium">
-			<PageHeader title="Your guilds" />
-			{viewer.guilds.length === 0 ? (
-				<p className="text-[0.8125rem] text-muted-foreground">
-					None of your characters are in a guild on Guildie yet. Characters show up once they're level 10 and
-					have logged out since joining. Search for your guild below, or add it.
-				</p>
-			) : (
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Name</TableHead>
-							<TableHead>Region</TableHead>
-							<TableHead className="text-right">Members</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{viewer.guilds.map((g) => (
-							<TableRow key={g._id} className="relative">
-								<TableCell>
-									<Link
-										to="/g/$region/$slug"
-										params={{ region: g.region, slug: g.slug }}
-										className="font-medium after:absolute after:inset-0"
-									>
-										{g.name}
-									</Link>
-								</TableCell>
-								<TableCell className="text-muted-foreground">
-									{[g.region.toUpperCase(), g.faction && g.faction[0] + g.faction.slice(1).toLowerCase()].filter(Boolean).join(" · ")}
-								</TableCell>
-								<TableCell className="num text-right">{g.memberCount}</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			)}
-			<GuildSearch className="mt-10" />
+			<PageHeader
+				title="No guild found yet"
+				description="Guildie finds your guild from your characters. A character shows up once it's level 10 and has logged out since joining the guild; then sign out and in again. Or look your guild up, or add it."
+			/>
+			<GuildSearch />
 			<AddGuild />
 		</Page>
 	);

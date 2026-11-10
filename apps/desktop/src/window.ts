@@ -18,7 +18,7 @@ declare const __VERSION__: string;
  * marks its title bar -webkit-app-region: drag. With Mica the strip is
  * transparent and the site's chrome is too.
  */
-export const TITLEBAR = { color: "#111113", symbolColor: "#ececef", height: 40 } as const;
+export const TITLEBAR = { color: "#13110e", symbolColor: "#eee9e1", height: 40 } as const;
 const TRANSPARENT = "#00000000";
 
 /** Windows 11 (build 22000+), where BrowserWindow's backgroundMaterial works. Win10 and macOS get the solid color. */

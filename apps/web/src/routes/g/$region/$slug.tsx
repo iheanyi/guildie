@@ -40,7 +40,7 @@ function GuildLayout() {
 				description={
 					<>
 						This guild's roster is for members only.{" "}
-						<Link to="/me" className="text-foreground underline underline-offset-4">
+						<Link to="/settings" className="text-foreground underline underline-offset-4">
 							Claim your characters
 						</Link>{" "}
 						to see it.

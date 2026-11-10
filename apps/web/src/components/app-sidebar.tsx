@@ -1,16 +1,14 @@
-import { useAuthActions } from "@convex-dev/auth/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { Dialog } from "@base-ui/react/dialog";
 import { api } from "@convex/_generated/api";
-import { Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
+import { AnvilIcon, Cancel01Icon, Login03Icon, Menu01Icon, PuzzleIcon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, type LinkProps, useRouter, useRouterState } from "@tanstack/react-router";
+import { Link, type LinkProps, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { ClassText } from "@/components/class-name";
 import { useCurrentGuild } from "@/lib/breadcrumbs";
 import { usePageTitle } from "@/lib/page-title";
-import { desktop } from "@/lib/desktop";
 import { cn } from "@/lib/utils";
 
 // Navigation. A fixed sidebar from md up; below that a top bar whose menu
@@ -58,19 +56,15 @@ function SidebarNav() {
 	);
 	return (
 		<nav className="flex min-h-0 flex-1 flex-col text-[0.8125rem]">
-			<div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-2 pt-1 pb-4">
-				<div>
-					<NavLink to="/" activeOptions={{ exact: true }}>
-						Home
-					</NavLink>
-				</div>
-
+			<div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-2 pt-2 pb-4">
 				{guilds.map((g) => (
 					<NavSection key={`${g.region}/${g.slug}`} title={g.name}>
-						<NavLink to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} activeOptions={{ exact: true }}>
+						<NavLink to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} activeOptions={{ exact: true }} className="pl-3">
+							<HugeiconsIcon icon={UserGroupIcon} size={15} strokeWidth={1.75} />
 							Roster
 						</NavLink>
-						<NavLink to="/g/$region/$slug/crafting" params={{ region: g.region, slug: g.slug }}>
+						<NavLink to="/g/$region/$slug/crafting" params={{ region: g.region, slug: g.slug }} className="pl-3">
+							<HugeiconsIcon icon={AnvilIcon} size={15} strokeWidth={1.75} />
 							Crafting
 						</NavLink>
 					</NavSection>
@@ -79,11 +73,17 @@ function SidebarNav() {
 				{characters.length > 0 && (
 					<NavSection title="Characters">
 						{characters.map((c) => (
-							<NavLink key={c._id} to="/c/$region/$slug" params={{ region: c.region, slug: c.slug }}>
-								<ClassText classId={c.classId} className="min-w-0 flex-1 truncate">
-									{c.name}
-								</ClassText>
-								{c.level ? <span className="num text-xs text-muted-foreground">{c.level}</span> : null}
+							<NavLink key={c._id} to="/c/$region/$slug" params={{ region: c.region, slug: c.slug }} className="h-9 pl-1.5">
+								{c.avatarUrl ? (
+									<img src={c.avatarUrl} alt="" className="size-6 shrink-0 rounded-full border border-border object-cover" />
+								) : (
+									<span className="size-6 shrink-0 rounded-full border border-border bg-muted" />
+								)}
+								<span className="min-w-0 flex-1 truncate">
+									<ClassText classId={c.classId}>{c.name}</ClassText>
+									{c.surname && <span className="text-muted-foreground"> {c.surname}</span>}
+								</span>
+								{c.level ? <span className="num text-xs text-muted-foreground">lvl {c.level}</span> : null}
 							</NavLink>
 						))}
 					</NavSection>
@@ -91,26 +91,22 @@ function SidebarNav() {
 			</div>
 
 			<div className="flex-none space-y-px border-t border-border px-2 pt-2 pb-2">
-				<NavLink to="/addon">Addon</NavLink>
+				<NavLink to="/addon">
+					<HugeiconsIcon icon={PuzzleIcon} size={15} strokeWidth={1.75} />
+					Addon
+				</NavLink>
 				{viewer ? (
-					<>
-						<NavLink to="/me">
-							<span className="min-w-0 flex-1 truncate">{viewer.battletag?.split("#")[0] ?? viewer.name ?? "Account"}</span>
-							<span className="text-xs text-muted-foreground">Account</span>
-						</NavLink>
-						<SignOut />
-					</>
+					<NavLink to="/settings">
+						<HugeiconsIcon icon={Settings02Icon} size={15} strokeWidth={1.75} />
+						<span className="flex-1">Settings</span>
+						<span className="min-w-0 truncate text-xs text-muted-foreground">{viewer.battletag?.split("#")[0] ?? viewer.name}</span>
+					</NavLink>
 				) : (
-					<NavLink to="/sign-in">Sign in</NavLink>
+					<NavLink to="/sign-in">
+						<HugeiconsIcon icon={Login03Icon} size={15} strokeWidth={1.75} />
+						Sign in
+					</NavLink>
 				)}
-				<div className="flex gap-3 px-2 pt-2 text-xs text-muted-foreground">
-					<Link to="/data" className="hover:text-foreground">
-						Data
-					</Link>
-					<a href="https://github.com/natedunn/guildie" className="hover:text-foreground">
-						GitHub
-					</a>
-				</div>
 			</div>
 		</nav>
 	);
@@ -119,7 +115,7 @@ function SidebarNav() {
 function NavSection({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<div>
-			<div className="truncate px-2 pb-1 text-xs font-medium text-muted-foreground" title={title}>
+			<div className="truncate px-2 pb-1 text-[0.8125rem] font-semibold text-foreground" title={title}>
 				{title}
 			</div>
 			<div className="space-y-px">{children}</div>
@@ -132,27 +128,6 @@ function NavLink({ className, children, ...props }: LinkProps & { className?: st
 		<Link {...props} className={cn("nav-item", className)}>
 			{children}
 		</Link>
-	);
-}
-
-function SignOut() {
-	const { signOut } = useAuthActions();
-	const router = useRouter();
-	return (
-		<button
-			type="button"
-			className="nav-item w-full"
-			onClick={async () => {
-				await signOut();
-				// Inside the desktop app, signing out here signs it out too.
-				await desktop()
-					?.signOut()
-					.catch(() => {});
-				await router.invalidate();
-			}}
-		>
-			Sign out
-		</button>
 	);
 }
 

@@ -77,10 +77,26 @@ export const viewer = query({
 		if (userId === null) return null;
 		const user = await ctx.db.get(userId as Id<"users">);
 		if (!user) return null;
-		const characters = await ctx.db
+		const owned = await ctx.db
 			.query("ownedCharacters")
 			.withIndex("by_user", (q) => q.eq("userId", user._id))
 			.collect();
+		// The roster's copy has the face, the surname and a fresher level.
+		const characters = await Promise.all(
+			owned.map(async (c) => {
+				const row = await ctx.db
+					.query("characters")
+					.withIndex("by_slug", (q) => q.eq("flavor", c.flavor).eq("region", c.region).eq("slug", c.slug))
+					.first();
+				return {
+					...c,
+					surname: row?.surname,
+					avatarUrl: row?.avatarUrl,
+					level: row?.level ?? c.level,
+					classId: row?.classId ?? c.classId,
+				};
+			}),
+		);
 		// The guilds their characters are in: header link, home page, where sign-in lands.
 		const guilds = (await guildsOf(ctx, user._id)).map((g) => ({
 			_id: g._id,

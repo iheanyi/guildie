@@ -58,40 +58,41 @@
 	--radius-4xl: calc(var(--radius) * 3.34);
 }
 
-/* Paper-thin greys. Color that means something (class, item quality, the
-   game's tooltip lines) comes from the game; the UI around it stays neutral. */
+/* Dark greys with a slight warm cast (brown in the surfaces, a little gold in
+   what's selected), a nod to the game. Color that means something (class,
+   item quality, the game's tooltip lines) comes from the game. */
 :root {
 	/* Sidebar and title bar. The desktop app paints its window buttons on
 	   this (apps/desktop/src/window.ts TITLEBAR), or on Mica instead. */
-	--chrome: #111113;
+	--chrome: #13110e;
 	/* The content pane. */
-	--background: #18181b;
-	--surface: #1d1d21;
-	--well: #141417;
-	--foreground: #ececef;
-	--muted-foreground: #8e8e96;
-	--hover: rgb(255 255 255 / 0.05);
-	--selected: rgb(255 255 255 / 0.08);
+	--background: #1a1815;
+	--surface: #201d19;
+	--well: #161411;
+	--foreground: #eee9e1;
+	--muted-foreground: #998f82;
+	--hover: rgb(255 240 215 / 0.05);
+	--selected: rgb(235 195 125 / 0.11);
 	--card: var(--surface);
 	--card-foreground: var(--foreground);
 	/* Menus and popovers. */
-	--popover: #1f1f23;
+	--popover: #23201b;
 	--popover-foreground: var(--foreground);
 	/* The game's tooltip: navy-black with a light grey edge. */
 	--tooltip: rgb(9 10 23 / 0.95);
 	--tooltip-border: #a3a5b0;
-	--primary: #ececef;
-	--primary-foreground: #111113;
-	--secondary: rgb(255 255 255 / 0.06);
+	--primary: #eee9e1;
+	--primary-foreground: #13110e;
+	--secondary: rgb(255 240 215 / 0.06);
 	--secondary-foreground: var(--foreground);
-	--muted: rgb(255 255 255 / 0.04);
+	--muted: rgb(255 240 215 / 0.04);
 	--accent: var(--selected);
 	--accent-foreground: var(--foreground);
 	--destructive: #f2555a;
-	--border: rgb(255 255 255 / 0.08);
-	--border-strong: rgb(255 255 255 / 0.14);
-	--input: rgb(255 255 255 / 0.1);
-	--ring: rgb(255 255 255 / 0.35);
+	--border: rgb(255 235 200 / 0.085);
+	--border-strong: rgb(255 235 200 / 0.15);
+	--input: rgb(255 235 200 / 0.11);
+	--ring: rgb(240 205 140 / 0.45);
 	--chart-1: var(--foreground);
 	--chart-2: var(--muted-foreground);
 	--chart-3: var(--muted-foreground);
