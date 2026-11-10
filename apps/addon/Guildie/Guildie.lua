@@ -133,6 +133,8 @@ SLASH_GUILDIE1 = "/guildie"
 SlashCmdList.GUILDIE = function()
     capture("slash")
     local me = GuildieDB.characters and GuildieDB.characters[UnitGUID("player")]
-    local count = me and #me.talents or 0
-    print(string.format("|cffd9b45aguildie|r: %d talents saved for %s. Type /reload to hand them to the helper now.", count, UnitName("player")))
+    local points = 0
+    for _, t in ipairs(me and me.talents or {}) do points = points + t.rank end
+    -- The game only writes addon data to disk on logout or /reload; that's when the helper uploads.
+    print(string.format("|cffd9b45aguildie|r: %d talent points saved. They'll upload when you log out (or now, with /reload).", points))
 end

@@ -6,8 +6,9 @@ game writes `GuildieDB` to `WTF/Account/<account>/SavedVariables/Guildie.lua`
 on `/reload` and logout, and the helper watches that file.
 
 - Install: copy the `Guildie` folder into your WoW: Forever `Interface/AddOns`.
-- `/guildie` saves now and says how many talents it read; `/reload` writes it
-  to disk for the helper.
+- Nothing to do in game: the game writes the addon's data when you log out,
+  and the helper uploads it then. `/reload` does it sooner, if you want.
+- `/guildie` saves now and says how many talent points it read.
 - Interface version 16001 is WoW: Forever 1.60.1 (as the WowSims exporter uses).
 
 Talents are read with `C_ClassTalents` / `C_Traits`, the way the
