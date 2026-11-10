@@ -42,8 +42,8 @@ Once cloud dev exists, set them there (with the gateway settings in
 docs/auth-environments.md) and every new worktree and preview copies them:
 
 ```sh
-pbpaste | npx convex env set --deployment <cloud dev> BATTLENET_CLIENT_ID
-pbpaste | npx convex env set --deployment <cloud dev> BATTLENET_CLIENT_SECRET
+pbpaste | npx convex env set --deployment <cloud dev> AUTH_BATTLENET_CLIENT_ID
+pbpaste | npx convex env set --deployment <cloud dev> AUTH_BATTLENET_CLIENT_SECRET
 ```
 
 Until then, set them on your checkout's local backend (in the checkout, with
@@ -51,8 +51,8 @@ Until then, set them on your checkout's local backend (in the checkout, with
 
 ```sh
 export CONVEX_AGENT_MODE=anonymous
-pbpaste | npx convex env set BATTLENET_CLIENT_ID
-pbpaste | npx convex env set BATTLENET_CLIENT_SECRET
+pbpaste | npx convex env set AUTH_BATTLENET_CLIENT_ID
+pbpaste | npx convex env set AUTH_BATTLENET_CLIENT_SECRET
 ```
 
 That's enough for the roster sync and `dev:probe`. Sign-in and claiming also

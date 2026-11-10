@@ -13,7 +13,7 @@ beta, so we upgrade promptly. The onda repo tracks upstream in detail
 | **Patch**: optional `CALLBACK_URL` component env, `viaGateway`, gateway Worker | `patches/`, `convex/authGateway.ts`, `workers/gateway` | One callback per tier for every deployment (docs/auth-environments.md) | Configurable callback upstream (#1) |
 | Battle.net catalog | `convex/authBattlenet.ts` | No built-in Battle.net method | Keep |
 | Claim flow (own OAuth, through the gateway) | `convex/claims.ts`, `convex/http.ts`, `src/routes/claim/callback.tsx` | No account linking or provider tokens in v2 | Upstream linking / provider tokens (#751, #429) |
-| Dev guest sign-in | `convex/auth.ts`, `convex/users.ts` | Use the app without keys | Keep (gated by `AUTH_DEV_GUEST`) |
+| Dev guest sign-in | `convex/auth.ts`, `convex/users.ts` | Use the app without keys | Keep (local backends only, `isLocalBackend` in `convex/origins.ts`) |
 
 ## Next beta: known breaking changes
 
