@@ -6,6 +6,12 @@ changed on the site since the last one. The release workflow uses the section
 for its version as the GitHub release notes, and the app shows them under
 Settings → App.
 
+Each pull request adds a line under `## Unreleased` (in `### New`,
+`### Improvements` or `### Fixes`), written for players. A release turns it
+into that version's section.
+
+## Unreleased
+
 ## 0.3.5
 
 ### New

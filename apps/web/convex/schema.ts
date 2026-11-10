@@ -158,7 +158,7 @@ export default defineSchema({
 		.index("by_stateHash", ["stateHash"])
 		.index("by_user", ["userId"]),
 
-	/** Tokens the desktop helper uploads addon data with (apps/helper). Only the hash is stored. */
+	/** Tokens the desktop app (and the retired helper) uploads addon data with. Only the hash is stored. */
 	helperTokens: defineTable({
 		userId: v.id("users"),
 		tokenHash: v.string(),

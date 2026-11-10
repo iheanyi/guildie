@@ -4,6 +4,7 @@ import { vBattlenetProfile } from "./authBattlenet";
 import { guildsOf } from "./guilds";
 import { pickProfile } from "./helper";
 import { isLocalBackend } from "./origins";
+import { claimSampleCharacter } from "./sample";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 
@@ -62,13 +63,32 @@ export const createFromGuest = internalMutation({
 	returns: v.id("users"),
 	handler: async (ctx) => {
 		if (!isLocalBackend()) throw new ConvexError("Guest sign-in is disabled");
-		return await ctx.db.insert("users", { name: "Guest" });
+		const userId = await ctx.db.insert("users", { name: "Guest" });
+		// With the sample data (contributors), the guest plays one of its characters.
+		await claimSampleCharacter(ctx, userId);
+		return userId;
 	},
 });
 
 export const guestEnabled = query({
 	args: {},
 	handler: async () => isLocalBackend(),
+});
+
+/**
+ * What the sign-in page offers. Battle.net sign-in needs a client and a way
+ * back from Battle.net (the dev gateway, or a callback URL of your own), which
+ * a contributor's local backend doesn't have (docs/local-dev.md); guests are
+ * local backends only.
+ */
+export const signInOptions = query({
+	args: {},
+	handler: async () => {
+		const local = isLocalBackend();
+		const clientId = process.env.AUTH_BATTLENET_CLIENT_ID;
+		const callback = !!(process.env.AUTH_GATEWAY_SECRET || process.env.AUTH_BATTLENET_CALLBACK_URL);
+		return { battlenet: !local || (!!clientId && clientId !== "unset" && callback), guest: local };
+	},
 });
 
 export const viewer = query({

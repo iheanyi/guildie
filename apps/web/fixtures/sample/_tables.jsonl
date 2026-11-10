@@ -1,0 +1,14 @@
+{"name":"apiTokens","id":10001}
+{"name":"characters","id":10002}
+{"name":"claimRequests","id":10003}
+{"name":"guilds","id":10004}
+{"name":"ownedCharacters","id":10005}
+{"name":"users","id":10006}
+{"name":"talentTreeInfo","id":10008}
+{"name":"addonSnapshots","id":10010}
+{"name":"helperTokens","id":10011}
+{"name":"helperPairings","id":10012}
+{"name":"recipes","id":10013}
+{"name":"desktopSessionCodes","id":10014}
+{"name":"items","id":10015}
+{"name":"talentLayouts","id":10016}

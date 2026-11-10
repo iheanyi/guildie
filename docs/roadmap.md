@@ -1,54 +1,49 @@
 # Roadmap
 
-Where Guildie is headed, roughly in order. The end goal: use what we know
-about the guild to tell, in game, which crafted items, weapons and armor
-would help which members.
+Where Guildie is headed, roughly in order. Ideas and votes: open an issue
+(the "Feature or idea" template).
 
-## Now: the directory (proof of concept)
+## Done
 
-- [x] Battle.net sign-in (Convex Auth v2, generic OAuth)
-- [x] Add a guild by name + region; hourly roster sync
-- [x] Per member: level, class, race, rank, gear, professions, last seen
-- [x] Claim your characters (Battle.net `wow.profile`)
-- [x] Per-guild visibility: public or members only (owner's choice)
-- [ ] Verify against the live Forever API with real keys
-- [x] Worktrees, Worker previews and an OAuth gateway, like Onda and Sportsball
-- [ ] One-time setup: domain, Convex project, gateways, Workers Builds (docs/deploy.md)
+- [x] Battle.net sign-in (Convex Auth v2), claim your characters
+- [x] Add a guild by name and region; hourly roster sync from Blizzard
+- [x] Per member: level, class, race, rank, gear, talents, professions and
+      recipes, last seen
+- [x] Guild ownership (whoever claims the guild master), public or
+      members-only guilds
+- [x] Guild crafting: who can make what, and who needs a reagent
+- [x] Worktrees, branch previews and an OAuth gateway; production on
+      guildie.club
+- [x] The addon: saves level, gear with tooltips, professions, recipes and
+      talents in game
+- [x] The Windows app: the site in a window, installs and updates the addon,
+      uploads its data, updates itself (replaced the tray-only helper)
+- [x] In-game tooltips: guildmates who need a reagent, gear-upgrade
+      suggestions from stat weights
+
+## Now
+
+- **Open to contributors**: contributor docs, sample data, CI on every PR,
+  release tooling.
+- **Confirm in game and on Windows**: the addon's 0.4.0 and 0.5.0 reads in
+  Forever, and the app's Windows-only parts (docs/addon.md, "Not verified
+  yet").
+- **Better suggestions**: tune stat weights with players' feedback
+  (`apps/web/convex/shared/weights.ts`).
 
 ## Next
 
-- **Guild ownership.** The person who claims the guild master's character
-  (rank 0) owns it (done). Next: hand settings to officers.
-- **Rank names.** The API only gives numbers; let the owner name them.
-- **Notes.** Members add a note to their own characters (main/alt, spec,
-  what they're farming).
-- **Mains and alts.** Group a player's characters using their claims.
-- **Profession lookup.** "Who can make X?" across the guild. Needs recipe
-  data (not in the profile API's Classic-style professions; probably the
-  addon).
+- **Officers**: hand guild settings to officers, not just the owner.
+- **Rank names**: the API only gives numbers; let the owner name them.
+- **Notes, mains and alts**: members describe their characters (main/alt,
+  spec, what they're farming) and group them.
+- **More from the addon**: online presence, bank and bags (with consent).
 
-## Later: Discord
+## Later
 
-- **Link Discord (optional)** from the account page, for notifications. A
-  second OAuth connection (`identify` scope), stored on the user. Convex Auth
-  v2 has no account linking yet, so this would be our own small flow, like
-  claiming characters.
-- **Notifications**: a guild event or a request ("can someone craft…") pings
-  the people who can help, by Discord DM or a guild channel webhook.
-- **Guild chat**: a persistent chat in the app, optionally mirrored to a
-  Discord channel via a bot.
-
-## Eventually: the addon
-
-A WoW addon that knows the guild:
-
-- **Upload** what the API can't see: who's online, full recipe lists,
-  bank and bag contents (with consent), via SavedVariables and a small
-  companion uploader, since addons can't make web requests.
-- **Download** the guild's data into the addon so, in game, an item tooltip
-  says which guildmates it would be an upgrade for, and which crafted
-  reagents or gear are worth making for whom.
-
-Open questions for the addon: whether to require a companion app for
-uploads, and how to score "upgrade" (item level is crude; stat weights per
-class/spec are better).
+- **Discord (optional)**: link Discord for notifications ("can someone craft
+  ...?" pings the people who can), possibly guild chat mirrored to a channel.
+  Convex Auth v2 has no account linking yet, so it would be our own small
+  flow, like claiming characters.
+- **Other game versions**: realm-based flavors (Classic Era, Anniversary);
+  `flavor` is already on guilds and characters.

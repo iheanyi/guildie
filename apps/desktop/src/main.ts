@@ -1,6 +1,6 @@
-// Guildie for Windows: the site in its own window, plus what the helper does
-// (apps/helper, packages/sync): uploads what the Guildie addon saves in game,
-// and downloads your guild's data into the addon. Signing in in the window
+// Guildie for Windows: the site in its own window, plus the uploader
+// (packages/sync): uploads what the Guildie addon saves in game, and
+// downloads your guild's data into the addon. Signing in in the window
 // connects it; nothing else to set up.
 //
 //   --url <url>        another Guildie (a preview, or https://<name>.guildie.localhost:1355);

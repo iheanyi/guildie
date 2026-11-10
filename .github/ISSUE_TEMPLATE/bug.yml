@@ -1,0 +1,69 @@
+name: Bug
+description: Something on guildie.club, in the Windows app or in the addon doesn't work right.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Don't paste upload tokens (`gld_...`), sign-in codes or anything from `%APPDATA%\guildie` except the log lines below.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      multiple: true
+      options:
+        - Website (guildie.club)
+        - Windows app
+        - Addon (in game)
+        - Sign-in or claiming characters
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the guild page
+        2. Sort by level
+        3. ...
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+      placeholder: https://guildie.club/g/us/unbound
+  - type: input
+    id: character
+    attributes:
+      label: Character and guild
+      description: Forever has no realms, so a character is name-surname (e.g. Brisket-Miller). Add the region.
+      placeholder: Brisket-Miller, guild Unbound, US
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: Settings → App, or the tray's About Guildie. Leave empty if you only use the website.
+      placeholder: "0.3.5"
+  - type: input
+    id: addon-version
+    attributes:
+      label: Addon version
+      description: Settings → Addon, or /guildie in game.
+      placeholder: "0.5.0"
+  - type: input
+    id: system
+    attributes:
+      label: Browser or Windows version
+      placeholder: Windows 11, or Firefox 140 on macOS
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or log lines
+      description: Screenshots help a lot. The app's log is `%APPDATA%\guildie\desktop\guildie.log`; paste only the lines around the problem.

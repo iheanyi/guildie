@@ -1,7 +1,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { ConvexError } from "convex/values";
 
-// Shared by the /api/helper/* routes the desktop helper (apps/helper) calls.
+// Shared by the /api/helper/* routes the desktop app (apps/desktop) calls.
 
 export function bearerToken(request: Request) {
 	return request.headers.get("authorization")?.match(/^Bearer (\S+)$/)?.[1] ?? null;

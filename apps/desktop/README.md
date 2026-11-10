@@ -1,6 +1,6 @@
 # Guildie for Windows (`apps/desktop`)
 
-Guildie in its own window, plus what the helper (`apps/helper`) does: it
+Guildie in its own window, plus what the retired tray helper used to do: it
 uploads what the Guildie addon saves in game, and downloads your guild's data
 into the addon for its tooltips. It also installs the addon and keeps it up to
 date, and updates itself. Sign in inside the window and that's it.
@@ -144,9 +144,10 @@ waits for someone to approve the code it logs.
 | `src/updater.ts` | App updates from GitHub Releases (electron-updater) |
 | `src/smoke.ts` | `--smoke-test` |
 
-The upload and download logic is `packages/sync` (`@guildie/sync`), shared
-with the helper. `scripts/build.mjs` bundles main and preload with esbuild, so
-the packaged app carries no `node_modules`.
+The upload and download logic is `packages/sync` (`@guildie/sync`), which
+the retired helper used too. `scripts/build.mjs` bundles main and preload
+with esbuild, so the packaged app carries no `node_modules`, and copies the
+icons from `assets/` (drawn by `scripts/make-icon.py`).
 
 Security: context isolation on, sandboxed page, no Node in the page, no
 `<webview>`, and no permissions granted besides writing to the clipboard. The bridge is exposed only on

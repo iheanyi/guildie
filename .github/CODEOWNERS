@@ -1,0 +1,27 @@
+# Changes to these need a review from the maintainer. Everything else is open
+# to any reviewer. See CONTRIBUTING.md, "Ask first before touching".
+
+# Sign-in: Convex Auth (patched beta), the SSR adapter, the OAuth gateway
+/apps/web/convex/auth*                    @natedunn
+/apps/web/convex/claims.ts                @natedunn
+/apps/web/convex/origins.ts               @natedunn
+/apps/web/src/lib/convex-auth-start/      @natedunn
+/apps/web/src/routes/auth/                @natedunn
+/apps/gateway/                            @natedunn
+/patches/                                 @natedunn
+
+# The desktop app's bridge, main process, updater and native calls
+/apps/desktop/src/preload.ts              @natedunn
+/apps/desktop/src/main.ts                 @natedunn
+/apps/desktop/src/origins.ts              @natedunn
+/apps/desktop/src/updater.ts              @natedunn
+/apps/desktop/src/window-border.ts        @natedunn
+/apps/desktop/electron-builder.yml        @natedunn
+
+# Releases, deploys and CI
+/.github/                                 @natedunn
+/apps/web/scripts/*deploy*                @natedunn
+/apps/web/scripts/deployments.sh          @natedunn
+/apps/web/wrangler.jsonc                  @natedunn
+/apps/desktop/package.json                @natedunn
+/apps/addon/Guildie/Guildie.toc           @natedunn

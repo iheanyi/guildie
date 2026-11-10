@@ -9,6 +9,7 @@
  */
 
 import type * as addonPayload from "../addonPayload.js";
+import type * as addonView from "../addonView.js";
 import type * as auth from "../auth.js";
 import type * as authBattlenet from "../authBattlenet.js";
 import type * as authGateway from "../authGateway.js";
@@ -26,6 +27,7 @@ import type * as items from "../items.js";
 import type * as origins from "../origins.js";
 import type * as profile from "../profile.js";
 import type * as recipes from "../recipes.js";
+import type * as sample from "../sample.js";
 import type * as shared_foreverTalents from "../shared/foreverTalents.js";
 import type * as shared_itemInfo from "../shared/itemInfo.js";
 import type * as shared_upgrades from "../shared/upgrades.js";
@@ -44,6 +46,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   addonPayload: typeof addonPayload;
+  addonView: typeof addonView;
   auth: typeof auth;
   authBattlenet: typeof authBattlenet;
   authGateway: typeof authGateway;
@@ -61,6 +64,7 @@ declare const fullApi: ApiFromModules<{
   origins: typeof origins;
   profile: typeof profile;
   recipes: typeof recipes;
+  sample: typeof sample;
   "shared/foreverTalents": typeof shared_foreverTalents;
   "shared/itemInfo": typeof shared_itemInfo;
   "shared/upgrades": typeof shared_upgrades;

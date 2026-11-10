@@ -1,5 +1,6 @@
 // Bundles the main process and the preload into dist/ (one file each, so the
-// packaged app ships no node_modules), and copies the icons from apps/helper.
+// packaged app ships no node_modules), and copies the icons from assets/
+// (drawn by scripts/make-icon.py).
 import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +26,6 @@ await build({ ...common, entryPoints: [join(root, "src/preload.ts")], outfile: j
 
 mkdirSync(join(root, "dist/assets"), { recursive: true });
 for (const icon of ["guildie.ico", "guildie-256.png"]) {
-	copyFileSync(join(root, "../helper/assets", icon), join(root, "dist/assets", icon));
+	copyFileSync(join(root, "assets", icon), join(root, "dist/assets", icon));
 }
 console.log(`Built Guildie ${version} into dist/`);

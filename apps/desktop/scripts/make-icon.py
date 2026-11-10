@@ -1,6 +1,6 @@
 """Draws guildie's shield (as in apps/web/public/favicon.svg) into
 assets/guildie.ico at 16, 32, 48 and 256 px. Pure Python, no image libraries:
-  python3 scripts/make-icon.py
+  python3 scripts/make-icon.py   (from apps/desktop)
 """
 import struct, zlib, os
 

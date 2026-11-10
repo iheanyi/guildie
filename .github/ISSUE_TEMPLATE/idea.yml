@@ -1,0 +1,39 @@
+name: Feature or idea
+description: Something Guildie could do for your guild.
+labels: ["idea"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would it help with
+      description: The situation in your guild, in game or on the site. ("Our crafters keep asking who has the Mooncloth recipe.")
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What it could look like. Sketches and screenshots of other tools welcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where it would live
+      multiple: true
+      options:
+        - Website
+        - Windows app
+        - Addon (in game)
+        - Not sure
+  - type: textarea
+    id: data
+    attributes:
+      label: What data it needs
+      description: "If you know: does Blizzard's API have it, or would the addon have to read it in game? Fine to leave empty."
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Building it
+      options:
+        - label: I'd like to work on this myself

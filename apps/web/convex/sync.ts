@@ -7,6 +7,7 @@ import { setOwner } from "./guilds";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { appToken, blizzardGet } from "./blizzard";
 import { type ItemPreview, tooltipLines } from "./items";
+import { isSampleGuild } from "./sample";
 import { vEquippedItem, vTalentTree } from "./schema";
 import { FLAVORS, type Region } from "./shared/wow";
 
@@ -47,7 +48,8 @@ export const syncGuild = internalAction({
 	args: { guildId: v.id("guilds"), force: v.optional(v.boolean()) },
 	handler: async (ctx, { guildId, force }) => {
 		const guild = await ctx.runQuery(internal.sync.getGuild, { guildId });
-		if (!guild) return;
+		// The sample guild's names are made up (convex/sample.ts): nothing to fetch.
+		if (!guild || isSampleGuild(guild)) return;
 		const flavor = FLAVORS[guild.flavor];
 		try {
 			const token = await appToken(ctx, guild.region);

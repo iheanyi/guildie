@@ -1,9 +1,11 @@
 #!/usr/bin/env sh
 # Run by scripts/dev.sh once the local backend is up. A new backend gets its
-# settings and guild data from cloud dev (scripts/deployments.sh); before
-# cloud dev exists, local placeholders and a fake guild instead. Every run
-# sets SITE_URL to this checkout's URL, the one origin sign-in may return to.
-# Until the settings are in, Convex holds the first push and retries it.
+# settings and guild data from cloud dev (scripts/deployments.sh) when this
+# machine's Convex login can read it (the maintainer). Otherwise (contributors,
+# forks, GUILDIE_SAMPLE=1): local signing keys and the sample guild
+# (fixtures/sample). Decided once per backend. Every run sets SITE_URL to this
+# checkout's URL, the one origin sign-in may return to. Until the settings are
+# in, Convex holds the first push and retries it. See docs/local-dev.md.
 #   usage: dev-seed.sh <cloud port> <app url>
 set -eu
 # Run from apps/web (the Convex project and Worker), wherever this was started.
@@ -23,13 +25,29 @@ umask 077
 dir="$(mktemp -d)"
 trap '/bin/rm -rf "$dir"' EXIT
 
-if [ -z "$cloud_dev" ]; then
-	# No cloud dev yet: signing keys and placeholder Battle.net
-	# keys, generated locally (scripts/dev-env.mjs).
+# Where this backend's data comes from: what it was seeded with, else cloud dev
+# if we can read it, else the sample.
+if [ -f .convex/local/sample-seeded ] || [ -f .convex/local/fake-guild-seeded ]; then
+	data_from=sample
+elif [ -f .convex/local/guild-data-seeded ]; then
+	data_from=cloud
+elif [ -n "${GUILDIE_SAMPLE:-}" ] || [ -z "$cloud_dev" ]; then
+	data_from=sample
+elif npx convex env get AUTH_GATEWAY_SECRET --deployment "$cloud_dev" < /dev/null > /dev/null 2>&1; then
+	data_from=cloud
+else
+	data_from=sample
+	echo "dev-seed: no access to cloud dev ($cloud_dev), so this backend gets the sample guild (docs/local-dev.md)"
+fi
+
+if [ "$data_from" = sample ]; then
+	# Signing keys, guest sign-in and placeholder Battle.net keys, generated
+	# locally (scripts/dev-env.mjs), then the sample guild. Your own Blizzard
+	# keys, once set, are kept.
 	node scripts/dev-env.mjs "$url"
-	marker=.convex/local/fake-guild-seeded
-	if [ ! -f "$marker" ]; then
-		npx convex run dev:seed > /dev/null && touch "$marker" && echo "dev-seed: added a fake guild"
+	marker=.convex/local/sample-seeded
+	if [ ! -f "$marker" ] && [ ! -f .convex/local/fake-guild-seeded ]; then
+		node scripts/sample-seed.mjs && touch "$marker" && echo "dev-seed: imported the sample guild (fixtures/sample)"
 	fi
 	exit 0
 fi

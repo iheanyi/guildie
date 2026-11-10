@@ -40,7 +40,9 @@ function SignIn() {
 		completeSignIn: api.auth.completeSignInWithBattlenet,
 	});
 	const { flowError } = useOauth();
-	const { data: guestEnabled } = useQuery(convexQuery(api.users.guestEnabled, {}));
+	const { data: options } = useQuery(convexQuery(api.users.signInOptions, {}));
+	// A contributor's local backend has no Battle.net client (docs/local-dev.md).
+	const battlenet = options?.battlenet ?? true;
 	const [pending, setPending] = useState(false);
 	const [startError, setStartError] = useState(false);
 	const claiming = useFinishSignIn(!!flowError);
@@ -57,7 +59,7 @@ function SignIn() {
 			/>
 			<Button
 				size="lg"
-				disabled={pending || claiming}
+				disabled={pending || claiming || !battlenet}
 				onClick={async () => {
 					setPending(true);
 					setStartError(false);
@@ -74,6 +76,11 @@ function SignIn() {
 			>
 				{claiming ? "Reading your characters…" : pending ? "Heading to Battle.net…" : "Continue with Battle.net"}
 			</Button>
+			{!battlenet && (
+				<p className="mt-3 text-muted-foreground">
+					Battle.net sign-in isn't set up on this local backend. Sign in as a guest below; see docs/local-dev.md.
+				</p>
+			)}
 			{(flowError || startError) && (
 				<p className="mt-3 text-destructive">
 					{flowError?.error === "ACCESS_DENIED"
@@ -83,7 +90,7 @@ function SignIn() {
 							: "Sign-in didn't finish. Try again."}
 				</p>
 			)}
-			{guestEnabled && <GuestSignIn />}
+			{options?.guest && <GuestSignIn />}
 		</Page>
 	);
 }
@@ -127,7 +134,9 @@ function GuestSignIn() {
 	const router = useRouter();
 	return (
 		<div className="mt-10 border-t border-border pt-4">
-			<p className="text-muted-foreground">Local backend: guest accounts are on.</p>
+			<p className="text-muted-foreground">
+				Local backend: guest accounts are on. With the sample data, a guest plays one of the Sample Guild's characters.
+			</p>
 			<Button
 				variant="outline"
 				className="mt-2"
