@@ -1,6 +1,9 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+
+// Where the helper keeps its settings and log (the desktop app keeps its own
+// next to them, in desktop/).
 
 export const DEFAULT_API = "https://guildie.club";
 
@@ -15,6 +18,7 @@ export type Config = { tokens: Record<string, { token: string; account?: string 
 
 const file = () => join(configDir(), "helper-config.json");
 
+/** The helper's settings (the desktop app reads its WoW folder as a starting point). */
 export function loadConfig(): Config {
 	try {
 		const raw = JSON.parse(readFileSync(file(), "utf8"));
@@ -31,17 +35,19 @@ export function saveConfig(config: Config) {
 
 export const logPath = () => join(configDir(), "helper.log");
 
+export type Log = (...parts: unknown[]) => void;
+
 /** Log to the file (and the console when there is one). Keeps the file under ~1 MB. */
-export function makeLogger(toConsole: boolean) {
-	mkdirSync(configDir(), { recursive: true });
+export function makeLogger(toConsole: boolean, path = logPath()): Log {
+	mkdirSync(dirname(path), { recursive: true });
 	try {
-		if (existsSync(logPath()) && statSync(logPath()).size > 1_000_000) writeFileSync(logPath(), "");
+		if (existsSync(path) && statSync(path).size > 1_000_000) writeFileSync(path, "");
 	} catch {}
 	return (...parts: unknown[]) => {
 		const line = `[${new Date().toLocaleString()}] ${parts.map(String).join(" ")}`;
 		if (toConsole) console.log(line);
 		try {
-			appendFileSync(logPath(), `${line}\n`);
+			appendFileSync(path, `${line}\n`);
 		} catch {}
 	};
 }

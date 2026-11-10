@@ -16,8 +16,14 @@
       "esbuild",
       "workerd"
     ],
+    "overrides": {
+      "electron>@types/node": "^26.6.5"
+    },
     "patchedDependencies": {
       "@convex-dev/auth": "patches/@convex-dev__auth.patch"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "electron-winstaller"
+    ]
   }
 }

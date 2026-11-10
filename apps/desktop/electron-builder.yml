@@ -1,0 +1,36 @@
+# electron-builder: pnpm --filter @guildie/desktop build:win (on Windows) or
+# build:win-cross (from macOS, no wine). Output in apps/desktop/release.
+appId: club.guildie.desktop
+productName: Guildie
+copyright: Guildie
+directories:
+  output: release
+# Everything the app needs is bundled into dist/ (scripts/build.mjs).
+files:
+  - dist/**/*
+  - "!dist/**/*.map"
+  - package.json
+asar: true
+extraMetadata:
+  main: dist/main.cjs
+win:
+  icon: dist/assets/guildie.ico
+  executableName: Guildie
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+  artifactName: Guildie-${version}-win-${arch}.${ext}
+nsis:
+  oneClick: true
+  perMachine: false
+  runAfterFinish: true
+  createDesktopShortcut: true
+  shortcutName: Guildie
+  artifactName: Guildie-Setup-${version}.${ext}
+portable:
+  artifactName: Guildie-${version}-portable.${ext}
+mac:
+  target: dir
+  category: public.app-category.games

@@ -6,7 +6,11 @@ Monorepo (pnpm workspaces):
 - `apps/web`: the app (TanStack Start + Convex). Its scripts cd to apps/web
   themselves; Workers Builds runs with root directory `apps/web`.
 - `apps/gateway`: the OAuth callback gateway Worker.
-- `apps/addon`: the in-game addon (Lua). `apps/helper`: the desktop uploader.
+- `apps/addon`: the in-game addon (Lua). `apps/desktop`: the Windows app
+  (Electron: the site in a window plus the uploader; apps/desktop/README.md).
+  `apps/helper`: the older tray-only uploader (Bun).
+- `packages/sync`: what desktop and helper share (SavedVariables reader,
+  uploader, GuildieData.lua writer).
 
 - pnpm. Tabs, double quotes, semicolons.
 - `pnpm dev` per checkout (Portless URL, own Convex backend): docs/local-dev.md.

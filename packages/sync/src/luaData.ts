@@ -1,3 +1,8 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import type { GuildData } from "./api.ts";
+import type { Log } from "./config.ts";
+
 // Turns the guild data from guildie.club into a Lua file the addon loads
 // (GuildieData.lua). The game runs addon files as code, so everything here is
 // written as plain data literals: numbers and fully escaped strings only.
@@ -30,7 +35,25 @@ export function toLua(value: unknown): string {
 	return "nil";
 }
 
-/** The whole file. `bytes` is UTF-8 (written as latin1 so each byte lands as-is). */
+/** The whole file. Strings come out as UTF-8 bytes, one char each: write it as latin1 so each byte lands as-is. */
 export function guildDataFile(data: unknown) {
 	return `-- Written by the Guildie helper from guildie.club; replaced on every refresh. Don't edit.\nGuildieData = ${toLua(data)}\n`;
+}
+
+/** Writes GuildieData.lua into each addon folder, only where it changed. Returns the files written. */
+export function writeGuildData(folders: string[], data: GuildData, log: Log): string[] {
+	const content = Buffer.from(guildDataFile(data), "latin1");
+	const written: string[] = [];
+	for (const folder of folders) {
+		const file = join(folder, "GuildieData.lua");
+		try {
+			if (existsSync(file) && readFileSync(file).equals(content)) continue;
+			writeFileSync(file, content);
+			written.push(file);
+			log(`Wrote guild data for ${data.guilds.join(", ") || "no guilds"} (${Object.keys(data.reagents).length} reagents) to ${file}`);
+		} catch (e) {
+			log(`Couldn't write ${file}: ${(e as Error).message}`);
+		}
+	}
+	return written;
 }
