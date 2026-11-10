@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCharacter } from "@/components/character-data";
+import { sourceNote, useCharacter } from "@/components/character-data";
 import { TalentList, TalentTree } from "@/components/talent-tree";
-import { ago } from "@/lib/format";
 
 // Talents: the class's three trees side by side, as in the game.
 export const Route = createFileRoute("/c/$region/$slug/talents")({
@@ -19,10 +18,7 @@ function TalentsPage() {
 	const summary = talentLayouts.length
 		? talentLayouts.map((l) => treeFor(l.specId)?.points ?? 0)
 		: trees.map((t) => t.points);
-	const source =
-		talentSource.kind === "addon"
-			? `From the Guildie addon, ${ago(talentSource.at) ?? "just now"}.`
-			: "From Blizzard, as of the last logout.";
+	const source = sourceNote(talentSource);
 
 	if (!talentLayouts.length && !trees.length) {
 		return <p className="text-sm text-muted-foreground">No points spent yet.</p>;

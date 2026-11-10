@@ -2,7 +2,9 @@ import { ConvexError, type Infer, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalQuery, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
+import { type AddonCharacter, LIMITS, matchRecipes, parseCharacter } from "./addonPayload";
 import { sha256 } from "./claims";
+import { mergeProfile } from "./profile";
 import type { vTalentTree } from "./schema";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { requireUserId } from "./users";
@@ -12,13 +14,11 @@ import { requireUserId } from "./users";
 // on their account page; only the token's hash is stored. Uploads are only
 // accepted for characters the token's owner has claimed.
 //
-// Blizzard's data stays the fallback: an addon snapshot is shown only while
-// it's newer than the last change we saw from Blizzard (see pickTalents).
+// Blizzard's data stays the fallback: each part of an addon snapshot is shown
+// only while it's newer than Blizzard's (see pickProfile, convex/profile.ts).
 
 /** One upload per token per this long. */
 const MIN_UPLOAD_INTERVAL_MS = 5_000;
-const MAX_CHARACTERS = 50;
-const MAX_TALENTS = 120;
 
 function newToken() {
 	const bytes = crypto.getRandomValues(new Uint8Array(24));
@@ -74,26 +74,13 @@ export const whoami = query({
 	},
 });
 
-const vUploadedCharacter = v.object({
-	/** UnitGUID("player"), e.g. Player-1234-0A1B2C3D. */
-	guid: v.string(),
-	/** UnitName("player"). */
-	name: v.string(),
-	level: v.optional(v.number()),
-	/** UnitClass's English token, e.g. PRIEST. */
-	classToken: v.optional(v.string()),
-	/** Game server time of the snapshot, seconds (GetServerTime()). */
-	capturedAt: v.number(),
-	talents: v.array(v.object({ id: v.number(), rank: v.number(), name: v.optional(v.string()) })),
-});
-
 /** The number in Player-<server>-<hex>: Blizzard's character id. */
 function blizzardIdFromGuid(guid: string) {
 	const hex = guid.match(/^Player-\d+-([0-9A-Fa-f]+)$/)?.[1];
 	return hex ? Number.parseInt(hex, 16) : undefined;
 }
 
-async function treesFromRanks(ctx: MutationCtx, talents: Infer<typeof vUploadedCharacter>["talents"]) {
+async function treesFromRanks(ctx: MutationCtx, talents: AddonCharacter["talents"]) {
 	const trees = new Map<string, Infer<typeof vTalentTree>>();
 	for (const t of talents) {
 		const where = TALENT_TREE_BY_ID.get(t.id);
@@ -115,15 +102,31 @@ async function treesFromRanks(ctx: MutationCtx, talents: Infer<typeof vUploadedC
 	return [...trees.values()].sort((a, b) => b.points - a.points);
 }
 
-/** Called by the /api/helper/snapshot route with the helper's token and the addon's data. */
+type SnapshotFields = Omit<Doc<"addonSnapshots">, "_id" | "_creationTime">;
+
+/** The newer of two sections (by capturedAt); the existing one on a tie only if the new one is missing. */
+const newer = <T extends { capturedAt: number }>(incoming: T | undefined, existing: T | undefined) =>
+	incoming && (!existing || incoming.capturedAt >= existing.capturedAt) ? incoming : existing;
+
+/** "Broadsword of the Eagle" (a random suffix) -> "Broadsword", the item's own name. */
+const baseName = (item: { name: string; suffixId?: number }) =>
+	item.suffixId && item.name.lastIndexOf(" of ") > 0 ? item.name.slice(0, item.name.lastIndexOf(" of ")) : item.name;
+
+/**
+ * Called by the /api/helper/snapshot route with the helper's token and the
+ * addon's characters (payload version 1 or 2). Each character is checked
+ * (addonPayload.ts) and kept only if the token's owner claimed it. Each part
+ * of the stored snapshot keeps whichever copy is newer, so an older upload
+ * (another computer, say) never replaces newer data.
+ */
 export const ingest = mutation({
-	args: { token: v.string(), characters: v.array(vUploadedCharacter) },
-	handler: async (ctx, { token, characters }) => {
+	args: { token: v.string(), version: v.optional(v.number()), characters: v.array(v.any()) },
+	handler: async (ctx, { token, version, characters }) => {
 		const row = await tokenOwner(ctx, token);
 		if (!row) throw new ConvexError("Unknown or revoked token");
 		const now = Date.now();
 		if (row.lastUsedAt && now - row.lastUsedAt < MIN_UPLOAD_INTERVAL_MS) throw new ConvexError("Too many uploads; slow down");
-		if (characters.length > MAX_CHARACTERS) throw new ConvexError("Too many characters in one upload");
+		if (characters.length > LIMITS.characters) throw new ConvexError("Too many characters in one upload");
 		await ctx.db.patch(row._id, { lastUsedAt: now });
 
 		const owned = await ctx.db
@@ -132,41 +135,135 @@ export const ingest = mutation({
 			.collect();
 		const accepted: string[] = [];
 		const unmatched: string[] = [];
-		for (const c of characters) {
+		const rejected: string[] = [];
+		// Each profession's catalog, read once per upload.
+		const catalogs = new Map<number, Doc<"recipes">[]>();
+		const catalog = async (professionId: number) => {
+			if (!catalogs.has(professionId)) {
+				catalogs.set(
+					professionId,
+					await ctx.db
+						.query("recipes")
+						.withIndex("by_professionId", (q) => q.eq("professionId", professionId))
+						.collect(),
+				);
+			}
+			return catalogs.get(professionId)!;
+		};
+
+		for (const raw of characters) {
+			const parsed = parseCharacter(raw, now);
+			if (!parsed.ok) {
+				console.warn(`helper.ingest: rejected ${parsed.name}: ${parsed.error}`);
+				rejected.push(parsed.name);
+				continue;
+			}
+			const c = parsed.character;
 			const match = matchOwned(owned, c);
-			if (!match || c.talents.length > MAX_TALENTS) {
+			if (!match) {
 				unmatched.push(c.name);
 				continue;
 			}
-			const capturedAt = c.capturedAt * 1000;
-			// Don't trust a clock far in the future.
-			if (capturedAt > now + 10 * 60_000) {
-				unmatched.push(c.name);
-				continue;
-			}
+			const key = { flavor: match.flavor, region: match.region, slug: match.slug };
 			const existing = await ctx.db
 				.query("addonSnapshots")
-				.withIndex("by_slug", (q) => q.eq("flavor", match.flavor).eq("region", match.region).eq("slug", match.slug))
+				.withIndex("by_slug", (q) => q.eq("flavor", key.flavor).eq("region", key.region).eq("slug", key.slug))
 				.unique();
-			const snapshot = {
+			const character = await ctx.db
+				.query("characters")
+				.withIndex("by_slug", (q) => q.eq("flavor", key.flavor).eq("region", key.region).eq("slug", key.slug))
+				.first();
+
+			// Level, XP, guild and talents: read together, every time.
+			const top =
+				!existing || existing.capturedAt <= c.capturedAt
+					? {
+							capturedAt: c.capturedAt,
+							version: version ?? 1,
+							level: c.level,
+							xp: c.xp,
+							xpMax: c.xpMax,
+							classToken: c.classToken,
+							raceToken: c.raceToken,
+							guild: c.guild,
+							talentTrees: await treesFromRanks(ctx, c.talents),
+						}
+					: {
+							capturedAt: existing.capturedAt,
+							version: existing.version,
+							level: existing.level,
+							xp: existing.xp,
+							xpMax: existing.xpMax,
+							classToken: existing.classToken,
+							raceToken: existing.raceToken,
+							guild: existing.guild,
+							talentTrees: existing.talentTrees,
+						};
+
+			const incomingGear: SnapshotFields["equipment"] = c.equipment && {
+				capturedAt: c.equipment.capturedAt,
+				averageItemLevel: c.equipment.averageItemLevel,
+				items: c.equipment.items,
+			};
+			const equipment = newer(incomingGear, existing?.equipment);
+			const incomingProfessions: SnapshotFields["professions"] = c.professions && {
+				capturedAt: c.professions.capturedAt,
+				list: c.professions.list,
+			};
+			const professions = newer(incomingProfessions, existing?.professions);
+
+			// Known recipes, per profession: the newer read, matched to the catalog
+			// (an unchanged read keeps its earlier match).
+			const recipes = new Map((existing?.recipes ?? []).map((r) => [r.professionId, r]));
+			for (const r of c.recipes) {
+				const before = recipes.get(r.professionId);
+				if (before && before.capturedAt > r.capturedAt) continue;
+				if (before && before.capturedAt === r.capturedAt && before.count === r.known.length) continue;
+				const blizzardKnown = new Set(character?.professions?.find((p) => p.id === r.professionId)?.knownRecipes ?? []);
+				const { recipeIds, unmatched: missing } = matchRecipes(r.known, await catalog(r.professionId), blizzardKnown);
+				recipes.set(r.professionId, {
+					professionId: r.professionId,
+					profession: r.profession,
+					capturedAt: r.capturedAt,
+					recipeIds,
+					count: r.known.length,
+					unmatched: missing,
+				});
+			}
+			// Professions the character no longer has take their recipes with them.
+			const keptRecipes = [...recipes.values()].filter((r) => !professions || professions.list.some((p) => p.id === r.professionId));
+
+			const snapshot: SnapshotFields = {
 				userId: row.userId,
-				flavor: match.flavor,
-				region: match.region,
-				slug: match.slug,
-				capturedAt,
+				...key,
+				...top,
 				receivedAt: now,
-				level: c.level,
-				talentTrees: await treesFromRanks(ctx, c.talents),
+				equipment,
+				professions,
+				recipes: keptRecipes.length ? keptRecipes : undefined,
 			};
 			if (!existing) await ctx.db.insert("addonSnapshots", snapshot);
-			else if (existing.capturedAt <= capturedAt) await ctx.db.replace(existing._id, snapshot);
+			else await ctx.db.replace(existing._id, snapshot);
 			accepted.push(match.slug);
+
+			// Icons (and names, where Blizzard's item API has none) for gear we
+			// haven't seen yet, with the game's tooltip as the fallback.
+			const gearChanged =
+				equipment === incomingGear &&
+				incomingGear &&
+				incomingGear.items.map((i) => i.itemId).join() !== (existing?.equipment?.items ?? []).map((i) => i.itemId).join();
+			if (gearChanged && incomingGear.items.length) {
+				await ctx.scheduler.runAfter(0, internal.items.ensure, {
+					itemIds: incomingGear.items.map((i) => i.itemId),
+					hints: incomingGear.items.map((i) => ({ itemId: i.itemId, name: baseName(i), quality: i.quality, tooltip: i.tooltip })),
+				});
+			}
 		}
-		return { accepted, unmatched };
+		return { accepted, unmatched, rejected };
 	},
 });
 
-function matchOwned(owned: Doc<"ownedCharacters">[], c: Infer<typeof vUploadedCharacter>) {
+function matchOwned(owned: Doc<"ownedCharacters">[], c: AddonCharacter) {
 	const id = blizzardIdFromGuid(c.guid);
 	const byId = id !== undefined ? owned.find((o) => o.blizzardId === id) : undefined;
 	if (byId) return byId;
@@ -175,25 +272,20 @@ function matchOwned(owned: Doc<"ownedCharacters">[], c: Infer<typeof vUploadedCh
 	return byName.length === 1 ? byName[0] : undefined;
 }
 
-export type TalentSource = { kind: "addon" | "blizzard"; at?: number };
-
-/**
- * The talents to show for a character: the addon's while its snapshot is
- * newer than the last change we saw from Blizzard, otherwise Blizzard's.
- */
-export async function pickTalents(ctx: QueryCtx, character: Doc<"characters">) {
-	const snapshot = await ctx.db
+/** A character's latest addon snapshot, if any. */
+export async function snapshotOf(ctx: QueryCtx, character: Pick<Doc<"characters">, "flavor" | "region" | "slug">) {
+	return await ctx.db
 		.query("addonSnapshots")
 		.withIndex("by_slug", (q) => q.eq("flavor", character.flavor).eq("region", character.region).eq("slug", character.slug))
 		.unique();
-	const blizzardAt = character.talentsChangedAt ?? character.profileSyncedAt ?? 0;
-	if (snapshot && snapshot.capturedAt > blizzardAt) {
-		return { talentTrees: snapshot.talentTrees, source: { kind: "addon", at: snapshot.capturedAt } as TalentSource };
-	}
-	return {
-		talentTrees: character.talentTrees,
-		source: { kind: "blizzard", at: character.profileSyncedAt } as TalentSource,
-	};
+}
+
+/**
+ * The character as shown: Blizzard's profile with the addon's newer parts
+ * (level, gear, professions, recipes, talents) on top. Rules: convex/profile.ts.
+ */
+export async function pickProfile(ctx: QueryCtx, character: Doc<"characters">) {
+	return mergeProfile(character, await snapshotOf(ctx, character));
 }
 
 // ---- Connecting the helper from the browser ---------------------------------
@@ -381,14 +473,15 @@ export const guildDataBase = internalQuery({
 				.query("characters")
 				.withIndex("by_guild", (q) => q.eq("guildId", guildId).eq("inRoster", true))
 				.collect();
+			const profiles = await Promise.all(members.map((m) => pickProfile(ctx, m)));
 			guilds.push({
 				name: guild.name,
 				region: guild.region,
-				members: members.map((m) => ({
+				members: members.map((m, i) => ({
 					name: m.name,
 					slug: m.slug,
 					classId: m.classId,
-					professions: (m.professions ?? []).map((p) => ({ name: p.name, skill: p.skill, knownRecipes: p.knownRecipes ?? [] })),
+					professions: profiles[i].professions.map((p) => ({ name: p.name, skill: p.skill, knownRecipes: p.knownRecipes ?? [] })),
 				})),
 			});
 		}

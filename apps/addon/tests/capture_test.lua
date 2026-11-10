@@ -1,0 +1,387 @@
+-- Tests the addon's capture and payload with a stubbed WoW API.
+--   luajit apps/addon/tests/capture_test.lua
+-- With an output path, also writes the SavedVariables file the game would
+-- (used by the end-to-end check):
+--   luajit apps/addon/tests/capture_test.lua /tmp/Guildie.lua
+
+local here = debug.getinfo(1, "S").source:match("^@(.*/)") or "./"
+local wow = dofile(here .. "wow.lua")
+
+local failures, passed = 0, 0
+local function test(name, fn)
+    local ok, err = pcall(fn)
+    if ok then
+        passed = passed + 1
+    else
+        failures = failures + 1
+        print("FAIL " .. name .. ": " .. tostring(err))
+    end
+end
+local function eq(actual, expected, what)
+    if actual ~= expected then
+        error(string.format("%s: expected %s, got %s", what or "value", tostring(expected), tostring(actual)), 2)
+    end
+end
+
+local GREEN = { 0, 1, 0 }
+local WHITE = { 1, 1, 1 }
+
+--- Lich, a level 23 priest with a couple of items, two professions and Cooking.
+local function lich(overrides)
+    local state = {
+        db = {},
+        guid = "Player-4904-004E2B22",
+        name = "Lich",
+        level = 23,
+        xp = 1200,
+        xpMax = 15000,
+        guild = { name = "Unbound", rank = "Member", rankIndex = 5 },
+        average = 21.47,
+        gear = {
+            [1] = { id = 9492, name = "Electromagnetic Gigaflux Reactivator", quality = 3, itemLevel = 36 },
+            [16] = { id = 2520, name = "Broadsword of the Eagle", quality = 2, itemLevel = 24, enchant = 241, suffix = 852 },
+        },
+        tooltips = {
+            [1] = {
+                { "Binds when picked up", WHITE },
+                { "Head", WHITE, "Cloth" },
+                { "43 Armor", WHITE },
+                { "Durability 47 / 50", WHITE },
+                { "Equip: Increases damage and healing done by magical spells and effects by up to 8.", GREEN },
+            },
+            [16] = {
+                { "Two-Hand", WHITE, "Sword" },
+                { "|cffffffff+3 Agility|r", WHITE },
+                { "Crusader", GREEN },
+                { "", WHITE },
+                { "Item Level 24", { 1, 0.82, 0 } },
+            },
+        },
+        skillLines = {
+            { header = true, name = "Professions" },
+            { name = "Tailoring", rank = 120, max = 150, abandonable = true },
+            { name = "Enchanting", rank = 98, max = 150, abandonable = true },
+            { header = true, name = "Secondary Skills" },
+            { name = "Cooking", rank = 60, max = 75, abandonable = true },
+            { header = true, name = "Weapon Skills" },
+            { name = "Staves", rank = 100, max = 115 },
+        },
+    }
+    for k, v in pairs(overrides or {}) do state[k] = v end
+    return state
+end
+
+local function payload(db)
+    return wow.decode(db.payload)
+end
+
+test("captures level, XP, guild, gear and professions on login", function()
+    local state = lich()
+    wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    local p = payload(state.db)
+    eq(p.version, 2, "version")
+    eq(#p.characters, 1, "characters")
+    local c = p.characters[1]
+    eq(c.guid, "Player-4904-004E2B22")
+    eq(c.level, 23, "level")
+    eq(c.xp, 1200, "xp")
+    eq(c.xpMax, 15000, "xpMax")
+    eq(c.classToken, "PRIEST")
+    eq(c.raceToken, "NightElf")
+    eq(c.capturedAt, state.time, "capturedAt")
+    eq(c.guild.name, "Unbound")
+    eq(c.guild.rank, "Member")
+    eq(c.guild.rankIndex, 5)
+    eq(#c.talents, 0, "talents (no talent API stubbed)")
+    eq(c.equipment.capturedAt, state.time, "equipment time")
+    eq(c.equipment.averageItemLevel, 21.47, "average item level")
+    eq(#c.equipment.items, 2, "items")
+    local head, weapon = c.equipment.items[1], c.equipment.items[2]
+    eq(head.slot, 1)
+    eq(head.id, 9492)
+    eq(head.name, "Electromagnetic Gigaflux Reactivator")
+    eq(head.quality, 3)
+    eq(head.itemLevel, 36)
+    eq(head.enchant, nil, "no enchant")
+    eq(#head.tooltip, 5, "head tooltip lines (name line skipped)")
+    eq(head.tooltip[1].left, "Binds when picked up")
+    eq(head.tooltip[1].color, nil, "white isn't sent")
+    eq(head.tooltip[2].right, "Cloth")
+    eq(head.tooltip[5].color, "#00ff00")
+    eq(weapon.slot, 16)
+    eq(weapon.name, "Broadsword of the Eagle", "random suffix name from the link")
+    eq(weapon.enchant, 241)
+    eq(weapon.suffix, 852)
+    eq(weapon.tooltip[2].left, "+3 Agility", "inline color codes stripped")
+    eq(weapon.tooltip[2].color, "#ffffff", "inline color kept when the line is white")
+    eq(#weapon.tooltip, 4, "blank lines dropped")
+    eq(weapon.tooltip[4].left, "Item Level 24", "kept; the site drops it")
+    eq(weapon.tooltip[1].right, "Sword")
+    eq(weapon.tooltip[3].right, nil, "hidden right text isn't read")
+    local skills = c.professions.skills
+    eq(#skills, 3, "professions (weapon skills left out)")
+    eq(skills[1].name, "Tailoring")
+    eq(skills[1].rank, 120)
+    eq(skills[1].max, 150)
+    eq(skills[3].name, "Cooking")
+    eq(c.recipes, nil, "no recipes until a window opens")
+end)
+
+test("level up and gear change show up, and mark it changed since load", function()
+    local state = lich()
+    local ns = wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    eq(ns.dirty, false, "fresh")
+    state.level = 24
+    state.time = state.time + 60
+    wow.fire("PLAYER_LEVEL_UP")
+    eq(payload(state.db).characters[1].level, 24)
+    eq(ns.dirty, true, "dirty after level up")
+    state.gear[16] = nil
+    wow.fire("PLAYER_EQUIPMENT_CHANGED")
+    eq(#payload(state.db).characters[1].equipment.items, 1)
+    -- Nothing readable (inventory not loaded): the last read stays, with its time.
+    local at = payload(state.db).characters[1].equipment.capturedAt
+    state.gear = {}
+    state.time = state.time + 60
+    wow.fire("PLAYER_ENTERING_WORLD")
+    eq(#payload(state.db).characters[1].equipment.items, 1)
+    eq(payload(state.db).characters[1].equipment.capturedAt, at)
+end)
+
+test("recipes: trade skill window, kept per profession, merged on later reads", function()
+    local state = lich()
+    wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    state.trade = {
+        profession = "Tailoring",
+        lines = {
+            { name = "Cloth", kind = "header" },
+            { name = "Bolt of Linen Cloth", item = 2996 },
+            { name = "Brown Linen Vest", item = 2568 },
+        },
+    }
+    state.time = state.time + 10
+    wow.fire("TRADE_SKILL_SHOW")
+    local c = payload(state.db).characters[1]
+    eq(#c.recipes, 1, "one profession")
+    eq(c.recipes[1].profession, "Tailoring")
+    eq(c.recipes[1].capturedAt, state.time)
+    eq(#c.recipes[1].known, 2, "headers skipped")
+    eq(c.recipes[1].known[1].item, 2996)
+    -- A filtered view later: what it hides is kept.
+    state.trade.lines = { { name = "Linen Bag", item = 4238 } }
+    state.time = state.time + 10
+    wow.fire("TRADE_SKILL_UPDATE")
+    c = payload(state.db).characters[1]
+    eq(#c.recipes[1].known, 3, "merged")
+    eq(c.recipes[1].capturedAt, state.time)
+    -- Window closed: nothing changes.
+    local before = c.recipes[1].capturedAt
+    state.trade = nil
+    state.time = state.time + 10
+    wow.fire("TRADE_SKILL_UPDATE")
+    eq(payload(state.db).characters[1].recipes[1].capturedAt, before, "closed window isn't a read")
+end)
+
+test("recipes: Enchanting through the craft API, other professions keep their time", function()
+    local state = lich()
+    wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    state.trade = { profession = "Tailoring", lines = { { name = "Bolt of Linen Cloth", item = 2996 } } }
+    wow.fire("TRADE_SKILL_SHOW")
+    local tailoringAt = state.time
+    state.trade = nil
+    state.time = state.time + 100
+    state.craft = {
+        profession = "Enchanting",
+        lines = { { name = "Enchant Bracer - Minor Health" }, { name = "Runed Copper Rod", item = 6218 } },
+    }
+    wow.fire("CRAFT_SHOW")
+    local c = payload(state.db).characters[1]
+    eq(#c.recipes, 2)
+    local byName = {}
+    for _, s in ipairs(c.recipes) do byName[s.profession] = s end
+    eq(byName.Tailoring.capturedAt, tailoringAt, "tailoring keeps its time")
+    eq(byName.Enchanting.capturedAt, state.time)
+    eq(byName.Enchanting.known[1].item, nil, "enchant links aren't items")
+    eq(byName.Enchanting.known[2].item, 6218)
+end)
+
+test("an unlearned profession drops its recipes; a collapsed header doesn't", function()
+    local state = lich()
+    wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    state.trade = { profession = "Tailoring", lines = { { name = "Bolt of Linen Cloth", item = 2996 } } }
+    wow.fire("TRADE_SKILL_SHOW")
+    state.trade = nil
+    -- Collapsed Professions header: Tailoring isn't visible but is still known.
+    state.skillLines = {
+        { header = true, name = "Professions", expanded = false },
+        { header = true, name = "Secondary Skills" },
+        { name = "Cooking", rank = 61, max = 75, abandonable = true },
+    }
+    wow.fire("SKILL_LINES_CHANGED")
+    local c = payload(state.db).characters[1]
+    eq(#c.professions.skills, 3, "kept what the header hides")
+    eq(#c.recipes, 1, "recipes kept")
+    -- Tailoring unlearned.
+    state.skillLines = {
+        { header = true, name = "Professions" },
+        { name = "Enchanting", rank = 98, max = 150, abandonable = true },
+        { header = true, name = "Secondary Skills" },
+        { name = "Cooking", rank = 61, max = 75, abandonable = true },
+    }
+    wow.fire("SKILL_LINES_CHANGED")
+    c = payload(state.db).characters[1]
+    eq(#c.professions.skills, 2)
+    eq(#c.recipes, 0, "tailoring's recipes dropped")
+end)
+
+test("guild unknown right after login keeps the last; leaving clears it", function()
+    local state = lich()
+    wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    state.guildLoading = true
+    wow.fire("PLAYER_ENTERING_WORLD")
+    eq(payload(state.db).characters[1].guild.name, "Unbound")
+    state.guild = nil
+    wow.fire("PLAYER_GUILD_UPDATE")
+    eq(payload(state.db).characters[1].guild, nil)
+end)
+
+test("a version 1 saved character upgrades and keeps its talents", function()
+    local state = lich({
+        db = {
+            version = 1,
+            characters = {
+                ["Player-4904-004E2B22"] = {
+                    guid = "Player-4904-004E2B22", name = "Lich", level = 22, classToken = "PRIEST",
+                    capturedAt = 1794200000, talents = { { id = 134214, rank = 5, name = "Wand Specialization" } },
+                },
+            },
+        },
+    })
+    wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    local c = payload(state.db).characters[1]
+    eq(c.level, 23)
+    eq(c.talents[1].id, 134214, "talents kept when they can't be read")
+    eq(#c.equipment.items, 2)
+end)
+
+test("logout saves at once; unknown events don't break loading", function()
+    local state = lich({ unknownEvents = { CRAFT_SHOW = true, CRAFT_UPDATE = true, TRADE_SKILL_LIST_UPDATE = true } })
+    wow.load(state)
+    _G.C_Timer = { After = function() error("logout must not wait") end }
+    wow.fire("PLAYER_LOGOUT")
+    eq(state.db.lastReason, "PLAYER_LOGOUT")
+end)
+
+test("events in a burst read once", function()
+    local state = lich()
+    wow.load(state)
+    local timers = {}
+    _G.C_Timer = { After = function(_, fn) table.insert(timers, fn) end }
+    wow.fire("PLAYER_EQUIPMENT_CHANGED")
+    wow.fire("PLAYER_EQUIPMENT_CHANGED")
+    wow.fire("SKILL_LINES_CHANGED")
+    state.trade = { profession = "Tailoring", lines = { { name = "Bolt of Linen Cloth", item = 2996 } } }
+    wow.fire("TRADE_SKILL_UPDATE")
+    eq(#timers, 2, "one character read and one window read pending")
+    for _, fn in ipairs(timers) do fn() end
+    eq(#payload(state.db).characters[1].recipes, 1)
+end)
+
+test("modern clients: C_TooltipInfo and GetProfessions", function()
+    local state = lich()
+    local ns = wow.load(state)
+    _G.C_TooltipInfo = {
+        GetInventoryItem = function(_, slot)
+            if slot ~= 1 then return nil end
+            return { lines = {
+                { leftText = "Electromagnetic Gigaflux Reactivator", leftColor = { r = 0, g = 0.44, b = 0.87 } },
+                { leftText = "Soulbound", leftColor = { r = 1, g = 1, b = 1 } },
+                { leftText = "Equip: Restores 3 mana per 5 sec.", leftColor = { r = 0, g = 1, b = 0 } },
+                { leftText = "Head", rightText = "Cloth", leftColor = { r = 1, g = 1, b = 1 } },
+            } }
+        end,
+    }
+    _G.GetProfessions = function() return 3, nil, nil, 7, 5, nil end
+    _G.GetProfessionInfo = function(i)
+        local p = ({ [3] = { "Tailoring", 120, 150, 197 }, [5] = { "Cooking", 60, 75, 185 }, [7] = { "Fishing", 1, 75, 356 } })[i]
+        return p[1], "icon", p[2], p[3], 0, 0, p[4]
+    end
+    wow.fire("PLAYER_ENTERING_WORLD")
+    local c = payload(state.db).characters[1]
+    local head = c.equipment.items[1]
+    eq(#head.tooltip, 3)
+    eq(head.tooltip[1].left, "Soulbound")
+    eq(head.tooltip[2].color, "#00ff00")
+    eq(head.tooltip[3].right, "Cloth")
+    eq(#c.professions.skills, 3)
+    eq(c.professions.skills[1].id, 197, "skill line id")
+    eq(c.professions.skills[3].name, "Cooking")
+    assert(ns.current())
+end)
+
+test("encoder: escapes, NaN, empty lists", function()
+    local ns = wow.load(lich())
+    eq(ns.encode({ a = 'x"\\\n\1' }), '{"a":"x\\"\\\\\\n\\u0001"}')
+    eq(ns.encode({ n = 0 / 0 }), '{"n":null}')
+    eq(ns.encode({}), "[]")
+    eq(ns.encode({ 1, 2 }), "[1,2]")
+    local decoded = wow.decode(ns.encode({ s = "Ðawn \"q\"", list = { { left = "a" } } }))
+    eq(decoded.s, "Ðawn \"q\"")
+    eq(decoded.list[1].left, "a")
+end)
+
+test("window summary", function()
+    local state = lich()
+    local ns = wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    state.trade = { profession = "Tailoring", lines = { { name = "Bolt of Linen Cloth", item = 2996 } } }
+    wow.fire("TRADE_SKILL_SHOW")
+    local text = ns.summary(ns.current())
+    assert(text:find("2 items worn", 1, true), text)
+    assert(text:find("Tailoring 120 (1 recipes)", 1, true), text)
+end)
+
+-- The end-to-end check's input: a SavedVariables file like the game's, for
+-- Lich with gear, professions and recipes (some the catalog knows, one it
+-- doesn't). Arguments: output path, level, game time, GUID.
+local out = arg and arg[1]
+if out then
+    local state = lich({ level = tonumber(arg[2]) or 36, time = tonumber(arg[3]) or os.time(), guid = arg[4] or "Player-4904-004E2BA2" })
+    state.skillLines = {
+        { header = true, name = "Professions" },
+        { name = "Tailoring", rank = 215, max = 225, abandonable = true },
+        { name = "Enchanting", rank = 225, max = 225, abandonable = true },
+        { header = true, name = "Secondary Skills" },
+        { name = "Cooking", rank = 194, max = 225, abandonable = true },
+        { name = "Fishing", rank = 150, max = 225, abandonable = true },
+    }
+    wow.load(state)
+    wow.fire("PLAYER_ENTERING_WORLD")
+    state.trade = {
+        profession = "Tailoring",
+        lines = {
+            { name = "Cloth", kind = "header" },
+            { name = "Bolt of Silk Cloth", item = 4305 },
+            { name = "Red Linen Vest", item = 6239 },
+            { name = "Not In The Catalog", item = 999999 },
+        },
+    }
+    wow.fire("TRADE_SKILL_SHOW")
+    state.trade = nil
+    state.craft = { profession = "Enchanting", lines = { { name = "Enchant Bracer - Agility" }, { name = "Runed Copper Rod", item = 6218 } } }
+    wow.fire("CRAFT_SHOW")
+    local file = assert(io.open(out, "w"))
+    file:write(wow.savedVariables(state.db))
+    file:close()
+    print("wrote " .. out)
+end
+
+print(string.format("%d passed, %d failed", passed, failures))
+os.exit(failures == 0 and 0 or 1)

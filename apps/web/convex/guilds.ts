@@ -4,7 +4,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, mutation, type MutationCtx, type QueryCtx, query } from "./_generated/server";
 import { vRegion, vVisibility } from "./schema";
-import { pickTalents } from "./helper";
+import { pickProfile } from "./helper";
 import { requireUserId } from "./users";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { guildSlug } from "./shared/wow";
@@ -84,7 +84,8 @@ export const get = query({
 			.collect();
 		// Mark which characters someone has claimed. Members (never the public)
 		// also see the claimant's BattleTag, unless that player hid it.
-		const talents = await Promise.all(characters.map((c) => pickTalents(ctx, c)));
+		// Each with the addon's newer data on top of Blizzard's (convex/profile.ts).
+		const profiles = await Promise.all(characters.map((c) => pickProfile(ctx, c)));
 		const claimed = await Promise.all(
 			characters.map((c) =>
 				ctx.db
@@ -111,24 +112,19 @@ export const get = query({
 				slug: c.slug,
 				name: c.name,
 				surname: c.surname,
-				level: c.level,
+				level: profiles[i].level,
 				classId: c.classId,
 				raceId: c.raceId,
 				rank: c.rank,
 				lastLoginAt: c.lastLoginAt,
-				averageItemLevel: c.averageItemLevel,
-				professions: c.professions,
-				talentTrees: talents[i].talentTrees?.map(({ id, name, points }) => ({ id, name, points })),
-				talentSource: talents[i].source,
+				averageItemLevel: profiles[i].averageItemLevel,
+				professions: profiles[i].professions.map(({ id, name, skill, maxSkill, secondary }) => ({ id, name, skill, maxSkill, secondary })),
+				talentTrees: profiles[i].talentTrees?.map(({ id, name, points }) => ({ id, name, points })),
+				talentSource: profiles[i].sources.talents,
 				// When this character's data was last current, and from where: an
-				// in-game sync by the Guildie app when that's newer, else Blizzard
-				// (their profile as of their last logout; checked at profileSyncedAt).
-				synced:
-					talents[i].source.kind === "addon"
-						? { kind: "app" as const, at: talents[i].source.at }
-						: c.lastLoginAt
-							? { kind: "blizzard" as const, at: c.lastLoginAt, checkedAt: c.profileSyncedAt }
-							: undefined,
+				// in-game sync by the Guildie app when any of it is newer than
+				// Blizzard's, else Blizzard (as of their last logout).
+				synced: profiles[i].synced,
 				avatarUrl: c.avatarUrl,
 				profileMissing: c.profileMissing,
 				claimed: claimed[i] !== null,
@@ -148,9 +144,9 @@ export const character = query({
 		if (!character) return null;
 		const guild = await ctx.db.get(character.guildId);
 		if (!guild || !(await access(ctx, guild)).canView) return null;
-		const { talentTrees, source } = await pickTalents(ctx, character);
+		const profile = await pickProfile(ctx, character);
 		const equipment = await Promise.all(
-			(character.equipment ?? []).map(async (item) => {
+			(profile.equipment ?? []).map(async (item) => {
 				const known = await itemRow(ctx, item.itemId);
 				return { ...item, icon: known?.icon };
 			}),
@@ -161,8 +157,18 @@ export const character = query({
 			.withIndex("by_classId", (q) => q.eq("classId", character.classId))
 			.collect();
 		return {
-			character: { ...character, equipment, talentTrees },
-			talentSource: source,
+			character: {
+				...character,
+				level: profile.level,
+				averageItemLevel: profile.averageItemLevel,
+				equipment,
+				professions: profile.professions,
+				talentTrees: profile.talentTrees,
+			},
+			/** Where each part came from: the game (the Guildie addon) or Blizzard. */
+			sources: profile.sources,
+			talentSource: profile.sources.talents,
+			synced: profile.synced,
 			talentLayouts: layouts
 				.map(({ specId, name, nodes }) => ({
 					specId,

@@ -2,10 +2,12 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { type QueryCtx, query } from "./_generated/server";
 import { access, itemRow } from "./guilds";
+import { pickProfile } from "./helper";
 import { vRegion } from "./schema";
 
-// What characters can craft: their professions' known recipes (from
-// Blizzard's profiles), joined with the recipe catalog and item data.
+// What characters can craft: their professions' known recipes (Blizzard's
+// profiles, with newer reads from the Guildie addon on top: pickProfile),
+// joined with the recipe catalog and item data.
 
 async function recipeRow(ctx: QueryCtx, recipeId: number) {
 	return await ctx.db
@@ -57,15 +59,26 @@ export const characterProfessions = query({
 		const guild = await ctx.db.get(character.guildId);
 		if (!guild || !(await access(ctx, guild)).canView) return null;
 		const items = new Map<number, Doc<"items"> | null>();
+		const profile = await pickProfile(ctx, character);
 		return await Promise.all(
-			(character.professions ?? []).map(async (p) => {
+			profile.professions.map(async (p) => {
 				const recipes = [];
 				for (const id of p.knownRecipes ?? []) {
 					const recipe = await recipeRow(ctx, id);
 					if (recipe) recipes.push(await recipeView(ctx, recipe, items));
 				}
 				recipes.sort((a, b) => a.name.localeCompare(b.name));
-				return { id: p.id, name: p.name, skill: p.skill, maxSkill: p.maxSkill, secondary: p.secondary, recipes };
+				return {
+					id: p.id,
+					name: p.name,
+					skill: p.skill,
+					maxSkill: p.maxSkill,
+					secondary: p.secondary,
+					recipes,
+					/** Where the skill and the recipes came from (the game or Blizzard). */
+					source: profile.sources.professions,
+					recipesSource: p.recipesSource ?? { kind: "blizzard" as const, at: character.lastLoginAt },
+				};
 			}),
 		);
 	},
@@ -87,7 +100,7 @@ export const guildCrafting = query({
 			.collect();
 		const crafters = new Map<number, { name: string; slug: string; classId: number; skill?: number }[]>();
 		for (const m of members) {
-			for (const p of m.professions ?? []) {
+			for (const p of (await pickProfile(ctx, m)).professions) {
 				for (const id of p.knownRecipes ?? []) {
 					const list = crafters.get(id) ?? [];
 					list.push({ name: m.name, slug: m.slug, classId: m.classId, skill: p.skill });
@@ -138,10 +151,11 @@ export const itemDetail = query({
 					.withIndex("by_guild", (q) => q.eq("guildId", guild._id).eq("inRoster", true))
 					.collect()
 			: [];
+		const profiles = await Promise.all(members.map((m) => pickProfile(ctx, m)));
 		const craftersOf = (recipeId: number) =>
 			members
-				.flatMap((m) =>
-					(m.professions ?? [])
+				.flatMap((m, i) =>
+					profiles[i].professions
 						.filter((p) => p.knownRecipes?.includes(recipeId))
 						.map((p) => ({ name: m.name, slug: m.slug, region: m.region, classId: m.classId, skill: p.skill })),
 				)

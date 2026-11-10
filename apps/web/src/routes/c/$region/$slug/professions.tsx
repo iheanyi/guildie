@@ -5,6 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { type ReactNode, useDeferredValue, useMemo, useState } from "react";
+import { sourceNote } from "@/components/character-data";
 import { buildIndex, compareProfessions, queryWords, Reagents, RecipeItem, searchIndex } from "@/components/recipe-row";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -131,7 +132,13 @@ function RecipeList({ profession }: { profession: Profession }) {
 					/>
 				) : null}
 			</div>
-			{total === 0 ? (
+			{total === 0 && profession.recipesSource.kind === "blizzard" && profession.source.kind === "addon" ? (
+				// Learned or seen in game since Blizzard's profile: its recipes come
+				// from the game too, once its window has been open.
+				<p className="py-6 text-sm text-muted-foreground">
+					No recipes from the game yet. They're sent once {profession.name}'s window has been open in game.
+				</p>
+			) : total === 0 ? (
 				<p className="py-6 text-sm text-muted-foreground">
 					Blizzard reports {profession.skill ? `skill ${profession.skill} in ${profession.name}` : profession.name} but
 					no known recipes.
@@ -152,6 +159,11 @@ function RecipeList({ profession }: { profession: Profession }) {
 					))}
 				</ul>
 			)}
+			<p className="mt-3 text-xs text-muted-foreground">
+				{profession.source.kind === profession.recipesSource.kind
+					? sourceNote(profession.recipesSource)
+					: `${sourceNote(profession.source, "Skill from")} ${sourceNote(profession.recipesSource, "Recipes from")}`}
+			</p>
 		</section>
 	);
 }

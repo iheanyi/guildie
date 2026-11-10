@@ -1,5 +1,5 @@
 -- Guildie's window and minimap button. The window shows what's saved for this
--- character and when it reaches guildie.club; "Upload now" reloads the UI,
+-- character (level, talents, gear, professions and their recipes) and when it reaches guildie.club; "Upload now" reloads the UI,
 -- which is when the game writes addon data to disk for the helper.
 
 local ADDON, ns = ...
@@ -40,18 +40,39 @@ local function checkbox(parent, anchor, label, get, set)
     return cb, text
 end
 
+--- Gear, professions and recipes saved, in a couple of lines.
+function ns.summary(me)
+    local items = me.equipment and #me.equipment.items or 0
+    local parts = {}
+    local recipes = {}
+    for _, section in ipairs(me.recipes or {}) do recipes[section.profession] = #section.known end
+    for _, skill in ipairs(me.professions and me.professions.skills or {}) do
+        local known = recipes[skill.name]
+        table.insert(parts, string.format("%s %d%s", skill.name, skill.rank or 0,
+            known and string.format(" (%d recipes)", known) or ""))
+    end
+    local text = string.format("%d item%s worn", items, items == 1 and "" or "s")
+    if #parts > 0 then
+        text = text .. "\n" .. table.concat(parts, ", ")
+            .. "\n|cff999999Open a profession's window to save its recipes.|r"
+    end
+    return text
+end
+
 local function refresh()
     if not window or not window:IsShown() then return end
     local me = ns.current()
     if not me then
         window.character:SetText("No data yet for this character.")
         window.talents:SetText("")
+        window.details:SetText("")
         window.saved:SetText("")
         return
     end
     window.character:SetText(string.format("%s, level %d", me.name or UnitName("player"), me.level or UnitLevel("player")))
     local points = ns.points(me)
     window.talents:SetText(string.format("%d talent point%s in %d talent%s", points, points == 1 and "" or "s", #me.talents, #me.talents == 1 and "" or "s"))
+    window.details:SetText(ns.summary(me))
     if GuildieData and GuildieData.generatedAt then
         local count = 0
         for _ in pairs(GuildieData.reagents or {}) do count = count + 1 end
@@ -70,7 +91,7 @@ ns.onCapture = refresh
 
 local function buildWindow()
     window = CreateFrame("Frame", "GuildieWindow", UIParent, "BasicFrameTemplateWithInset")
-    window:SetSize(340, 270)
+    window:SetSize(340, 320)
     window:SetPoint("CENTER")
     window:SetMovable(true)
     window:EnableMouse(true)
@@ -91,7 +112,8 @@ local function buildWindow()
 
     window.character = line(window, top, 0, "GameFontNormalLarge")
     window.talents = line(window, window.character, -6)
-    window.guildData = line(window, window.talents, -6, "GameFontDisableSmall")
+    window.details = line(window, window.talents, -6, "GameFontHighlightSmall")
+    window.guildData = line(window, window.details, -6, "GameFontDisableSmall")
     window.saved = line(window, window.guildData, -12, "GameFontHighlightSmall")
 
     local upload = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")

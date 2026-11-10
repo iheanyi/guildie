@@ -1,6 +1,6 @@
 import { className, raceName } from "@convex/shared/wow";
 import { createFileRoute, Link, notFound, Outlet } from "@tanstack/react-router";
-import { characterQuery, useCharacter } from "@/components/character-data";
+import { characterQuery, sourceNote, useCharacter } from "@/components/character-data";
 import { ClassText } from "@/components/class-name";
 import { PageTab, PageTabs } from "@/components/page-tabs";
 import { ago, rankLabel } from "@/lib/format";
@@ -22,9 +22,9 @@ function CharacterLayout() {
 	const data = useCharacter();
 	if (!data) return null;
 	const { character: c, guild } = data;
-	// Last synced: an in-game sync by the Guildie app when newer, else Blizzard's last logout.
-	const synced = data.talentSource.kind === "addon" && data.talentSource.at ? data.talentSource.at : c.lastLoginAt;
-	const seen = ago(synced);
+	// Last synced: an in-game sync by the Guildie app when any of it is newer, else Blizzard's last logout.
+	const seen = ago(data.synced?.at);
+	const inGame = data.synced?.kind === "app";
 	return (
 		<div className="w-full max-w-5xl py-5">
 			<header className="flex items-center gap-3">
@@ -39,7 +39,7 @@ function CharacterLayout() {
 						{c.surname && <span className="font-normal text-muted-foreground"> {c.surname}</span>}
 					</h1>
 					<p className="mt-0.5 text-[13px] text-muted-foreground">
-						<span className="num">
+						<span className="num" title={sourceNote(data.sources.level)}>
 							Level {c.level} {raceName(c.raceId)} {className(c.classId)}
 						</span>
 						{" · "}
@@ -51,12 +51,14 @@ function CharacterLayout() {
 							{guild.name}
 						</Link>
 						{`, ${rankLabel(c.rank)}`}
-						{seen && ` · last synced ${seen}`}
+						{seen && ` · last synced ${seen}${inGame ? " in game" : ""}`}
 					</p>
 				</div>
 				{c.averageItemLevel !== undefined && (
 					<div className="shrink-0 text-right leading-tight">
-						<div className="num text-lg font-semibold">{c.averageItemLevel}</div>
+						<div className="num text-lg font-semibold" title={sourceNote(data.sources.gear)}>
+							{c.averageItemLevel}
+						</div>
 						<div className="text-xs text-muted-foreground">Item level</div>
 					</div>
 				)}

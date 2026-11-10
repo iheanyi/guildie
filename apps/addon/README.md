@@ -1,7 +1,9 @@
 # Guildie addon
 
-Saves your character's talents (and level) for the Guildie desktop helper
-(`apps/helper`) to upload to guildie.club.
+Saves your character as the game sees it for the Guildie desktop app
+(`apps/desktop`, or the older helper `apps/helper`) to upload to
+guildie.club, so the site shows it before Blizzard's profile catches up
+(which is only after you log out).
 
 Addons can't use the internet. The game writes the addon's data
 (`WTF/Account/<account>/SavedVariables/Guildie.lua`) when you log out or
@@ -24,8 +26,55 @@ reload the UI, and the helper, running on the same computer, uploads it then.
   `GuildieData.lua`; it loads at login and `/reload`.
 - Interface version 16001 is WoW: Forever 1.60.1.
 
+## What's saved, and when
+
+Per character, in `GuildieDB` (`Guildie.lua`, `Capture.lua`):
+
+| What | Read with | When |
+|---|---|---|
+| Level, XP, class, race | `UnitLevel`, `UnitXP`/`UnitXPMax`, `UnitClass`, `UnitRace` | every read |
+| Guild and rank | `GetGuildInfo` | every read (kept while the game hasn't loaded it yet after login) |
+| Talents | `C_ClassTalents` / `C_Traits` (below) | every read |
+| Gear, slots 1–19 | `GetInventoryItemLink`/`ID`/`Quality`; item level from `GetDetailedItemLevelInfo` or `GetItemInfo`; average from `GetAverageItemLevel` | every read |
+| Each item's tooltip as the game shows it (colors, enchant, durability, set) | `C_TooltipInfo.GetInventoryItem`, else a hidden `GameTooltip` (`SetInventoryItem`) read line by line, name line skipped | every read |
+| Professions with skill and max | `GetProfessions`/`GetProfessionInfo` (skill line ids), else `GetSkillLineInfo` | every read |
+| Known recipes (name, crafted item id) | `GetTradeSkillInfo`/`GetTradeSkillItemLink`, `C_TradeSkillUI`, or the Craft API (`GetCraftInfo`, Enchanting in classic-era clients) | **only when you open that profession's window** |
+
+A read happens at login, on level up, gear changes, skill and guild changes,
+talent changes, when a profession window opens or updates, and on logout and
+`/reload` (`PLAYER_LOGOUT`, which can't wait). Bursts of events are read once
+a second later.
+
+- Each part keeps its own `capturedAt` (game server time): something that
+  can't be read right now keeps its last good read and time.
+- Recipes: the last read per profession is kept across sessions, and a new
+  read adds to it (a filter or a collapsed header in the window can hide
+  some, and recipes are only ever lost with the profession). A profession
+  you haven't opened since keeps its old list; an unlearned one drops off
+  with its recipes. Open each profession's window once to send its recipes.
+- A collapsed header in the skills tab hides what's under it; those
+  professions keep their last read.
+
+The payload (`GuildieDB.payload`, JSON, `version` 2; docs/addon.md, "API")
+is rebuilt on every read for all of the account's characters, and the app
+uploads it when the game writes the file.
+
+## Tests
+
+`luajit apps/addon/tests/capture_test.lua` loads the addon with a stubbed WoW
+API (`tests/wow.lua`) and checks what each read saves and the JSON. With a
+path it also writes a SavedVariables file like the game's, for trying the
+app and the site end to end. Tests live outside `Guildie/` so they don't ship.
+
+## Talents
+
 Talents are read with `C_ClassTalents` / `C_Traits`, the way the
 [WowSims exporter](https://github.com/wowsims/exporter) (MIT) reads them in
 Forever, and sent as TraitDefinition IDs: the same IDs as Blizzard's web API,
 which is how guildie.club places them in their trees. Confirmed in game: talent
 reading, and that the in-game GUID's number is Blizzard's character id.
+
+Not confirmed in game yet (0.4.0): which of the gear, tooltip, profession and
+recipe APIs above Forever has (each read tries the modern API, then the
+classic one, and an unreadable part keeps its last read), and whether
+`TRADE_SKILL_*` or `CRAFT_*` fire for Enchanting there.

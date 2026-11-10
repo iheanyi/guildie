@@ -2,7 +2,8 @@
 // (apps/web/src/routes/api/helper).
 
 export type Me = { battletag: string | null; characters: string[] };
-export type UploadResult = { accepted?: string[]; unmatched?: string[]; error?: string };
+/** `rejected`: characters the site refused as malformed (names; the site logs why). */
+export type UploadResult = { accepted?: string[]; unmatched?: string[]; rejected?: string[]; error?: string };
 export type GuildData = { generatedAt: number; guilds: string[]; reagents: Record<string, unknown> };
 export type Pairing = { code: string; pollSecret: string; expiresInSeconds: number; connectUrl: string };
 export type PairingResult =

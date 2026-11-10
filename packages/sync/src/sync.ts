@@ -98,6 +98,7 @@ export class SyncEngine {
 			return false;
 		}
 		this.events.log(`Uploaded ${file}: updated ${body.accepted?.join(", ") || "nothing"}`);
+		if (body.rejected?.length) this.events.log(`The site refused data for ${body.rejected.join(", ")} (malformed; is the addon current?)`);
 		if (body.accepted?.length) {
 			this.lastUpload = { at: Date.now(), characters: body.accepted };
 			this.events.onUpload?.(this.lastUpload);

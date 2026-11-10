@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as addonPayload from "../addonPayload.js";
 import type * as auth from "../auth.js";
 import type * as authBattlenet from "../authBattlenet.js";
 import type * as authGateway from "../authGateway.js";
@@ -23,6 +24,7 @@ import type * as helper from "../helper.js";
 import type * as http from "../http.js";
 import type * as items from "../items.js";
 import type * as origins from "../origins.js";
+import type * as profile from "../profile.js";
 import type * as recipes from "../recipes.js";
 import type * as shared_foreverTalents from "../shared/foreverTalents.js";
 import type * as shared_wow from "../shared/wow.js";
@@ -37,6 +39,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  addonPayload: typeof addonPayload;
   auth: typeof auth;
   authBattlenet: typeof authBattlenet;
   authGateway: typeof authGateway;
@@ -52,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   items: typeof items;
   origins: typeof origins;
+  profile: typeof profile;
   recipes: typeof recipes;
   "shared/foreverTalents": typeof shared_foreverTalents;
   "shared/wow": typeof shared_wow;

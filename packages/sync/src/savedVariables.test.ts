@@ -17,3 +17,19 @@ test("decimal escapes", () => {
 test("no payload yet", () => {
 	assert.equal(extractPayload("GuildieDB = {}"), null);
 });
+
+test("a version 2 payload with tooltips and recipes survives the game's escaping", () => {
+	const payload = {
+		version: 2,
+		characters: [
+			{
+				name: "Lich",
+				equipment: { capturedAt: 1, items: [{ slot: 16, id: 2520, name: "Broadsword of the Eagle", tooltip: [{ left: 'Equip: "Quoted" \\ back\nslash', color: "#00ff00" }] }] },
+				recipes: [{ profession: "Tailoring", capturedAt: 1, known: Array.from({ length: 400 }, (_, i) => ({ name: `Recipe ${i} — Ðawn`, item: i + 1 })) }],
+			},
+		],
+	};
+	const json = JSON.stringify(payload);
+	const luaString = json.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+	assert.deepEqual(JSON.parse(extractPayload(`GuildieDB = {\n\t["payload"] = "${luaString}",\n}\n`)!), payload);
+});

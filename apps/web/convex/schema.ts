@@ -29,6 +29,9 @@ export const vEquippedItem = v.object({
 	itemLevel: v.optional(v.number()),
 	/** The tooltip as worn (enchants included), name line excluded. */
 	tooltip: v.optional(v.array(vTooltipLine)),
+	/** From the addon: the enchant and random suffix ids in the item's link. */
+	enchantId: v.optional(v.number()),
+	suffixId: v.optional(v.number()),
 });
 
 /** A talent tree with points in it, from the active talent group. */
@@ -40,7 +43,7 @@ export const vTalentTree = v.object({
 	talents: v.array(v.object({ id: v.optional(v.number()), name: v.string(), rank: v.number() })),
 });
 
-const vProfession = v.object({
+export const vProfession = v.object({
 	id: v.number(),
 	name: v.string(),
 	skill: v.optional(v.number()),
@@ -203,18 +206,50 @@ export default defineSchema({
 
 	/**
 	 * The latest in-game snapshot per character, uploaded by the helper from
-	 * the Guildie addon. Shown instead of Blizzard's data only while it's newer.
+	 * the Guildie addon. Each part is shown instead of Blizzard's only while
+	 * it's newer (convex/profile.ts). Parts the addon reads separately carry
+	 * their own capturedAt; the rest share the snapshot's.
 	 */
 	addonSnapshots: defineTable({
 		userId: v.id("users"),
 		flavor: vFlavor,
 		region: vRegion,
 		slug: v.string(),
-		/** Game server time of the snapshot, ms. */
+		/** Game server time of the snapshot (level, XP, guild, talents), ms. */
 		capturedAt: v.number(),
 		receivedAt: v.number(),
+		/** The payload version it came in (1: level and talents only). */
+		version: v.optional(v.number()),
 		level: v.optional(v.number()),
+		xp: v.optional(v.number()),
+		xpMax: v.optional(v.number()),
+		classToken: v.optional(v.string()),
+		raceToken: v.optional(v.string()),
+		guild: v.optional(v.object({ name: v.string(), rank: v.optional(v.string()), rankIndex: v.optional(v.number()) })),
 		talentTrees: v.array(vTalentTree),
+		/** Worn gear with each item's tooltip as the game showed it. */
+		equipment: v.optional(
+			v.object({ capturedAt: v.number(), averageItemLevel: v.optional(v.number()), items: v.array(vEquippedItem) }),
+		),
+		/** Professions with skill (Blizzard's skill line ids). */
+		professions: v.optional(v.object({ capturedAt: v.number(), list: v.array(vProfession) })),
+		/**
+		 * Known recipes per profession, as of when its window was last open in
+		 * game, matched to the recipes table. `unmatched`: names the catalog
+		 * doesn't have; `count`: how many the game listed.
+		 */
+		recipes: v.optional(
+			v.array(
+				v.object({
+					professionId: v.number(),
+					profession: v.string(),
+					capturedAt: v.number(),
+					recipeIds: v.array(v.number()),
+					count: v.number(),
+					unmatched: v.number(),
+				}),
+			),
+		),
 	}).index("by_slug", ["flavor", "region", "slug"]),
 
 	/**
@@ -240,7 +275,8 @@ export default defineSchema({
 		syncedAt: v.number(),
 	})
 		.index("by_recipeId", ["recipeId"])
-		.index("by_craftedItemId", ["craftedItemId"]),
+		.index("by_craftedItemId", ["craftedItemId"])
+		.index("by_professionId", ["professionId"]),
 
 	/**
 	 * Forever items we show: equipped gear, crafted items and reagents. Name,

@@ -4,6 +4,7 @@ import type { Region } from "@convex/shared/wow";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
+import { ago } from "@/lib/format";
 
 // One query feeds every character tab: the layout route's loader fills the
 // cache, and each tab reads the same entry, so switching tabs costs nothing.
@@ -21,4 +22,16 @@ export const characterQuery = (region: string, slug: string) =>
 export function useCharacter(): CharacterData | null {
 	const { region, slug } = useParams({ from: "/c/$region/$slug" });
 	return useSuspenseQuery(characterQuery(region, slug)).data;
+}
+
+export type DataSource = CharacterData["sources"]["gear"];
+
+/**
+ * Where a part of the character came from, for the small note under it: the
+ * game (the player's Guildie app uploaded it) or Blizzard's profile.
+ */
+export function sourceNote(source: DataSource, what = "From") {
+	return source.kind === "addon"
+		? `${what} the game, ${ago(source.at) ?? "just now"}.`
+		: `${what} Blizzard, as of the last logout.`;
 }
