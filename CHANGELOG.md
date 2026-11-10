@@ -12,6 +12,8 @@ into that version's section.
 
 ## Unreleased
 
+## 0.3.6
+
 ### New
 
 - A redesigned in-game window with the Guildie logo and an "On Guildie" check: it lists what Guildie doesn't have yet for your character (level, talents, gear, professions, recipes). Addon 0.6.0; restart WoW once to load it.
