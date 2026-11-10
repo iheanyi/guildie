@@ -2,7 +2,7 @@
 ## Title: Guildie
 ## Notes: Sends your character (level, gear, professions, recipes, talents) to guildie.club and suggests guildmates on item tooltips: reagents and gear upgrades (with the Guildie app).
 ## Author: Guildie
-## Version: 0.5.0
+## Version: 0.6.0
 ## SavedVariables: GuildieDB
 ## IconTexture: Interface\AddOns\Guildie\icon
 ## AddonCompartmentFunc: Guildie_OnAddonCompartmentClick
@@ -11,6 +11,7 @@
 GuildieData.lua
 Capture.lua
 Guildie.lua
+Status.lua
 UI.lua
 Upgrades.lua
 Tooltip.lua

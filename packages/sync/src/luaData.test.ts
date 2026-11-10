@@ -18,7 +18,7 @@ test("a name can't break out of its string", () => {
 });
 
 test("file header", () => {
-	assert.ok(guildDataFile({ version: 1 }).startsWith("-- Written by the Guildie helper"));
+	assert.ok(guildDataFile({ version: 1 }).startsWith("-- Written by the Guildie app"));
 });
 
 test("writes UTF-8 bytes, and only when the content changes", () => {

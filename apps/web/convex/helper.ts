@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalQuery, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 import { type AddonCharacter, LIMITS, matchRecipes, parseCharacter } from "./addonPayload";
+import { type AddonView, addonView } from "./addonView";
 import { sha256 } from "./claims";
 import { mergeProfile } from "./profile";
 import type { vTalentTree } from "./schema";
@@ -440,6 +441,7 @@ type GuildDataBase = {
 	}[];
 	/** Active guildmates (not the token owner's own characters) for gear-upgrade suggestions. */
 	upgradeMembers: UpgradeMember[];
+	characters: GuildData["characters"];
 };
 
 export type GuildData = {
@@ -456,6 +458,12 @@ export type GuildData = {
 	 * active guildmate with the scores of what they wear.
 	 */
 	upgrades: { version: 1; rules: Rules; members: UpgradeMember[] };
+	/**
+	 * The token owner's own claimed characters as Guildie shows them now, by
+	 * name (addon 0.6.0+; older addons ignore it): the addon compares them
+	 * with the live game ("3 changes not on Guildie yet"). See addonView.ts.
+	 */
+	characters: Record<string, AddonView>;
 };
 
 /** The token's guilds (those its claimed characters are in) and their members. */
@@ -469,12 +477,18 @@ export const guildDataBase = internalQuery({
 			.withIndex("by_user", (q) => q.eq("userId", row.userId))
 			.collect();
 		const guildIds = new Set<Id<"guilds">>();
+		const characters: GuildData["characters"] = {};
 		for (const c of owned) {
 			const member = await ctx.db
 				.query("characters")
 				.withIndex("by_slug", (q) => q.eq("flavor", c.flavor).eq("region", c.region).eq("slug", c.slug))
 				.first();
 			if (member?.inRoster) guildIds.add(member.guildId);
+			if (!member) continue;
+			const view = addonView(member, await snapshotOf(ctx, member));
+			// The same first name twice (two regions): the one synced last.
+			const before = characters[member.name];
+			if (!before || (view.synced?.at ?? 0) > (before.synced?.at ?? 0)) characters[member.name] = view;
 		}
 		const guilds = [];
 		const rules = upgradeRules();
@@ -507,7 +521,7 @@ export const guildDataBase = internalQuery({
 				})),
 			});
 		}
-		return { mine: owned.map((c) => c.name), guilds, upgradeMembers };
+		return { mine: owned.map((c) => c.name), guilds, upgradeMembers, characters };
 	},
 });
 
@@ -563,6 +577,7 @@ export const guildData = action({
 			recipesInCatalog: reagentsByRecipe.size,
 			reagents,
 			upgrades: { version: 1, rules: upgradeRules(), members: base.upgradeMembers },
+			characters: base.characters,
 		};
 	},
 });

@@ -9,20 +9,35 @@ local wow = {}
 
 local ROOT = (debug.getinfo(1, "S").source:match("^@(.*)tests/wow%.lua$") or "./") .. "Guildie/"
 
--- Frames: anything not defined here is a no-op, so UI.lua loads too.
+-- Frames, font strings and textures: anything not defined here is a no-op,
+-- so UI.lua loads too. Each keeps its text and anchors, for the window tests.
 local function frame(name)
-    local f = { scripts = {}, events = {}, shown = false }
+    local f = { scripts = {}, events = {}, shown = false, points = {} }
     function f:RegisterEvent(event)
         if wow.state.unknownEvents and wow.state.unknownEvents[event] then error("unknown event " .. event) end
         self.events[event] = true
     end
     function f:SetScript(script, fn) self.scripts[script] = fn end
-    function f:Show() self.shown = true end
+    function f:Show()
+        local was = self.shown
+        self.shown = true
+        if not was and self.scripts.OnShow then self.scripts.OnShow(self) end
+    end
     function f:Hide() self.shown = false end
+    function f:SetShown(on) if on then self:Show() else self:Hide() end end
     function f:IsShown() return self.shown end
+    function f:SetText(text) self._text = text end
+    function f:GetText() return self._text end
+    function f:SetPoint(point, relativeTo, relativePoint, x, y)
+        table.insert(self.points, { point, relativeTo, relativePoint, x or 0, y or 0 })
+    end
+    function f:ClearAllPoints() self.points = {} end
+    function f:CreateFontString() local fs = frame() fs.shown = true return fs end
+    function f:CreateTexture() local t = frame() t.shown = true return t end
     if name then _G[name] = f end
     return setmetatable(f, { __index = function() return function() end end })
 end
+wow.frame = frame
 
 local function fontString(text, color, shown)
     return {
@@ -66,15 +81,30 @@ function wow.reset(state)
     _G.GuildieData = nil
     _G.SlashCmdList = {}
     _G.UISpecialFrames = {}
+    _G.tinsert = table.insert
     _G.C_Timer = nil
     _G.WorldFrame = frame()
     _G.UIParent = frame()
     _G.Minimap = frame()
+    function _G.Minimap:GetWidth() return 140 end
     _G.GameTooltip = frame()
     _G.ItemRefTooltip = frame()
     _G.TooltipDataProcessor = nil
-    _G.CreateFrame = function(kind, name)
+    -- Templates: state.missingTemplates errors like a client without them;
+    -- PortraitFrameTemplate has its parts only with state.portrait (else
+    -- it's a bare frame, as a client might hand back).
+    _G.CreateFrame = function(kind, name, _, template)
+        if template and state.missingTemplates and state.missingTemplates[template] then
+            error("Couldn't find inherited node \"" .. template .. "\"")
+        end
         local f = kind == "GameTooltip" and scanTooltip(name) or frame(name)
+        f.template = template
+        if template == "PortraitFrameTemplate" and state.portrait then
+            f.NineSlice = frame()
+            f.PortraitContainer = frame()
+            f.PortraitContainer.portrait = frame()
+            function f:SetTitle(title) self.title = title end
+        end
         table.insert(wow.frames, f)
         return f
     end
@@ -140,11 +170,20 @@ function wow.reset(state)
     _G.C_TooltipInfo = nil
 end
 
+--- The addon's files in load order, from Guildie.toc.
+function wow.files()
+    local files = {}
+    for line in io.lines(ROOT .. "Guildie.toc") do
+        if line:match("%.lua$") then table.insert(files, line) end
+    end
+    return files
+end
+
 --- Loads the addon's files as the game would (same `ns` for each).
 function wow.load(state)
     wow.reset(state)
     local ns = {}
-    for _, file in ipairs({ "GuildieData.lua", "Capture.lua", "Guildie.lua", "UI.lua", "Upgrades.lua", "Tooltip.lua" }) do
+    for _, file in ipairs(wow.files()) do
         local chunk = assert(loadfile(ROOT .. file))
         chunk("Guildie", ns)
     end

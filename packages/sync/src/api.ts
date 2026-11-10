@@ -10,6 +10,8 @@ export type GuildData = {
 	guilds: string[];
 	reagents: Record<string, unknown>;
 	upgrades?: { members?: unknown[] };
+	/** Your own characters as Guildie shows them, for the addon's "not on Guildie yet" check (addon 0.6.0). */
+	characters?: Record<string, unknown>;
 };
 export type Pairing = { code: string; pollSecret: string; expiresInSeconds: number; connectUrl: string };
 export type PairingResult =

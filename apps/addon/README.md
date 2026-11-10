@@ -1,13 +1,13 @@
 # Guildie addon
 
 Saves your character as the game sees it for the Guildie desktop app
-(`apps/desktop`, or the older helper `apps/helper`) to upload to
+(`apps/desktop`) to upload to
 guildie.club, so the site shows it before Blizzard's profile catches up
 (which is only after you log out).
 
 Addons can't use the internet. The game writes the addon's data
 (`WTF/Account/<account>/SavedVariables/Guildie.lua`) when you log out or
-reload the UI, and the helper, running on the same computer, uploads it then.
+reload the UI, and the Guildie app, running on the same computer, uploads it then.
 
 - **Install:** install the Guildie desktop app (apps/desktop, from GitHub
   Releases); it installs this folder into WoW: Forever's `Interface/AddOns`
@@ -15,8 +15,17 @@ reload the UI, and the helper, running on the same computer, uploads it then.
   version in `Guildie.toc` whenever the addon changes, or players keep the old
   copy. (Copying the folder by hand works for development.)
 - **Minimap button** (drag it around the minimap) or `/guildie`: opens the
-  window: what's saved, whether it changed since your last upload, and
-  **Upload now**, which reloads the UI so it goes right away.
+  window (`UI.lua`): your character, whether Guildie is up to date with it
+  (below), what happens next, **Upload now** (reloads the UI so it goes
+  right away), the guild data for tooltips, and the options. The minimap
+  button's tooltip shows the same headline and the first few changes.
+- **"On Guildie"** (`Status.lua`, addon 0.6.0): compares what the game shows
+  now with what guildie.club shows for this character (`GuildieData.characters`,
+  which the app downloads) and lists what Guildie doesn't have yet:
+  "3 changes not on Guildie yet: Level 23 (Guildie has 22), New gear: …,
+  Tailoring 155 (Guildie has 150), 4 new Tailoring recipes", or "Up to date
+  with Guildie", with when Guildie last got data for it ("Last synced 5 min
+  ago, from the game"). The rules: docs/addon.md, "Up to date with Guildie".
 - **Upload while I'm AFK** (off by default, experimental): reloads the UI for
   you while you're flagged AFK and out of combat, if something changed, at most
   every 20 minutes. If the game doesn't allow addons to reload on their own, it
@@ -24,8 +33,8 @@ reload the UI, and the helper, running on the same computer, uploads it then.
 - **Tooltips:** hover a reagent to see guildmates whose known recipes use it
   ("Guildie might want this: …"), and a piece of gear to see who it might be
   an upgrade for ("Guildie: upgrade for Brisket (Feral), maybe Miller (at
-  24)"; `Upgrades.lua`, docs/addon.md). The helper downloads your guild's data
-  into `GuildieData.lua`; it loads at login and `/reload`.
+  24)"; `Upgrades.lua`, docs/addon.md). The Guildie app downloads your
+  guild's data into `GuildieData.lua`; it loads at login and `/reload`.
 - Interface version 16001 is WoW: Forever 1.60.1.
 
 ## What's saved, and when
@@ -71,7 +80,13 @@ TypeScript, written by `apps/web/scripts/gen-upgrade-vectors.ts`), reading a
 hovered item, and the tooltip line; given a `GuildieData.lua` and a JSON list
 of items, it prints the line for each. With a
 path it also writes a SavedVariables file like the game's, for trying the
-app and the site end to end. Tests live outside `Guildie/` so they don't ship.
+app and the site end to end. `luajit apps/addon/tests/status_test.lua` checks
+the "On Guildie" comparison and builds the window against the stub (each
+frame template, rows on one left edge); given a `GuildieData.lua` the app
+wrote and a character name in it, it plays that character a level, an item,
+5 skill and 4 recipes ahead (or exactly as Guildie has it, with `same`) and
+prints the window's lines. The stub loads the files in `Guildie.toc`'s order.
+Tests live outside `Guildie/` so they don't ship.
 
 ## Talents
 
@@ -80,6 +95,12 @@ Talents are read with `C_ClassTalents` / `C_Traits`, the way the
 Forever, and sent as TraitDefinition IDs: the same IDs as Blizzard's web API,
 which is how guildie.club places them in their trees. Confirmed in game: talent
 reading, and that the in-game GUID's number is Blizzard's character id.
+
+Not confirmed in game yet (0.6.0): the window's frame template
+(`PortraitFrameTemplate` with the logo in the portrait, else
+`BasicFrameTemplateWithInset`, else a dialog-box backdrop), the logo on its
+dark disc (`TempPortraitAlphaMask`), and how text measures and wraps there
+(the window sizes itself from `GetStringHeight`).
 
 Not confirmed in game yet (0.4.0): which of the gear, tooltip, profession and
 recipe APIs above Forever has (each read tries the modern API, then the

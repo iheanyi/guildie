@@ -167,7 +167,7 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 			const file = join(addon, "GuildieData.lua");
 			check(
 				"GuildieData.lua written",
-				existsSync(file) && readFileSync(file, "utf8").startsWith("-- Written by the Guildie helper"),
+				existsSync(file) && readFileSync(file, "utf8").startsWith("-- Written by the Guildie app"),
 			);
 			await page("window.guildieDesktop.signOut()");
 			const after = await page<{ connected: boolean }>("window.guildieDesktop.getState()");

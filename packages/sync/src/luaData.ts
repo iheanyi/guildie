@@ -37,7 +37,7 @@ export function toLua(value: unknown): string {
 
 /** The whole file. Strings come out as UTF-8 bytes, one char each: write it as latin1 so each byte lands as-is. */
 export function guildDataFile(data: unknown) {
-	return `-- Written by the Guildie helper from guildie.club; replaced on every refresh. Don't edit.\nGuildieData = ${toLua(data)}\n`;
+	return `-- Written by the Guildie app from guildie.club; replaced on every refresh. Don't edit.\nGuildieData = ${toLua(data)}\n`;
 }
 
 /** Writes GuildieData.lua into each addon folder, only where it changed. Returns the files written. */

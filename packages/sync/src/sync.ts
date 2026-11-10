@@ -102,6 +102,10 @@ export class SyncEngine {
 		if (body.accepted?.length) {
 			this.lastUpload = { at: Date.now(), characters: body.accepted };
 			this.events.onUpload?.(this.lastUpload);
+			// Download guild data again right after (this same tick): it carries
+			// what Guildie now shows for your characters, so the addon's window
+			// reads "up to date" at the next /reload instead of up to 15 min later.
+			this.lastGuildDataTry = 0;
 		}
 		const newlyUnmatched = (body.unmatched ?? []).filter((n) => !this.warnedUnmatched.has(n));
 		if (newlyUnmatched.length) {

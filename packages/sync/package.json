@@ -2,7 +2,7 @@
 	"name": "@guildie/sync",
 	"private": true,
 	"type": "module",
-	"description": "What the helper and the desktop app share: reading the addon's SavedVariables, uploading them, writing GuildieData.lua.",
+	"description": "What the desktop app uses: reading the addon's SavedVariables, uploading them, writing GuildieData.lua.",
 	"exports": {
 		".": "./src/index.ts"
 	},

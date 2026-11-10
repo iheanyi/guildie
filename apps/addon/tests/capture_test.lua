@@ -337,17 +337,6 @@ test("encoder: escapes, NaN, empty lists", function()
     eq(decoded.list[1].left, "a")
 end)
 
-test("window summary", function()
-    local state = lich()
-    local ns = wow.load(state)
-    wow.fire("PLAYER_ENTERING_WORLD")
-    state.trade = { profession = "Tailoring", lines = { { name = "Bolt of Linen Cloth", item = 2996 } } }
-    wow.fire("TRADE_SKILL_SHOW")
-    local text = ns.summary(ns.current())
-    assert(text:find("2 items worn", 1, true), text)
-    assert(text:find("Tailoring 120 (1 recipes)", 1, true), text)
-end)
-
 -- The end-to-end check's input: a SavedVariables file like the game's, for
 -- Lich with gear, professions and recipes (some the catalog knows, one it
 -- doesn't). Arguments: output path, level, game time, GUID.

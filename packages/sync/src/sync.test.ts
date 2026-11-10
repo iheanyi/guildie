@@ -86,8 +86,47 @@ test("uploads once per change, downloads guild data, writes GuildieData.lua", as
 	const later = new Date(Date.now() + 5_000);
 	utimesSync(file, later, later);
 	await engine.tick();
-	assert.equal(calls.length, 5);
+	assert.equal(calls.length, 6);
 	assert.ok(calls[4]?.body?.includes("Corwin"));
+});
+
+test("an accepted upload downloads guild data again at once; a refused one doesn't", async () => {
+	const { wow, file, addon } = fakeWow('{"version":1,"characters":[{"name":"Brenna"}]}');
+	let level = 22;
+	let accept = true;
+	const { api, calls } = fakeApi(({ path }) =>
+		path === "/api/helper/snapshot"
+			? { status: 200, body: accept ? { accepted: ["brenna-ironfoot"] } : { unmatched: ["Brenna"] } }
+			: { status: 200, body: { generatedAt: level, guilds: ["Dawn"], reagents: {}, characters: { Brenna: { level } } } },
+	);
+	const engine = new SyncEngine(api, wow, { log: () => {}, onUnauthorized: () => assert.fail("not expected") });
+	await engine.tick();
+	assert.equal(calls.length, 2);
+
+	// Leveled up and /reloaded: the upload, then fresh guild data in the same tick.
+	level = 23;
+	const rewrite = (name: string, seconds: number) => {
+		writeFileSync(file, `GuildieDB = { ["payload"] = "{\\"version\\":1,\\"characters\\":[{\\"name\\":\\"${name}\\"}]}" }`);
+		const later = new Date(Date.now() + seconds * 1000);
+		utimesSync(file, later, later);
+	};
+	rewrite("Brenna2", 5);
+	await engine.tick();
+	assert.deepEqual(
+		calls.slice(2).map((c) => c.path),
+		["/api/helper/snapshot", "/api/helper/guild-data"],
+	);
+	assert.deepEqual(JSON.parse(calls[2]?.body ?? ""), { version: 1, characters: [{ name: "Brenna2" }] });
+	assert.ok(readFileSync(join(addon, "GuildieData.lua"), "utf8").includes('["Brenna"]={["level"]=23}'));
+
+	// Nothing accepted (not claimed): no extra download.
+	accept = false;
+	rewrite("Brenna3", 10);
+	await engine.tick();
+	assert.deepEqual(
+		calls.slice(4).map((c) => c.path),
+		["/api/helper/snapshot"],
+	);
 });
 
 test("a 401 disconnects", async () => {
