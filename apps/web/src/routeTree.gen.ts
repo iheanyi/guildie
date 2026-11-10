@@ -27,6 +27,8 @@ import { Route as ApiHelperSnapshotRouteImport } from './routes/api/helper/snaps
 import { Route as CRegionSlugRouteImport } from './routes/c/$region/$slug'
 import { Route as GRegionSlugRouteImport } from './routes/g/$region/$slug'
 import { Route as ApiHelperPairPollRouteImport } from './routes/api/helper/pair/poll'
+import { Route as CRegionSlugIndexRouteImport } from './routes/c/$region/$slug/index'
+import { Route as GRegionSlugIndexRouteImport } from './routes/g/$region/$slug/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,6 +120,16 @@ const ApiHelperPairPollRoute = ApiHelperPairPollRouteImport.update({
   path: '/poll',
   getParentRoute: () => ApiHelperPairRoute,
 } as any)
+const CRegionSlugIndexRoute = CRegionSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CRegionSlugRoute,
+} as any)
+const GRegionSlugIndexRoute = GRegionSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GRegionSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -135,9 +147,11 @@ export interface FileRoutesByFullPath {
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
   '/api/helper/signout': typeof ApiHelperSignoutRoute
   '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
-  '/c/$region/$slug': typeof CRegionSlugRoute
-  '/g/$region/$slug': typeof GRegionSlugRoute
+  '/c/$region/$slug': typeof CRegionSlugRouteWithChildren
+  '/g/$region/$slug': typeof GRegionSlugRouteWithChildren
   '/api/helper/pair/poll': typeof ApiHelperPairPollRoute
+  '/c/$region/$slug/': typeof CRegionSlugIndexRoute
+  '/g/$region/$slug/': typeof GRegionSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,9 +169,9 @@ export interface FileRoutesByTo {
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
   '/api/helper/signout': typeof ApiHelperSignoutRoute
   '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
-  '/c/$region/$slug': typeof CRegionSlugRoute
-  '/g/$region/$slug': typeof GRegionSlugRoute
   '/api/helper/pair/poll': typeof ApiHelperPairPollRoute
+  '/c/$region/$slug': typeof CRegionSlugIndexRoute
+  '/g/$region/$slug': typeof GRegionSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,9 +190,11 @@ export interface FileRoutesById {
   '/api/helper/pair': typeof ApiHelperPairRouteWithChildren
   '/api/helper/signout': typeof ApiHelperSignoutRoute
   '/api/helper/snapshot': typeof ApiHelperSnapshotRoute
-  '/c/$region/$slug': typeof CRegionSlugRoute
-  '/g/$region/$slug': typeof GRegionSlugRoute
+  '/c/$region/$slug': typeof CRegionSlugRouteWithChildren
+  '/g/$region/$slug': typeof GRegionSlugRouteWithChildren
   '/api/helper/pair/poll': typeof ApiHelperPairPollRoute
+  '/c/$region/$slug/': typeof CRegionSlugIndexRoute
+  '/g/$region/$slug/': typeof GRegionSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +217,8 @@ export interface FileRouteTypes {
     | '/c/$region/$slug'
     | '/g/$region/$slug'
     | '/api/helper/pair/poll'
+    | '/c/$region/$slug/'
+    | '/g/$region/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -218,9 +236,9 @@ export interface FileRouteTypes {
     | '/api/helper/pair'
     | '/api/helper/signout'
     | '/api/helper/snapshot'
+    | '/api/helper/pair/poll'
     | '/c/$region/$slug'
     | '/g/$region/$slug'
-    | '/api/helper/pair/poll'
   id:
     | '__root__'
     | '/'
@@ -241,6 +259,8 @@ export interface FileRouteTypes {
     | '/c/$region/$slug'
     | '/g/$region/$slug'
     | '/api/helper/pair/poll'
+    | '/c/$region/$slug/'
+    | '/g/$region/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -259,8 +279,8 @@ export interface RootRouteChildren {
   ApiHelperPairRoute: typeof ApiHelperPairRouteWithChildren
   ApiHelperSignoutRoute: typeof ApiHelperSignoutRoute
   ApiHelperSnapshotRoute: typeof ApiHelperSnapshotRoute
-  CRegionSlugRoute: typeof CRegionSlugRoute
-  GRegionSlugRoute: typeof GRegionSlugRoute
+  CRegionSlugRoute: typeof CRegionSlugRouteWithChildren
+  GRegionSlugRoute: typeof GRegionSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -391,6 +411,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHelperPairPollRouteImport
       parentRoute: typeof ApiHelperPairRoute
     }
+    '/c/$region/$slug/': {
+      id: '/c/$region/$slug/'
+      path: '/'
+      fullPath: '/c/$region/$slug/'
+      preLoaderRoute: typeof CRegionSlugIndexRouteImport
+      parentRoute: typeof CRegionSlugRoute
+    }
+    '/g/$region/$slug/': {
+      id: '/g/$region/$slug/'
+      path: '/'
+      fullPath: '/g/$region/$slug/'
+      preLoaderRoute: typeof GRegionSlugIndexRouteImport
+      parentRoute: typeof GRegionSlugRoute
+    }
   }
 }
 
@@ -404,6 +438,30 @@ const ApiHelperPairRouteChildren: ApiHelperPairRouteChildren = {
 
 const ApiHelperPairRouteWithChildren = ApiHelperPairRoute._addFileChildren(
   ApiHelperPairRouteChildren,
+)
+
+interface CRegionSlugRouteChildren {
+  CRegionSlugIndexRoute: typeof CRegionSlugIndexRoute
+}
+
+const CRegionSlugRouteChildren: CRegionSlugRouteChildren = {
+  CRegionSlugIndexRoute: CRegionSlugIndexRoute,
+}
+
+const CRegionSlugRouteWithChildren = CRegionSlugRoute._addFileChildren(
+  CRegionSlugRouteChildren,
+)
+
+interface GRegionSlugRouteChildren {
+  GRegionSlugIndexRoute: typeof GRegionSlugIndexRoute
+}
+
+const GRegionSlugRouteChildren: GRegionSlugRouteChildren = {
+  GRegionSlugIndexRoute: GRegionSlugIndexRoute,
+}
+
+const GRegionSlugRouteWithChildren = GRegionSlugRoute._addFileChildren(
+  GRegionSlugRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
@@ -422,8 +480,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHelperPairRoute: ApiHelperPairRouteWithChildren,
   ApiHelperSignoutRoute: ApiHelperSignoutRoute,
   ApiHelperSnapshotRoute: ApiHelperSnapshotRoute,
-  CRegionSlugRoute: CRegionSlugRoute,
-  GRegionSlugRoute: GRegionSlugRoute,
+  CRegionSlugRoute: CRegionSlugRouteWithChildren,
+  GRegionSlugRoute: GRegionSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

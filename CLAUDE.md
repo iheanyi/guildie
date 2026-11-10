@@ -24,26 +24,19 @@ Monorepo (pnpm workspaces):
   imported by both sides. Forever is realmless: characters are `{name}-{surname}`.
 - Pages: route `loader` + `ensureQueryData(convexQuery(...))`, components read
   with `useSuspenseQuery`. Writes: `useMutation` from `apps/web/convex/react`.
-- Design: looks like the game's own UI, dark only, and stays a dense data
-  tool. Tokens and classes live in `apps/web/src/styles/app.css`; restyle
-  shadcn primitives there or through their classes, not by forking behavior.
-  - Surfaces: stone page (`--background` + `--grain`), each page inside one
-    `.frame` (bronze bevel, riveted corners; narrow pages with a `max-w-*`
-    root get a centered, fitted window). `.inset` wells for lists and tables
-    inside it; `.section-head` for a heading with a figure on the right.
-    `.parchment` (flips tokens to ink) only for mostly-reading pages (/data).
-  - Text: `--foreground` warm off-white, `--muted-foreground` for secondary,
-    `--gold` (#ffd100, the game's label gold) for column heads, links and
-    button text, `--heading` for h1-h3. Color with meaning comes from class
-    and item-quality colors (`ClassText`, `.q-*`, `.item-row`), never the UI.
-  - Controls: `Button` default = red panel button (`.btn-red`), outline/
-    secondary = dark bronze (`.btn-dark`). `Switch` is drawn as the game's
-    checkbox. Tooltips and menus use `.wow-tooltip` (navy-black, silver edge).
-    Toggle filters use `.chip` with `data-active`.
-  - Type: Marcellus (headings, buttons; a free stand-in for the game's
-    Friz Quadrata, one weight only, never bold) and Source Sans 3 (text,
-    tables); tabular numbers with `.num`.
-  - No eyebrow labels, emoji, decorative badges or fluff cards. Gradients
-    only where the game uses them for material (button bevels, parchment).
-  - Desktop app: `<html data-desktop="true">` makes `.site-header` a 40px
-    drag region clear of the window buttons; `--titlebar` is its color.
+- Design: minimal, dark only, an app rather than a website (the same React
+  app runs on the web and in the Windows app). Tokens live in
+  `apps/web/src/styles/app.css`; restyle shadcn primitives there.
+  - App shell: a left sidebar for navigation and one content pane that
+    scrolls by itself; the page never scrolls as a whole. Phones get a top
+    bar instead of the sidebar. In the desktop app (`html[data-desktop]`)
+    the sidebar and title bar sit on the window's own translucent material.
+  - Color: neutral greys only (surfaces, hairline borders at ~8% white).
+    Color with meaning comes from class colors (`ClassText`), item quality
+    (`.q-*`) and in-game tooltip colors. No gradients, glows, emoji,
+    textures or decorative badges.
+  - Type: one sans family, 13-14px UI text, `.num` for tabular numbers.
+    Headings are weight, not size or color.
+  - Shapes: 6px radius, 1px borders, no shadows except popovers/tooltips.
+  - Game art is the decoration: item and talent icons (Blizzard render URLs)
+    and character renders. Item tooltips mimic the game's (`ItemTooltip`).
