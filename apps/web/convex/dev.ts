@@ -4,7 +4,8 @@ import { internalAction, internalMutation } from "./_generated/server";
 import { appToken, blizzardGet } from "./blizzard";
 import { sha256 } from "./claims";
 import { isLocalBackend } from "./origins";
-import { vRegion } from "./schema";
+import { forgetAddonBundle } from "./addon";
+import { vRegion, vVisibility } from "./schema";
 import { CLASSES, FLAVORS, guildSlug, SLOT_ORDER } from "./shared/wow";
 
 // Dev helpers.
@@ -209,5 +210,25 @@ export const helperTest = internalMutation({
 		const token = `gld_${btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
 		await ctx.db.insert("helperTokens", { userId, tokenHash: await sha256(token), label: "dev test", createdAt: Date.now() });
 		return { token, blizzardId: character.blizzardId, talentTrees: character.talentTrees };
+	},
+});
+
+/**
+ * Local backends only: set a guild's visibility without its owner, e.g. to
+ * check that members-only guilds stay out of the addon bundle.
+ *   npx convex run dev:setVisibility '{"region": "eu", "slug": "unbound", "visibility": "members"}'
+ */
+export const setVisibility = internalMutation({
+	args: { region: vRegion, slug: v.string(), visibility: vVisibility },
+	handler: async (ctx, { region, slug, visibility }) => {
+		if (!isLocalBackend()) throw new ConvexError("Local backends only");
+		const guild = await ctx.db
+			.query("guilds")
+			.withIndex("by_key", (q) => q.eq("flavor", "forever").eq("region", region).eq("slug", slug))
+			.unique();
+		if (!guild) throw new ConvexError("No such guild");
+		await ctx.db.patch(guild._id, { visibility });
+		await forgetAddonBundle(ctx);
+		return visibility;
 	},
 });

@@ -1,7 +1,7 @@
 -- guildie: saves this character's current talents (and level) so the Guildie
--- desktop helper can upload them to guildie.club. Addons can't use the
--- internet; the game writes GuildieDB to disk on /reload and on logout, and the
--- helper watches that file. Source: https://github.com/natedunn/guildie
+-- app can upload them to guildie.club. Addons can't use the internet; the game
+-- writes GuildieDB to disk on /reload and on logout, and the app watches that
+-- file. Source: https://github.com/natedunn/guildie
 --
 -- Talents are read the way the WowSims exporter reads WoW: Forever's (MIT,
 -- https://github.com/wowsims/exporter): C_ClassTalents / C_Traits. Each talent
@@ -110,14 +110,14 @@ local function capture(reason)
         -- Keep the last good read if talents can't be read right now.
         talents = (ok and talents) or (previous and previous.talents) or {},
     }
-    -- What the helper uploads, as-is: { version, characters = [ ... ] }.
+    -- What the Guildie app uploads, as-is: { version, characters = [ ... ] }.
     local list = {}
     for _, character in pairs(GuildieDB.characters) do table.insert(list, character) end
     GuildieDB.version = VERSION
     GuildieDB.payload = encode({ version = VERSION, characters = list })
     GuildieDB.lastReason = reason
     -- The game wrote GuildieDB to disk when this session's UI loaded; anything
-    -- different since then reaches the helper only at the next /reload or logout.
+    -- different since then reaches the app only at the next /reload or logout.
     local now = fingerprint(GuildieDB.characters[guid])
     ns.loadedFingerprint = ns.loadedFingerprint or now
     ns.dirty = now ~= ns.loadedFingerprint
@@ -156,7 +156,14 @@ frame:SetScript("OnEvent", function(_, event)
 end)
 
 SLASH_GUILDIE1 = "/guildie"
-SlashCmdList.GUILDIE = function()
+SlashCmdList.GUILDIE = function(args)
     capture("slash")
+    if (args or ""):lower():match("^%s*sync") then
+        -- Debugging guild sync: show its status line, and announce now.
+        ns.showSyncStatus = true
+        if ns.sync then ns.sync.announce() end
+        if ns.showWindow then ns.showWindow() end
+        return
+    end
     if ns.toggleWindow then ns.toggleWindow() end
 end

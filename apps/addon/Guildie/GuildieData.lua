@@ -1,3 +1,4 @@
--- Written by the Guildie helper from guildie.club; replaced on every refresh. Don't edit.
--- Empty until the helper downloads your guild's data (it loads at login and /reload).
+-- Written by the Guildie app from guildie.club: your guilds' latest data,
+-- members-only guilds included. Empty unless the app is installed. The game
+-- loads it at login and /reload.
 GuildieData = nil

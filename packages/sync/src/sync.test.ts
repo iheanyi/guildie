@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -21,14 +21,14 @@ function fakeWow(payload = '{"version":1,"characters":[]}') {
 	return { wow, file, addon };
 }
 
-type Call = { path: string; method: string; auth?: string; body?: string };
+type Call = { path: string; search?: string; method: string; auth?: string; body?: string };
 
 /** An Api whose requests are answered by `answer` and recorded in `calls`. */
 function fakeApi(answer: (call: Call) => { status: number; body: unknown }) {
 	const calls: Call[] = [];
 	const api = new Api("https://guildie.test", "gld_abcdefghijklmnopqrstuvwxyz012345", async (url, init) => {
 		const headers = init.headers as Record<string, string>;
-		const call = { path: new URL(url).pathname, method: init.method ?? "GET", auth: headers.Authorization, body: init.body as string | undefined };
+		const call = { path: new URL(url).pathname, search: new URL(url).search, method: init.method ?? "GET", auth: headers.Authorization, body: init.body as string | undefined };
 		calls.push(call);
 		const { status, body } = answer(call);
 		return new Response(JSON.stringify(body), { status });
@@ -49,7 +49,10 @@ test("uploads once per change, downloads guild data, writes GuildieData.lua", as
 	const { api, calls } = fakeApi(({ path }) =>
 		path === "/api/helper/snapshot"
 			? { status: 200, body: { accepted: ["brenna-ironfoot"], unmatched: ["Alt"] } }
-			: { status: 200, body: { generatedAt: 1, guilds: ["Dawn"], reagents: {} } },
+			: {
+					status: 200,
+					body: { version: 2, generatedAt: 1, guilds: { "us/dawn": { name: "Dawn", region: "us", slug: "dawn", generatedAt: 1, reagents: {} } } },
+				},
 	);
 	const uploads: string[][] = [];
 	const unmatched: string[][] = [];
@@ -68,7 +71,8 @@ test("uploads once per change, downloads guild data, writes GuildieData.lua", as
 	assert.deepEqual(JSON.parse(calls[0]?.body ?? ""), { version: 1, characters: [{ name: "Brenna" }] });
 	assert.deepEqual(uploads, [["brenna-ironfoot"]]);
 	assert.deepEqual(unmatched, [["Alt"]]);
-	assert.ok(readFileSync(join(addon, "GuildieData.lua"), "utf8").includes('["guilds"]={"Dawn"}'));
+	assert.equal(calls[1]?.search, "?v=2");
+	assert.ok(readFileSync(join(addon, "GuildieData.lua"), "utf8").includes('["guilds"]={["us/dawn"]={["name"]="Dawn"'));
 	assert.ok(engine.guildDataAt);
 
 	// Nothing changed: nothing to do.
@@ -113,4 +117,20 @@ test("token shape and display names", () => {
 	assert.ok(!isTokenShaped("gld_abcdefghijklmnop qrstuvwxyz012345"));
 	assert.ok(!isTokenShaped(42));
 	assert.equal(displayName("brenna-ironfoot"), "Brenna");
+});
+
+test("puts GuildieData.lua back when an addon update removes it", async () => {
+	const { wow, addon } = fakeWow();
+	const { api, calls } = fakeApi(({ path }) =>
+		path === "/api/helper/snapshot" ? { status: 200, body: { accepted: [] } } : { status: 200, body: { version: 2, generatedAt: 1, guilds: {} } },
+	);
+	const engine = new SyncEngine(api, wow, { log: () => {}, onUnauthorized: () => assert.fail("not expected") });
+	await engine.tick();
+	const file = join(addon, "GuildieData.lua");
+	const content = readFileSync(file, "utf8");
+	rmSync(file);
+	(engine as unknown as { lastGuildDataCheck: number }).lastGuildDataCheck = 0;
+	await engine.tick();
+	assert.equal(readFileSync(file, "utf8"), content);
+	assert.equal(calls.filter((c) => c.path === "/api/helper/guild-data").length, 1, "rewritten from memory, not downloaded again");
 });
