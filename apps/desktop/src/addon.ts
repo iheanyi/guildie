@@ -193,3 +193,72 @@ export function ensureAddon(source: string, wow: string, log: Log, force = false
 		}
 	});
 }
+
+/** One WoW: Forever install's copy of the addon, for the app's Addon page. */
+export type AddonInstall = {
+	/** <wow>/_forever_ */
+	flavor: string;
+	/** <flavor>/Interface/AddOns/Guildie */
+	folder: string;
+	/** The installed version; undefined when not installed. */
+	version?: string;
+	/** A folder is there but its .toc has no readable version. */
+	broken?: boolean;
+};
+
+export function addonInstalls(wow: string): AddonInstall[] {
+	return foreverFlavors(wow).map((flavor) => {
+		const folder = join(flavor, "Interface", "AddOns", ADDON);
+		const present = existsSync(folder) && statSync(folder).isDirectory();
+		const version = present ? readAddonVersion(folder) : undefined;
+		return { flavor, folder, version, broken: present && !version ? true : undefined };
+	});
+}
+
+/**
+ * Removes the addon from every Forever flavor of a WoW folder: its folder
+ * (with the app's GuildieData.lua) and any install leftovers. With
+ * `savedData`, also the game's saved file for it (WTF/.../SavedVariables/
+ * Guildie.lua and .bak, per account and per character). Never touches
+ * anything else. Returns what it removed.
+ */
+export function uninstallAddon(wow: string, options: { savedData: boolean }, log: Log): string[] {
+	const removed: string[] = [];
+	const remove = (path: string) => {
+		if (!existsSync(path)) return;
+		rmSync(path, { recursive: true, force: true });
+		removed.push(path);
+		log(`Addon: removed ${path}`);
+	};
+	for (const flavor of foreverFlavors(wow)) {
+		const addOns = join(flavor, "Interface", "AddOns");
+		for (const name of [ADDON, STAGING, OLD]) remove(join(addOns, name));
+		if (!options.savedData) continue;
+		const accounts = join(flavor, "WTF", "Account");
+		for (const account of safeList(accounts)) {
+			const accountDir = join(accounts, account);
+			removeSaved(join(accountDir, "SavedVariables"), remove);
+			// Per character: Account/<account>/<realm>/<character>/SavedVariables.
+			for (const realm of safeList(accountDir)) {
+				for (const character of safeList(join(accountDir, realm))) {
+					removeSaved(join(accountDir, realm, character, "SavedVariables"), remove);
+				}
+			}
+		}
+	}
+	return removed;
+}
+
+function removeSaved(folder: string, remove: (path: string) => void) {
+	for (const file of [`${ADDON}.lua`, `${ADDON}.lua.bak`]) remove(join(folder, file));
+}
+
+function safeList(folder: string): string[] {
+	try {
+		return readdirSync(folder, { withFileTypes: true })
+			.filter((d) => d.isDirectory())
+			.map((d) => d.name);
+	} catch {
+		return [];
+	}
+}

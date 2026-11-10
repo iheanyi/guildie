@@ -10,6 +10,8 @@
 //     signIn(): Promise<void>,                    // sign in via the browser (see connection.ts pair)
 //     getStatus(): Promise<Status>,               // sync status, see connection.ts
 //     onStatus(cb): () => void,                   // ...and its changes
+//     addon: { info, install, uninstall({ savedData }), openFolder },  // the Addon page
+//     chooseWowFolder(), uploadNow(), restartToUpdate(),
 //   }
 
 import { contextBridge, ipcRenderer } from "electron";
@@ -26,6 +28,15 @@ if (isGuildieUrl(location.href)) {
 		signOut: () => ipcRenderer.invoke("guildie:sign-out"),
 		signIn: () => ipcRenderer.invoke("guildie:sign-in"),
 		getStatus: () => ipcRenderer.invoke("guildie:get-status"),
+		addon: {
+			info: () => ipcRenderer.invoke("guildie:addon-info"),
+			install: () => ipcRenderer.invoke("guildie:addon-install"),
+			uninstall: (options?: unknown) => ipcRenderer.invoke("guildie:addon-uninstall", options),
+			openFolder: () => ipcRenderer.invoke("guildie:addon-open-folder"),
+		},
+		chooseWowFolder: () => ipcRenderer.invoke("guildie:choose-wow"),
+		uploadNow: () => ipcRenderer.invoke("guildie:upload-now"),
+		restartToUpdate: () => ipcRenderer.invoke("guildie:restart-to-update"),
 		onStatus: (callback: unknown) => {
 			if (typeof callback !== "function") throw new TypeError("onStatus needs a function");
 			// The page gets the status only, never Electron's event object.

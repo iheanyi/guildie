@@ -120,6 +120,15 @@ export const get = query({
 				professions: c.professions,
 				talentTrees: talents[i].talentTrees?.map(({ id, name, points }) => ({ id, name, points })),
 				talentSource: talents[i].source,
+				// When this character's data was last current, and from where: an
+				// in-game sync by the Guildie app when that's newer, else Blizzard
+				// (their profile as of their last logout; checked at profileSyncedAt).
+				synced:
+					talents[i].source.kind === "addon"
+						? { kind: "app" as const, at: talents[i].source.at }
+						: c.lastLoginAt
+							? { kind: "blizzard" as const, at: c.lastLoginAt, checkedAt: c.profileSyncedAt }
+							: undefined,
 				avatarUrl: c.avatarUrl,
 				profileMissing: c.profileMissing,
 				claimed: claimed[i] !== null,

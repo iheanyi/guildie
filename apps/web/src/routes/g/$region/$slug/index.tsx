@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { CLASSES, className, raceName, type Region } from "@convex/shared/wow";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowDown01Icon, ArrowUp01Icon, CheckmarkBadge01Icon } from "@hugeicons/core-free-icons";
+import { ArrowDown01Icon, ArrowUp01Icon, CheckmarkBadge01Icon, GameController03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
@@ -65,7 +65,7 @@ function Roster({ members }: { members: Member[] }) {
 				case "ilvl":
 					return m.averageItemLevel ?? -1;
 				case "seen":
-					return m.lastLoginAt ?? 0;
+					return m.synced?.at ?? 0;
 			}
 		};
 		return filtered.sort((a, b) => {
@@ -149,7 +149,7 @@ function Roster({ members }: { members: Member[] }) {
 						{header("rank", "Rank")}
 						<TableHead className="max-2xl:hidden">Professions</TableHead>
 						{header("ilvl", "Item level", "right")}
-						{header("seen", "Last seen", "right", "max-md:hidden")}
+						{header("seen", "Last synced", "right", "max-md:hidden")}
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -209,16 +209,52 @@ function Roster({ members }: { members: Member[] }) {
 										: ""}
 							</TableCell>
 							<TableCell className="num text-right">{m.averageItemLevel ?? ""}</TableCell>
-							<TableCell className="num text-right text-muted-foreground max-md:hidden">{ago(m.lastLoginAt) ?? ""}</TableCell>
+							<TableCell className="num text-right text-muted-foreground max-md:hidden">
+								<LastSynced synced={m.synced} />
+							</TableCell>
 						</TableRow>
 					))}
 				</TableBody>
 			</Table>
 			{rows.length === 0 && <p className="py-6 text-center text-muted-foreground">Nobody matches.</p>}
 			<p className="mt-4 text-xs text-muted-foreground">
-				Talents, professions, gear and last seen fill in once a character is level 10 and has logged out.
+				Talents, professions, gear and last synced fill in once a character is level 10 and has logged out.
 				Blizzard's API doesn't say who's online right now.
 			</p>
 		</section>
+	);
+}
+
+type Synced = { kind: "app"; at?: number } | { kind: "blizzard"; at: number; checkedAt?: number } | undefined;
+
+const fullTime = (at: number) =>
+	new Date(at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+/**
+ * How current a character's data is. A small controller icon when it came
+ * from the game itself (the player's Guildie app synced it); otherwise
+ * Blizzard's, as of their last logout. Hover says which.
+ */
+function LastSynced({ synced }: { synced: Synced }) {
+	if (!synced?.at) return null;
+	return (
+		<Tooltip>
+			<TooltipTrigger render={<span className="inline-flex items-center justify-end gap-1.5" />}>
+				{synced.kind === "app" && (
+					<HugeiconsIcon icon={GameController03Icon} size={14} strokeWidth={1.75} className="text-foreground/80" aria-label="Synced in game" />
+				)}
+				{ago(synced.at)}
+			</TooltipTrigger>
+			<TooltipContent side="left">
+				{synced.kind === "app" ? (
+					<>Synced from the game with the Guildie app, {fullTime(synced.at)}</>
+				) : (
+					<>
+						From Blizzard, as of their last logout ({fullTime(synced.at)})
+						{synced.checkedAt ? `. Checked ${ago(synced.checkedAt)}.` : ""}
+					</>
+				)}
+			</TooltipContent>
+		</Tooltip>
 	);
 }

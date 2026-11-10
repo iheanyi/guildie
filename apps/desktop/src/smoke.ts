@@ -67,7 +67,7 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		check("bridge exposed on the site", security.bridge === "object" && security.isDesktop === "true", security);
 		check(
 			"bridge has exactly the agreed functions",
-			security.keys === "getState,getStatus,isDesktop,onStatus,setToken,signIn,signOut,version",
+			security.keys === "addon,chooseWowFolder,getState,getStatus,isDesktop,onStatus,restartToUpdate,setToken,signIn,signOut,uploadNow,version",
 			security.keys,
 		);
 		check('html[data-desktop="true"]', security.dataset === "true");
@@ -130,6 +130,26 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		const status = await page<{ wowFolder?: string; addonVersion?: string }>("window.guildieDesktop.getStatus()");
 		check("getStatus() has the WoW folder", status.wowFolder === wow, status);
 		check("getStatus() has the addon version", status.addonVersion === shipped, status.addonVersion);
+
+		// The Addon page's calls: what's installed, uninstall (and that it stays
+		// uninstalled), install again. Saved data goes only when asked.
+		type Info = { bundled?: string; managed: boolean; installs: { version?: string }[] };
+		const info = await page<Info>("window.guildieDesktop.addon.info()");
+		check("addon.info() shows the installed version", info.installs[0]?.version === shipped && info.bundled === shipped, info);
+		const saved = join(wow, "_forever_", "WTF", "Account", "SMOKE", "SavedVariables", "Guildie.lua");
+		const after = await page<Info>("window.guildieDesktop.addon.uninstall({ savedData: false })");
+		check(
+			"addon.uninstall() removes the addon, keeps saved data, and stays uninstalled",
+			!existsSync(addon) && existsSync(saved) && after.managed === false && !after.installs[0]?.version,
+			after,
+		);
+		connection.setWowFolder(wow); // what a start or a folder change does: must not reinstall
+		check("an uninstalled addon isn't put back by itself", !existsSync(addon));
+		const back = await page<Info>("window.guildieDesktop.addon.install()");
+		check("addon.install() puts it back", back.installs[0]?.version === shipped && back.managed === true, back);
+		await page("window.guildieDesktop.addon.uninstall({ savedData: true })");
+		check("uninstall with saved data removes Guildie's saved file too", !existsSync(addon) && !existsSync(saved));
+		await page("window.guildieDesktop.addon.install()");
 
 		const token = process.env.GUILDIE_SMOKE_TOKEN;
 		if (token) {

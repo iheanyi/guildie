@@ -12,6 +12,8 @@ export type TrayActions = {
 	chooseWow: () => void;
 	/** Install the addon, or put a fresh copy over the installed one. */
 	reinstallAddon: () => void;
+	/** Open the window's Addon page. */
+	manageAddon: () => void;
 	/** Quit and install the downloaded app update. */
 	restartToUpdate: () => void;
 	startWithSystem: { get: () => boolean; set: (on: boolean) => void } | undefined;
@@ -57,7 +59,7 @@ export function createTray(actions: TrayActions) {
 				{ label: "Sign in...", visible: !status.connected && !status.pairingCode, click: actions.connect },
 				{ label: "Upload now", enabled: status.connected, click: actions.uploadNow },
 				{ label: "Choose World of Warcraft folder...", click: actions.chooseWow },
-				{ label: "Reinstall addon", visible: !!status.addonVersion, click: actions.reinstallAddon },
+				{ label: "Manage addon...", click: actions.manageAddon },
 				...(actions.startWithSystem
 					? [
 							{

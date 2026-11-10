@@ -15,6 +15,8 @@ type Stored = {
 	bounds?: Bounds;
 	/** The "still running in the tray" notice was shown once. */
 	trayNoticeShown?: boolean;
+	/** False after the player uninstalls the addon: don't put it back until they install it again. */
+	addonManaged?: boolean;
 };
 
 const file = () => join(app.getPath("userData"), "settings.json");
@@ -53,6 +55,13 @@ export const settings = {
 	},
 	set bounds(bounds: Bounds | undefined) {
 		load().bounds = bounds;
+		save();
+	},
+	get addonManaged() {
+		return load().addonManaged !== false;
+	},
+	set addonManaged(on: boolean) {
+		load().addonManaged = on ? undefined : false;
 		save();
 	},
 	get trayNoticeShown() {

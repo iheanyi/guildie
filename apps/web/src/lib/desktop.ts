@@ -22,6 +22,30 @@ export type GuildieDesktop = {
 	/** Sync status, and its changes (app 0.2+). */
 	getStatus?(): Promise<DesktopStatus>;
 	onStatus?(callback: (status: DesktopStatus) => void): () => void;
+	/** The Addon page (app 0.3.1+). */
+	addon?: {
+		info(): Promise<AddonInfo>;
+		install(): Promise<AddonInfo>;
+		uninstall(options: { savedData: boolean }): Promise<AddonInfo>;
+		openFolder(): Promise<void>;
+	};
+	chooseWowFolder?(): Promise<AddonInfo>;
+	uploadNow?(): Promise<void>;
+	restartToUpdate?(): Promise<void>;
+};
+
+export type AddonInfo = {
+	appVersion: string;
+	/** The addon version this app installs. */
+	bundled?: string;
+	wowFolder?: string;
+	/** The WoW folder has a _forever_ folder (where the addon goes). */
+	hasForever: boolean;
+	/** False after the player uninstalled it: the app won't put it back by itself. */
+	managed: boolean;
+	installs: { flavor: string; folder: string; version?: string; broken?: boolean }[];
+	/** An app update is downloaded, waiting for a restart. */
+	updateReady?: string;
 };
 
 export type DesktopStatus = {
@@ -31,6 +55,10 @@ export type DesktopStatus = {
 	guildDataAt?: number;
 	/** While signing in: the code the browser's Connect page should show. */
 	pairingCode?: string;
+	/** Character slugs ("todd-bonzalez"), as uploaded. */
+	lastUpload?: { at: number; characters: string[] };
+	addonVersion?: string;
+	updateReady?: string;
 };
 
 declare global {

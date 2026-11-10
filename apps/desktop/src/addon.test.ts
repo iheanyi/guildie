@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFil
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { compareVersions, DATA_FILE, decideAddonAction, ensureAddon, readAddonVersion, replaceAddon, tocVersion } from "./addon.ts";
+import { addonInstalls, compareVersions, DATA_FILE, decideAddonAction, ensureAddon, readAddonVersion, replaceAddon, tocVersion, uninstallAddon } from "./addon.ts";
 
 const quiet = () => {};
 const temp = () => mkdtempSync(join(tmpdir(), "guildie-addon-test-"));
@@ -101,4 +101,34 @@ test("a crash between the folder swaps is recovered on the next run", () => {
 	assert.equal(readAddonVersion(join(addOns, "Guildie")), "0.3.1");
 	assert.equal(readFileSync(join(addOns, "Guildie", DATA_FILE), "utf8"), "GuildieData = { kept = true }\n");
 	assert.ok(!existsSync(join(addOns, "Guildie", "half.lua")));
+});
+
+test("uninstall removes the addon (and, if asked, only its saved files)", () => {
+	const root = wow("_forever_", "_classic_");
+	ensureAddon(source("0.3.1"), root, quiet);
+	const forever = join(root, "_forever_");
+	const sv = (...parts: string[]) => join(forever, "WTF", "Account", "ACCT", ...parts);
+	mkdirSync(sv("SavedVariables"), { recursive: true });
+	mkdirSync(sv("Realm", "Todd", "SavedVariables"), { recursive: true });
+	writeFileSync(sv("SavedVariables", "Guildie.lua"), "GuildieDB = {}");
+	writeFileSync(sv("SavedVariables", "Guildie.lua.bak"), "GuildieDB = {}");
+	writeFileSync(sv("SavedVariables", "Other.lua"), "Other = {}");
+	writeFileSync(sv("Realm", "Todd", "SavedVariables", "Guildie.lua"), "x");
+	mkdirSync(join(forever, "Interface", "AddOns", "OtherAddon"), { recursive: true });
+	assert.equal(addonInstalls(root)[0]?.version, "0.3.1");
+
+	// Without saved data: only the addon folder goes.
+	uninstallAddon(root, { savedData: false }, quiet);
+	assert.equal(addonInstalls(root)[0]?.version, undefined);
+	assert.ok(existsSync(sv("SavedVariables", "Guildie.lua")));
+
+	// With saved data: Guildie's saved files go too, nothing else.
+	ensureAddon(source("0.3.1"), root, quiet);
+	uninstallAddon(root, { savedData: true }, quiet);
+	assert.ok(!existsSync(join(forever, "Interface", "AddOns", "Guildie")));
+	assert.ok(!existsSync(sv("SavedVariables", "Guildie.lua")));
+	assert.ok(!existsSync(sv("SavedVariables", "Guildie.lua.bak")));
+	assert.ok(!existsSync(sv("Realm", "Todd", "SavedVariables", "Guildie.lua")));
+	assert.ok(existsSync(sv("SavedVariables", "Other.lua")));
+	assert.ok(existsSync(join(forever, "Interface", "AddOns", "OtherAddon")));
 });

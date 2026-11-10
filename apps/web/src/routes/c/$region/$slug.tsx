@@ -22,7 +22,9 @@ function CharacterLayout() {
 	const data = useCharacter();
 	if (!data) return null;
 	const { character: c, guild } = data;
-	const seen = ago(c.lastLoginAt);
+	// Last synced: an in-game sync by the Guildie app when newer, else Blizzard's last logout.
+	const synced = data.talentSource.kind === "addon" && data.talentSource.at ? data.talentSource.at : c.lastLoginAt;
+	const seen = ago(synced);
 	return (
 		<div className="w-full max-w-5xl py-5">
 			<header className="flex items-center gap-3">
@@ -49,7 +51,7 @@ function CharacterLayout() {
 							{guild.name}
 						</Link>
 						{`, ${rankLabel(c.rank)}`}
-						{seen && ` · last seen ${seen}`}
+						{seen && ` · last synced ${seen}`}
 					</p>
 				</div>
 				{c.averageItemLevel !== undefined && (

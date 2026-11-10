@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { configDir, DEFAULT_API, loadConfig, makeLogger } from "@guildie/sync";
 import { app, BrowserWindow, dialog, type IpcMainInvokeEvent, ipcMain, Notification, session, shell } from "electron";
-import { type AddonResult, ensureAddon, foreverFlavors, readAddonVersion } from "./addon.ts";
+import { type AddonResult, addonInstalls, ensureAddon, foreverFlavors, readAddonVersion, uninstallAddon } from "./addon.ts";
 import { Connection, type Status } from "./connection.ts";
 import { allowsSelfSigned, isGuildieUrl, originOf } from "./origins.ts";
 import { settings } from "./settings.ts";
@@ -102,7 +102,7 @@ const startWithSystem =
 		: undefined;
 
 /** The sync status as the page sees it. */
-const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode, addonVersion }: Status) => ({
+const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode, addonVersion, updateReady }: Status) => ({
 	connected,
 	account,
 	lastUpload,
@@ -111,6 +111,7 @@ const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, 
 	// The code the browser's Connect page shows, so the window can show it too.
 	pairingCode,
 	addonVersion,
+	updateReady,
 });
 
 /**
@@ -142,6 +143,13 @@ app.whenReady().then(async () => {
 	/** Versions already announced this run, so a change is told once. */
 	const announced = new Set<string>();
 	const manageAddon = (wow = connection.status.wowFolder, force = false) => {
+		// Installing by hand (the Addon page, the tray) undoes an uninstall;
+		// otherwise an uninstalled addon stays uninstalled.
+		if (force) settings.addonManaged = true;
+		if (!settings.addonManaged) {
+			connection.setExtras({ addonVersion: undefined });
+			return;
+		}
 		let results: AddonResult[] = [];
 		if (wow) {
 			try {
@@ -220,16 +228,6 @@ app.whenReady().then(async () => {
 		}
 	});
 
-	if (smokeTest) {
-		// No addon run at start here: it'd touch the real WoW folder. The smoke
-		// test checks it against fake ones (setWowFolder).
-		const ok = await runSmokeTest(win!, connection, siteUrl, log, addonSource);
-		quitting = true;
-		app.exit(ok ? 0 : 1);
-		return;
-	}
-
-	// ---- The tray ----
 	const chooseWow = async () => {
 		const result = await dialog.showOpenDialog({
 			title: "Choose your World of Warcraft folder",
@@ -246,6 +244,81 @@ app.whenReady().then(async () => {
 			void dialog.showMessageBox({ type: "warning", message: (e as Error).message });
 		}
 	};
+
+	let updater: Updater | undefined;
+
+	// ---- The Addon page (/addon): install, update, uninstall, WoW folder ----
+	const addonInfo = () => {
+		const wow = connection.status.wowFolder;
+		return {
+			appVersion: __VERSION__,
+			bundled: readAddonVersion(addonSource),
+			wowFolder: wow,
+			hasForever: wow ? foreverFlavors(wow).length > 0 : false,
+			managed: settings.addonManaged,
+			installs: wow ? addonInstalls(wow) : [],
+			updateReady: updater?.ready,
+		};
+	};
+	const pageOnly = <A extends unknown[], R>(handler: (...args: A) => R) =>
+		(event: IpcMainInvokeEvent, ...args: A) => {
+			if (!fromSite(event)) throw new Error("Not allowed from this page.");
+			return handler(...args);
+		};
+	ipcMain.handle("guildie:addon-info", pageOnly(addonInfo));
+	ipcMain.handle(
+		"guildie:addon-install",
+		pageOnly(() => {
+			manageAddon(undefined, true);
+			return addonInfo();
+		}),
+	);
+	ipcMain.handle(
+		"guildie:addon-uninstall",
+		pageOnly((options: unknown) => {
+			const savedData = !!(options && typeof options === "object" && (options as { savedData?: unknown }).savedData === true);
+			const wow = connection.status.wowFolder;
+			settings.addonManaged = false;
+			if (wow) uninstallAddon(wow, { savedData }, log);
+			connection.setExtras({ addonVersion: undefined });
+			return addonInfo();
+		}),
+	);
+	ipcMain.handle(
+		"guildie:addon-open-folder",
+		pageOnly(() => {
+			const install = addonInfo().installs.find((i) => i.version) ?? addonInfo().installs[0];
+			const target = install ? (install.version ? install.folder : join(install.flavor, "Interface", "AddOns")) : connection.status.wowFolder;
+			if (target) void shell.openPath(target);
+		}),
+	);
+	ipcMain.handle(
+		"guildie:choose-wow",
+		pageOnly(async () => {
+			await chooseWow();
+			return addonInfo();
+		}),
+	);
+	ipcMain.handle("guildie:upload-now", pageOnly(() => connection.uploadNow()));
+	ipcMain.handle(
+		"guildie:restart-to-update",
+		pageOnly(() => {
+			if (!updater?.ready) return;
+			quitting = true;
+			updater.restart();
+		}),
+	);
+
+	if (smokeTest) {
+		// No addon run at start here: it'd touch the real WoW folder. The smoke
+		// test checks it against fake ones (setWowFolder).
+		const ok = await runSmokeTest(win!, connection, siteUrl, log, addonSource);
+		quitting = true;
+		app.exit(ok ? 0 : 1);
+		return;
+	}
+
+	// ---- The tray ----
 	// Sign in through the player's own browser (Battle.net's login, Google
 	// included, can't run inside the app), then sign the window in with the
 	// one-time code that comes back with the token.
@@ -260,9 +333,9 @@ app.whenReady().then(async () => {
 		if (!fromSite(event)) throw new Error("Not allowed from this page.");
 		signIn();
 	});
-	let updater: Updater | undefined;
 	const { update } = createTray({
 		open: () => showWindow(),
+		manageAddon: () => showWindow(`${origin}/addon`),
 		reinstallAddon: () => manageAddon(undefined, true),
 		restartToUpdate: () => {
 			quitting = true;

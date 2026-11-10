@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AddonRouteImport } from './routes/addon'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as SignInRouteImport } from './routes/sign-in'
@@ -36,6 +37,11 @@ import { Route as GRegionSlugCraftingRouteImport } from './routes/g/$region/$slu
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AddonRoute = AddonRouteImport.update({
+  id: '/addon',
+  path: '/addon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataRoute = DataRouteImport.update({
@@ -151,6 +157,7 @@ const GRegionSlugCraftingRoute = GRegionSlugCraftingRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
   '/sign-in': typeof SignInRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
   '/sign-in': typeof SignInRoute
@@ -200,6 +208,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/addon': typeof AddonRoute
   '/data': typeof DataRoute
   '/me': typeof MeRoute
   '/sign-in': typeof SignInRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/addon'
     | '/data'
     | '/me'
     | '/sign-in'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/addon'
     | '/data'
     | '/me'
     | '/sign-in'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/addon'
     | '/data'
     | '/me'
     | '/sign-in'
@@ -301,6 +313,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AddonRoute: typeof AddonRoute
   DataRoute: typeof DataRoute
   MeRoute: typeof MeRoute
   SignInRoute: typeof SignInRoute
@@ -326,6 +339,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/addon': {
+      id: '/addon'
+      path: '/addon'
+      fullPath: '/addon'
+      preLoaderRoute: typeof AddonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data': {
@@ -529,6 +549,7 @@ const GRegionSlugRouteWithChildren = GRegionSlugRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AddonRoute: AddonRoute,
   DataRoute: DataRoute,
   MeRoute: MeRoute,
   SignInRoute: SignInRoute,

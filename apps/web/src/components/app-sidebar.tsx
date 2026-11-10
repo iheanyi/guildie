@@ -91,6 +91,7 @@ function SidebarNav() {
 			</div>
 
 			<div className="flex-none space-y-px border-t border-border px-2 pt-2 pb-2">
+				<NavLink to="/addon">Addon</NavLink>
 				{viewer ? (
 					<>
 						<NavLink to="/me">
