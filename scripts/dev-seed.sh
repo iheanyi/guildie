@@ -33,9 +33,12 @@ if [ -z "$cloud_dev" ]; then
 fi
 
 # `env get` rather than `env list`: the CLI lists names only when it detects an agent.
-if [ -z "$(npx convex env get AUTH_JWKS 2>/dev/null)" ]; then
+# Keyed on the gateway secret, not the signing keys: a backend made before
+# cloud dev existed has local placeholder keys but no gateway settings, and
+# needs cloud dev's (overwriting the placeholders) for sign-in to work.
+if [ -z "$(npx convex env get AUTH_GATEWAY_SECRET 2>/dev/null)" ]; then
 	npx convex env list --include-values --deployment "$cloud_dev" | grep -vE '^(SITE_URL|VITE_CONVEX_URL|VITE_CONVEX_SITE_URL)=' > "$dir/env"
-	npx convex env set --from-file "$dir/env" > /dev/null
+	npx convex env set --force --from-file "$dir/env" > /dev/null
 	echo "dev-seed: copied dev settings from $cloud_dev"
 fi
 
