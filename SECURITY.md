@@ -42,5 +42,5 @@ test against other players' accounts or data; use your own local copy
 - Data Blizzard publishes anyway (public guild rosters and character profiles).
 - Guest sign-in on a local backend (it only turns on there: `isLocalBackend`
   in `apps/web/convex/origins.ts`). If you can turn it on in the cloud, that
-  *is* in scope.
+  _is_ in scope.
 - The Windows builds being unsigned (SmartScreen's warning is known).

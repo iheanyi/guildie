@@ -102,8 +102,17 @@ export type AddonCharacter = {
 	talents: { id: number; rank: number; name?: string }[];
 	equipment?: { capturedAt: number; averageItemLevel?: number; items: AddonItem[] };
 	/** Only professions we know; `dropped` counts the rest. */
-	professions?: { capturedAt: number; list: { id: number; name: string; skill: number; maxSkill: number; secondary: boolean }[]; dropped: number };
-	recipes: { professionId: number; profession: string; capturedAt: number; known: { name: string; itemId?: number }[] }[];
+	professions?: {
+		capturedAt: number;
+		list: { id: number; name: string; skill: number; maxSkill: number; secondary: boolean }[];
+		dropped: number;
+	};
+	recipes: {
+		professionId: number;
+		profession: string;
+		capturedAt: number;
+		known: { name: string; itemId?: number }[];
+	}[];
 };
 
 class Invalid extends Error {}
@@ -317,7 +326,8 @@ export function matchRecipes(
 	const ids = new Set<number>();
 	let unmatched = 0;
 	for (const k of known) {
-		const id = (k.itemId !== undefined ? pick(byItem.get(k.itemId)) : undefined) ?? pick(byName.get(k.name.toLowerCase()));
+		const id =
+			(k.itemId !== undefined ? pick(byItem.get(k.itemId)) : undefined) ?? pick(byName.get(k.name.toLowerCase()));
 		if (id === undefined) unmatched++;
 		else ids.add(id);
 	}

@@ -57,7 +57,9 @@ export const syncTree = internalAction({
 				const first = n.ranks?.[0]?.tooltip;
 				if (!first?.talent) return null;
 				const spellId = first.spell_tooltip?.spell?.id;
-				const media = spellId ? await blizzardGet<Media>({ ...common, token, path: `/data/wow/media/spell/${spellId}` }) : null;
+				const media = spellId
+					? await blizzardGet<Media>({ ...common, token, path: `/data/wow/media/spell/${spellId}` })
+					: null;
 				return {
 					talentId: first.talent.id,
 					name: first.talent.name ?? `Talent ${first.talent.id}`,

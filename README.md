@@ -22,14 +22,14 @@ Open source and built by guild members. Want to help?
 
 ## Repo
 
-| Folder | What |
-|---|---|
-| `apps/web` | The site: TanStack Start + Convex, on Cloudflare Workers |
-| `apps/desktop` | The Windows app (Electron) |
-| `apps/addon` | The in-game addon (Lua), shipped inside the app |
+| Folder          | What                                                                    |
+| --------------- | ----------------------------------------------------------------------- |
+| `apps/web`      | The site: TanStack Start + Convex, on Cloudflare Workers                |
+| `apps/desktop`  | The Windows app (Electron)                                              |
+| `apps/addon`    | The in-game addon (Lua), shipped inside the app                         |
 | `packages/sync` | The app's uploader: reads the addon's saved data, writes its guild data |
-| `apps/gateway` | OAuth callback gateway Worker |
-| `docs/` | How it works and how it's run |
+| `apps/gateway`  | OAuth callback gateway Worker                                           |
+| `docs/`         | How it works and how it's run                                           |
 
 `apps/helper`, the old tray-only uploader, is retired; the Windows app
 replaces it.

@@ -28,7 +28,12 @@ function fakeApi(answer: (call: Call) => { status: number; body: unknown }) {
 	const calls: Call[] = [];
 	const api = new Api("https://guildie.test", "gld_abcdefghijklmnopqrstuvwxyz012345", async (url, init) => {
 		const headers = init.headers as Record<string, string>;
-		const call = { path: new URL(url).pathname, method: init.method ?? "GET", auth: headers.Authorization, body: init.body as string | undefined };
+		const call = {
+			path: new URL(url).pathname,
+			method: init.method ?? "GET",
+			auth: headers.Authorization,
+			body: init.body as string | undefined,
+		};
 		calls.push(call);
 		const { status, body } = answer(call);
 		return new Response(JSON.stringify(body), { status });
@@ -97,7 +102,10 @@ test("an accepted upload downloads guild data again at once; a refused one doesn
 	const { api, calls } = fakeApi(({ path }) =>
 		path === "/api/helper/snapshot"
 			? { status: 200, body: accept ? { accepted: ["brenna-ironfoot"] } : { unmatched: ["Brenna"] } }
-			: { status: 200, body: { generatedAt: level, guilds: ["Dawn"], reagents: {}, characters: { Brenna: { level } } } },
+			: {
+					status: 200,
+					body: { generatedAt: level, guilds: ["Dawn"], reagents: {}, characters: { Brenna: { level } } },
+				},
 	);
 	const engine = new SyncEngine(api, wow, { log: () => {}, onUnauthorized: () => assert.fail("not expected") });
 	await engine.tick();
@@ -106,7 +114,10 @@ test("an accepted upload downloads guild data again at once; a refused one doesn
 	// Leveled up and /reloaded: the upload, then fresh guild data in the same tick.
 	level = 23;
 	const rewrite = (name: string, seconds: number) => {
-		writeFileSync(file, `GuildieDB = { ["payload"] = "{\\"version\\":1,\\"characters\\":[{\\"name\\":\\"${name}\\"}]}" }`);
+		writeFileSync(
+			file,
+			`GuildieDB = { ["payload"] = "{\\"version\\":1,\\"characters\\":[{\\"name\\":\\"${name}\\"}]}" }`,
+		);
 		const later = new Date(Date.now() + seconds * 1000);
 		utimesSync(file, later, later);
 	};

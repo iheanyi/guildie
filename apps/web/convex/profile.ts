@@ -25,9 +25,19 @@ export type Source = { kind: "addon" | "blizzard"; at?: number };
 
 type Character = Pick<
 	Doc<"characters">,
-	"level" | "lastLoginAt" | "profileSyncedAt" | "talentsChangedAt" | "averageItemLevel" | "equipment" | "professions" | "talentTrees"
+	| "level"
+	| "lastLoginAt"
+	| "profileSyncedAt"
+	| "talentsChangedAt"
+	| "averageItemLevel"
+	| "equipment"
+	| "professions"
+	| "talentTrees"
 >;
-type Snapshot = Pick<Doc<"addonSnapshots">, "capturedAt" | "level" | "talentTrees" | "equipment" | "professions" | "recipes">;
+type Snapshot = Pick<
+	Doc<"addonSnapshots">,
+	"capturedAt" | "level" | "talentTrees" | "equipment" | "professions" | "recipes"
+>;
 type Item = NonNullable<Character["equipment"]>[number];
 
 export type Profession = NonNullable<Character["professions"]>[number] & { recipesSource?: Source };

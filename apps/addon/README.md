@@ -41,15 +41,15 @@ reload the UI, and the Guildie app, running on the same computer, uploads it the
 
 Per character, in `GuildieDB` (`Guildie.lua`, `Capture.lua`):
 
-| What | Read with | When |
-|---|---|---|
-| Level, XP, class, race | `UnitLevel`, `UnitXP`/`UnitXPMax`, `UnitClass`, `UnitRace` | every read |
-| Guild and rank | `GetGuildInfo` | every read (kept while the game hasn't loaded it yet after login) |
-| Talents | `C_ClassTalents` / `C_Traits` (below) | every read |
-| Gear, slots 1–19 | `GetInventoryItemLink`/`ID`/`Quality`; item level from `GetDetailedItemLevelInfo` or `GetItemInfo`; average from `GetAverageItemLevel` | every read |
-| Each item's tooltip as the game shows it (colors, enchant, durability, set) | `C_TooltipInfo.GetInventoryItem`, else a hidden `GameTooltip` (`SetInventoryItem`) read line by line, name line skipped | every read |
-| Professions with skill and max | `GetProfessions`/`GetProfessionInfo` (skill line ids), else `GetSkillLineInfo` | every read |
-| Known recipes (name, crafted item id) | `GetTradeSkillInfo`/`GetTradeSkillItemLink`, `C_TradeSkillUI`, or the Craft API (`GetCraftInfo`, Enchanting in classic-era clients) | **only when you open that profession's window** |
+| What                                                                        | Read with                                                                                                                              | When                                                              |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Level, XP, class, race                                                      | `UnitLevel`, `UnitXP`/`UnitXPMax`, `UnitClass`, `UnitRace`                                                                             | every read                                                        |
+| Guild and rank                                                              | `GetGuildInfo`                                                                                                                         | every read (kept while the game hasn't loaded it yet after login) |
+| Talents                                                                     | `C_ClassTalents` / `C_Traits` (below)                                                                                                  | every read                                                        |
+| Gear, slots 1–19                                                            | `GetInventoryItemLink`/`ID`/`Quality`; item level from `GetDetailedItemLevelInfo` or `GetItemInfo`; average from `GetAverageItemLevel` | every read                                                        |
+| Each item's tooltip as the game shows it (colors, enchant, durability, set) | `C_TooltipInfo.GetInventoryItem`, else a hidden `GameTooltip` (`SetInventoryItem`) read line by line, name line skipped                | every read                                                        |
+| Professions with skill and max                                              | `GetProfessions`/`GetProfessionInfo` (skill line ids), else `GetSkillLineInfo`                                                         | every read                                                        |
+| Known recipes (name, crafted item id)                                       | `GetTradeSkillInfo`/`GetTradeSkillItemLink`, `C_TradeSkillUI`, or the Craft API (`GetCraftInfo`, Enchanting in classic-era clients)    | **only when you open that profession's window**                   |
 
 A read happens at login, on level up, gear changes, skill and guild changes,
 talent changes, when a profession window opens or updates, and on logout and

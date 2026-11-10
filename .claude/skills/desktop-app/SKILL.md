@@ -1,4 +1,5 @@
 ---
+
 name: desktop-app
 description: How the Guildie Windows app (apps/desktop, Electron) is built, secured, tested and released. Use when changing anything in apps/desktop or packages/sync, the window.guildieDesktop bridge or the site code that calls it (apps/web/src/lib/desktop.ts, components/desktop-bridge.tsx, Settings → Addon/App), addon installation, app updates, or the release workflow.
 ---
@@ -12,21 +13,21 @@ reference: apps/desktop/README.md.
 
 ## Layout
 
-| File | What | Ask first? |
-|---|---|---|
-| `src/main.ts` | Start-up, single instance, the bridge's IPC handlers (`guildie:*`), tray actions | yes |
-| `src/preload.ts` | The bridge (`window.guildieDesktop`), sandboxed | yes |
-| `src/origins.ts` | Which URLs are Guildie (get the bridge), sign-in hops, everything else (opens in the browser) | yes |
-| `src/updater.ts` | Self-update (electron-updater, GitHub Releases) | yes |
-| `src/window-border.ts` | Hides Windows 11's accent border via `dwmapi.dll` through **koffi** (FFI) | yes |
-| `src/window.ts` | Window, title bar overlay, user agent (`GuildieDesktop/<v>`, ` (Mica)`) | |
-| `src/connection.ts` | Token, connect/pair/sign out, runs `SyncEngine` from `packages/sync` | |
-| `src/addon.ts` | Installs/updates the addon from the bundled copy | |
-| `src/tray.ts`, `src/settings.ts` | Tray menu; `settings.json` with DPAPI-encrypted tokens | |
-| `src/smoke.ts` | `--smoke-test` | |
-| `scripts/build.mjs` | esbuild bundles main + preload into `dist/` (no `node_modules` shipped), copies `assets/` icons | |
-| `electron-builder.yml` | NSIS installer + zip, `extraResources` (addon, koffi binary), publish to GitHub | yes |
-| `packages/sync` | Upload/download logic: SavedVariables reader, uploader, `GuildieData.lua` writer, WoW folder search | |
+| File                             | What                                                                                                | Ask first? |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- | ---------- |
+| `src/main.ts`                    | Start-up, single instance, the bridge's IPC handlers (`guildie:*`), tray actions                    | yes        |
+| `src/preload.ts`                 | The bridge (`window.guildieDesktop`), sandboxed                                                     | yes        |
+| `src/origins.ts`                 | Which URLs are Guildie (get the bridge), sign-in hops, everything else (opens in the browser)       | yes        |
+| `src/updater.ts`                 | Self-update (electron-updater, GitHub Releases)                                                     | yes        |
+| `src/window-border.ts`           | Hides Windows 11's accent border via `dwmapi.dll` through **koffi** (FFI)                           | yes        |
+| `src/window.ts`                  | Window, title bar overlay, user agent (`GuildieDesktop/<v>`, ` (Mica)`)                             |            |
+| `src/connection.ts`              | Token, connect/pair/sign out, runs `SyncEngine` from `packages/sync`                                |            |
+| `src/addon.ts`                   | Installs/updates the addon from the bundled copy                                                    |            |
+| `src/tray.ts`, `src/settings.ts` | Tray menu; `settings.json` with DPAPI-encrypted tokens                                              |            |
+| `src/smoke.ts`                   | `--smoke-test`                                                                                      |            |
+| `scripts/build.mjs`              | esbuild bundles main + preload into `dist/` (no `node_modules` shipped), copies `assets/` icons     |            |
+| `electron-builder.yml`           | NSIS installer + zip, `extraResources` (addon, koffi binary), publish to GitHub                     | yes        |
+| `packages/sync`                  | Upload/download logic: SavedVariables reader, uploader, `GuildieData.lua` writer, WoW folder search |            |
 
 ## The bridge: security rules
 
@@ -77,16 +78,14 @@ on Windows tries it. Self-update only runs in an NSIS install
 
 ## Releases (maintainers)
 
-1. CHANGELOG.md: `## Unreleased` becomes `## <version>` (the release notes on
-   GitHub and in Settings → App come from that section; the workflow fails
-   without it).
-2. Bump `version` in `apps/desktop/package.json`; bump `## Version` in
-   `apps/addon/Guildie/Guildie.toc` if the addon changed (players' copies
-   update only when it goes up).
-3. Tag `desktop-v<version>` and push the tag.
-   `.github/workflows/desktop-release.yml` checks the tag matches, runs check
-   and test, creates the release and uploads the installer, `.blockmap` and
-   `latest.yml`.
+`pnpm release <version> --push` on an up-to-date `main` (scripts/release.mjs)
+does it: `## Unreleased` in CHANGELOG.md becomes `## <version>` (the release
+notes on GitHub and in Settings → App), `apps/desktop/package.json` gets the
+version, and it commits, tags `desktop-v<version>` and pushes.
+`.github/workflows/desktop-release.yml` then checks the tag matches, runs
+check and test, creates the release and uploads the installer, `.blockmap`
+and `latest.yml`. The addon's `## Version` in `Guildie.toc` is bumped in the
+PR that changes the addon (players' copies update only when it goes up).
 
 electron-updater reads only the repo's **Latest, non-draft** release. Any
 other release in this repo must be a pre-release or not marked Latest, or

@@ -1,4 +1,5 @@
 ---
+
 name: wow-addon
 description: How the Guildie WoW addon (apps/addon, Lua 5.1, WoW Forever) works, gets data in and out, is tested outside the game and ships. Use when changing anything in apps/addon, the addon's SavedVariables payload, GuildieData.lua, in-game tooltips, or the code that reads or writes those files (packages/sync, apps/web/convex/helper.ts, addonPayload.ts).
 ---
@@ -31,15 +32,15 @@ docs/addon.md first; this is the short version.
 
 ## Files
 
-| File | What |
-|---|---|
-| `Guildie.toc` | Load order, `## Version` (what the app compares to update players' copies) |
-| `Guildie.lua` | Events, the debounced read, talents, building `GuildieDB.payload` (JSON, `version` 2) |
-| `Capture.lua` | Gear (with tooltips), professions, recipes; modern API first, classic fallback |
-| `Upgrades.lua` | Gear-upgrade suggestions, a port of `apps/web/convex/shared/upgrades.ts` (gear-and-weights skill) |
-| `Tooltip.lua` | The lines added to item tooltips (reagents, upgrades) |
-| `UI.lua` | `/guildie` window and minimap button |
-| `GuildieData.lua` | Placeholder; the app overwrites it per player |
+| File              | What                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `Guildie.toc`     | Load order, `## Version` (what the app compares to update players' copies)                        |
+| `Guildie.lua`     | Events, the debounced read, talents, building `GuildieDB.payload` (JSON, `version` 2)             |
+| `Capture.lua`     | Gear (with tooltips), professions, recipes; modern API first, classic fallback                    |
+| `Upgrades.lua`    | Gear-upgrade suggestions, a port of `apps/web/convex/shared/upgrades.ts` (gear-and-weights skill) |
+| `Tooltip.lua`     | The lines added to item tooltips (reagents, upgrades)                                             |
+| `UI.lua`          | `/guildie` window and minimap button                                                              |
+| `GuildieData.lua` | Placeholder; the app overwrites it per player                                                     |
 
 ## Forever's API is uncertain
 

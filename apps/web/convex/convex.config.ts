@@ -1,6 +1,6 @@
-import auth from "@convex-dev/auth/convex.config.js";
 import authAnonymous from "@convex-dev/auth/components/anonymous/convex.config.js";
 import authOauth from "@convex-dev/auth/components/oauth/convex.config.js";
+import auth from "@convex-dev/auth/convex.config.js";
 import { defineApp } from "convex/server";
 import { v } from "convex/values";
 

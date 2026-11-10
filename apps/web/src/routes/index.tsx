@@ -1,14 +1,14 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { REGIONS, type Region } from "@convex/shared/wow";
+import { convexQuery } from "@convex-dev/react-query";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { useEffect, useState } from "react";
+import { Page, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Page, PageHeader } from "@/components/page-header";
 
 // No home page for signed-in players: "/" opens your guild (the sidebar
 // switches between guilds). It shows a page only to signed-out visitors (sign
@@ -18,7 +18,8 @@ export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {
 		const viewer = await context.queryClient.ensureQueryData(convexQuery(api.users.viewer, {}));
 		const first = viewer?.guilds[0];
-		if (first) throw redirect({ to: "/g/$region/$slug", params: { region: first.region, slug: first.slug }, replace: true });
+		if (first)
+			throw redirect({ to: "/g/$region/$slug", params: { region: first.region, slug: first.slug }, replace: true });
 	},
 	component: Home,
 });
@@ -81,7 +82,9 @@ function GuildSearch({ className }: { className?: string }) {
 			{debounced.length >= 2 && (
 				<div className="mt-2">
 					{shown.length === 0 ? (
-						!isFetching && <p className="text-[0.8125rem] text-muted-foreground">No public guild by that name on Guildie.</p>
+						!isFetching && (
+							<p className="text-[0.8125rem] text-muted-foreground">No public guild by that name on Guildie.</p>
+						)
 					) : (
 						<ul className="divide-y divide-border rounded-md border border-border">
 							{shown.map((g) => (
@@ -142,7 +145,12 @@ function AddGuild() {
 						</option>
 					))}
 				</select>
-				<Input id="guild-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Guild name, exactly as in game" />
+				<Input
+					id="guild-name"
+					value={name}
+					onChange={(e) => setName(e.target.value)}
+					placeholder="Guild name, exactly as in game"
+				/>
 				<Button type="submit" disabled={!name.trim()}>
 					Add
 				</Button>

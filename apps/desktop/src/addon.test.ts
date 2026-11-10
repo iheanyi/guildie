@@ -3,7 +3,17 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFil
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { addonInstalls, compareVersions, DATA_FILE, decideAddonAction, ensureAddon, readAddonVersion, replaceAddon, tocVersion, uninstallAddon } from "./addon.ts";
+import {
+	addonInstalls,
+	compareVersions,
+	DATA_FILE,
+	decideAddonAction,
+	ensureAddon,
+	readAddonVersion,
+	replaceAddon,
+	tocVersion,
+	uninstallAddon,
+} from "./addon.ts";
 
 const quiet = () => {};
 const temp = () => mkdtempSync(join(tmpdir(), "guildie-addon-test-"));
@@ -12,7 +22,10 @@ const temp = () => mkdtempSync(join(tmpdir(), "guildie-addon-test-"));
 function source(version: string) {
 	const dir = join(temp(), "Guildie");
 	mkdirSync(join(dir, "media"), { recursive: true });
-	writeFileSync(join(dir, "Guildie.toc"), `## Interface: 16001\n## Title: Guildie\n## Version: ${version}\n\nGuildieData.lua\nGuildie.lua\n`);
+	writeFileSync(
+		join(dir, "Guildie.toc"),
+		`## Interface: 16001\n## Title: Guildie\n## Version: ${version}\n\nGuildieData.lua\nGuildie.lua\n`,
+	);
 	writeFileSync(join(dir, "Guildie.lua"), `-- ${version}\n`);
 	writeFileSync(join(dir, "media", "icon.tga"), "icon");
 	writeFileSync(join(dir, DATA_FILE), "-- repo placeholder\n");

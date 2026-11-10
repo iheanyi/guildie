@@ -2,11 +2,11 @@
 
 One Blizzard API client does three jobs:
 
-| Job | Grant | Scope | Needs a user? |
-|---|---|---|---|
-| Roster and character sync | client credentials | none | no |
-| Sign in with Battle.net | authorization code | `openid wow.profile` | yes |
-| Read my characters (right after sign-in) | authorization code | `wow.profile` | yes |
+| Job                                      | Grant              | Scope                | Needs a user? |
+| ---------------------------------------- | ------------------ | -------------------- | ------------- |
+| Roster and character sync                | client credentials | none                 | no            |
+| Sign in with Battle.net                  | authorization code | `openid wow.profile` | yes           |
+| Read my characters (right after sign-in) | authorization code | `wow.profile`        | yes           |
 
 Scopes aren't approved in the portal. Any client can request `openid` and
 `wow.profile`; the player agrees on Battle.net's consent screen. Public data

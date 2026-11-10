@@ -25,7 +25,13 @@ export function parseNotes(body: string): ReleaseNotes["sections"] {
 	return sections;
 }
 
-type GithubRelease = { tag_name: string; published_at: string; body: string | null; draft: boolean; prerelease: boolean };
+type GithubRelease = {
+	tag_name: string;
+	published_at: string;
+	body: string | null;
+	draft: boolean;
+	prerelease: boolean;
+};
 
 export function useReleaseNotes() {
 	return useQuery({
@@ -39,7 +45,11 @@ export function useReleaseNotes() {
 			const releases = (await res.json()) as GithubRelease[];
 			return releases
 				.filter((r) => !r.draft && !r.prerelease && r.tag_name.startsWith("desktop-v"))
-				.map((r) => ({ version: r.tag_name.replace(/^desktop-v/, ""), date: r.published_at, sections: parseNotes(r.body ?? "") }));
+				.map((r) => ({
+					version: r.tag_name.replace(/^desktop-v/, ""),
+					date: r.published_at,
+					sections: parseNotes(r.body ?? ""),
+				}));
 		},
 	});
 }

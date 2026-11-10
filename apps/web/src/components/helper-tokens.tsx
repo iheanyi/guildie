@@ -12,7 +12,9 @@ export function HelperTokens() {
 			<p className="mt-1 text-muted-foreground">
 				Computers signed in with the Guildie app, which upload your addon's data. Disconnect one you no longer use.
 			</p>
-			{tokens && tokens.length === 0 && <p className="mt-2 text-muted-foreground">None yet. Sign in inside the app to connect it.</p>}
+			{tokens && tokens.length === 0 && (
+				<p className="mt-2 text-muted-foreground">None yet. Sign in inside the app to connect it.</p>
+			)}
 			{tokens && tokens.length > 0 && (
 				<ul className="mt-3 divide-y divide-border border-y border-border">
 					{tokens.map((t) => (
@@ -20,7 +22,12 @@ export function HelperTokens() {
 							<span>{t.label}</span>
 							<span className="num flex items-center gap-4 text-muted-foreground">
 								{t.lastUsedAt ? `used ${ago(t.lastUsedAt)}` : `connected ${ago(t.createdAt)}`}
-								<Button variant="ghost" size="xs" className="hover:text-destructive" onClick={() => revoke({ tokenId: t._id })}>
+								<Button
+									variant="ghost"
+									size="xs"
+									className="hover:text-destructive"
+									onClick={() => revoke({ tokenId: t._id })}
+								>
 									Disconnect
 								</Button>
 							</span>

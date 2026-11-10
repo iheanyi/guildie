@@ -27,11 +27,17 @@ export function AppTitleBar() {
 						<Fragment key={`${i}-${c.label}`}>
 							{i > 0 && <span className="text-muted-foreground/50">/</span>}
 							{c.link && !last ? (
-								<Link to={c.link.to} params={c.link.params} className="truncate rounded px-1 text-muted-foreground hover:text-foreground">
+								<Link
+									to={c.link.to}
+									params={c.link.params}
+									className="truncate rounded px-1 text-muted-foreground hover:text-foreground"
+								>
 									{c.label}
 								</Link>
 							) : (
-								<span className={last ? "truncate px-1 text-foreground" : "truncate px-1 text-muted-foreground"}>{c.label}</span>
+								<span className={last ? "truncate px-1 text-foreground" : "truncate px-1 text-muted-foreground"}>
+									{c.label}
+								</span>
 							)}
 						</Fragment>
 					);

@@ -1,10 +1,10 @@
 import { AuthClient, defaultStorage } from "@convex-dev/auth/browser";
 import { oauth } from "@convex-dev/auth/methods/oauth/react";
-import { AuthProvider, type AuthSignInApi, useAuth } from "#convex-auth-react-internal";
 import { useRouter } from "@tanstack/react-router";
 import { ConvexHttpClient } from "convex/browser";
 import { ConvexProviderWithAuth, type ConvexReactClient } from "convex/react";
 import { type ReactNode, useState } from "react";
+import { AuthProvider, type AuthSignInApi, useAuth } from "#convex-auth-react-internal";
 
 type AuthSessionResponse = { tokens: { accessToken: string } | null };
 

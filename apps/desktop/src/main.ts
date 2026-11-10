@@ -13,16 +13,32 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { configDir, DEFAULT_API, loadConfig, makeLogger } from "@guildie/sync";
-import { app, BrowserWindow, dialog, type IpcMainInvokeEvent, ipcMain, Notification, session, shell } from "electron";
-import { type AddonResult, addonInstalls, ensureAddon, foreverFlavors, readAddonVersion, uninstallAddon } from "./addon.ts";
+import {
+	app,
+	type BrowserWindow,
+	dialog,
+	type IpcMainInvokeEvent,
+	ipcMain,
+	Notification,
+	session,
+	shell,
+} from "electron";
+import {
+	type AddonResult,
+	addonInstalls,
+	ensureAddon,
+	foreverFlavors,
+	readAddonVersion,
+	uninstallAddon,
+} from "./addon.ts";
 import { Connection, type Status } from "./connection.ts";
 import { allowsSelfSigned, isGuildieUrl, originOf } from "./origins.ts";
 import { settings } from "./settings.ts";
 import { runSmokeTest } from "./smoke.ts";
 import { createTray } from "./tray.ts";
 import { canSelfUpdate, startUpdater, type Updater, type UpdateState } from "./updater.ts";
-import { hideWindowBorder } from "./window-border.ts";
 import { createWindow } from "./window.ts";
+import { hideWindowBorder } from "./window-border.ts";
 
 declare const __VERSION__: string;
 
@@ -103,7 +119,17 @@ const startWithSystem =
 		: undefined;
 
 /** The sync status as the page sees it. */
-const publicStatus = ({ connected, account, lastUpload, guildDataAt, wowFolder, pairingCode, addonVersion, updateReady, update }: Status) => ({
+const publicStatus = ({
+	connected,
+	account,
+	lastUpload,
+	guildDataAt,
+	wowFolder,
+	pairingCode,
+	addonVersion,
+	updateReady,
+	update,
+}: Status) => ({
 	connected,
 	account,
 	lastUpload,
@@ -162,7 +188,8 @@ app.whenReady().then(async () => {
 			if (!foreverFlavors(wow).length) {
 				log(`Addon: no _forever_ folder in ${wow}; nothing to install`);
 				// Asked for from the tray: say why nothing happened.
-				if (force) notify("Guildie", `No WoW: Forever (_forever_) folder in ${wow}. Choose your World of Warcraft folder.`);
+				if (force)
+					notify("Guildie", `No WoW: Forever (_forever_) folder in ${wow}. Choose your World of Warcraft folder.`);
 			}
 		}
 		// Files on disk apply at the game's next /reload (or start, for a new install),
@@ -263,7 +290,8 @@ app.whenReady().then(async () => {
 			updateReady: updater?.ready,
 		};
 	};
-	const pageOnly = <A extends unknown[], R>(handler: (...args: A) => R) =>
+	const pageOnly =
+		<A extends unknown[], R>(handler: (...args: A) => R) =>
 		(event: IpcMainInvokeEvent, ...args: A) => {
 			if (!fromSite(event)) throw new Error("Not allowed from this page.");
 			return handler(...args);
@@ -279,7 +307,11 @@ app.whenReady().then(async () => {
 	ipcMain.handle(
 		"guildie:addon-uninstall",
 		pageOnly((options: unknown) => {
-			const savedData = !!(options && typeof options === "object" && (options as { savedData?: unknown }).savedData === true);
+			const savedData = !!(
+				options &&
+				typeof options === "object" &&
+				(options as { savedData?: unknown }).savedData === true
+			);
 			const wow = connection.status.wowFolder;
 			settings.addonManaged = false;
 			if (wow) uninstallAddon(wow, { savedData }, log);
@@ -291,7 +323,11 @@ app.whenReady().then(async () => {
 		"guildie:addon-open-folder",
 		pageOnly(() => {
 			const install = addonInfo().installs.find((i) => i.version) ?? addonInfo().installs[0];
-			const target = install ? (install.version ? install.folder : join(install.flavor, "Interface", "AddOns")) : connection.status.wowFolder;
+			const target = install
+				? install.version
+					? install.folder
+					: join(install.flavor, "Interface", "AddOns")
+				: connection.status.wowFolder;
 			if (target) void shell.openPath(target);
 		}),
 	);
@@ -302,7 +338,10 @@ app.whenReady().then(async () => {
 			return addonInfo();
 		}),
 	);
-	ipcMain.handle("guildie:upload-now", pageOnly(() => connection.uploadNow()));
+	ipcMain.handle(
+		"guildie:upload-now",
+		pageOnly(() => connection.uploadNow()),
+	);
 	/** "Check for updates" (Settings → App and the tray). Resolves with where updating stands. */
 	const checkForUpdates = async (): Promise<UpdateState> => (updater ? await updater.check() : { state: "off" });
 	ipcMain.handle("guildie:check-updates", pageOnly(checkForUpdates));
@@ -347,9 +386,11 @@ app.whenReady().then(async () => {
 			const result = await checkForUpdates();
 			// From the tray there's no page to show it: say how it went.
 			if (result.state === "current") notify("Guildie is up to date", `You have the latest version, ${__VERSION__}.`);
-			else if (result.state === "off") notify("Guildie", "This copy of Guildie can't update itself. Install it from guildie.club to get updates.");
+			else if (result.state === "off")
+				notify("Guildie", "This copy of Guildie can't update itself. Install it from guildie.club to get updates.");
 			else if (result.state === "failed") notify("Guildie", "Couldn't check for updates. Try again later.");
-			else if (result.state === "downloading") notify("Guildie", `Downloading Guildie ${result.version}. It'll say when it's ready.`);
+			else if (result.state === "downloading")
+				notify("Guildie", `Downloading Guildie ${result.version}. It'll say when it's ready.`);
 		},
 		restartToUpdate: () => {
 			quitting = true;

@@ -1,7 +1,7 @@
 import { ConvexError, type Infer, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { action, internalQuery, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
+import { action, internalQuery, type MutationCtx, mutation, type QueryCtx, query } from "./_generated/server";
 import { type AddonCharacter, LIMITS, matchRecipes, parseCharacter } from "./addonPayload";
 import { type AddonView, addonView } from "./addonView";
 import { sha256 } from "./claims";
@@ -26,7 +26,10 @@ const MIN_UPLOAD_INTERVAL_MS = 5_000;
 
 function newToken() {
 	const bytes = crypto.getRandomValues(new Uint8Array(24));
-	const b64 = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+	const b64 = btoa(String.fromCharCode(...bytes))
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=+$/, "");
 	return `gld_${b64}`;
 }
 
@@ -129,7 +132,8 @@ export const ingest = mutation({
 		const row = await tokenOwner(ctx, token);
 		if (!row) throw new ConvexError("Unknown or revoked token");
 		const now = Date.now();
-		if (row.lastUsedAt && now - row.lastUsedAt < MIN_UPLOAD_INTERVAL_MS) throw new ConvexError("Too many uploads; slow down");
+		if (row.lastUsedAt && now - row.lastUsedAt < MIN_UPLOAD_INTERVAL_MS)
+			throw new ConvexError("Too many uploads; slow down");
 		if (characters.length > LIMITS.characters) throw new ConvexError("Too many characters in one upload");
 		await ctx.db.patch(row._id, { lastUsedAt: now });
 
@@ -235,7 +239,9 @@ export const ingest = mutation({
 				});
 			}
 			// Professions the character no longer has take their recipes with them.
-			const keptRecipes = [...recipes.values()].filter((r) => !professions || professions.list.some((p) => p.id === r.professionId));
+			const keptRecipes = [...recipes.values()].filter(
+				(r) => !professions || professions.list.some((p) => p.id === r.professionId),
+			);
 
 			const snapshot: SnapshotFields = {
 				userId: row.userId,
@@ -255,11 +261,17 @@ export const ingest = mutation({
 			const gearChanged =
 				equipment === incomingGear &&
 				incomingGear &&
-				incomingGear.items.map((i) => i.itemId).join() !== (existing?.equipment?.items ?? []).map((i) => i.itemId).join();
+				incomingGear.items.map((i) => i.itemId).join() !==
+					(existing?.equipment?.items ?? []).map((i) => i.itemId).join();
 			if (gearChanged && incomingGear.items.length) {
 				await ctx.scheduler.runAfter(0, internal.items.ensure, {
 					itemIds: incomingGear.items.map((i) => i.itemId),
-					hints: incomingGear.items.map((i) => ({ itemId: i.itemId, name: baseName(i), quality: i.quality, tooltip: i.tooltip })),
+					hints: incomingGear.items.map((i) => ({
+						itemId: i.itemId,
+						name: baseName(i),
+						quality: i.quality,
+						tooltip: i.tooltip,
+					})),
 				});
 			}
 		}
@@ -280,7 +292,9 @@ function matchOwned(owned: Doc<"ownedCharacters">[], c: AddonCharacter) {
 export async function snapshotOf(ctx: QueryCtx, character: Pick<Doc<"characters">, "flavor" | "region" | "slug">) {
 	return await ctx.db
 		.query("addonSnapshots")
-		.withIndex("by_slug", (q) => q.eq("flavor", character.flavor).eq("region", character.region).eq("slug", character.slug))
+		.withIndex("by_slug", (q) =>
+			q.eq("flavor", character.flavor).eq("region", character.region).eq("slug", character.slug),
+		)
 		.unique();
 }
 
@@ -385,7 +399,8 @@ export const approvePairing = mutation({
 			.withIndex("by_code", (q) => q.eq("code", code.trim().toUpperCase()))
 			.unique();
 		if (row?.token || row?.collectedAt) return;
-		if (!row || row.expiresAt < Date.now()) throw new ConvexError("That code expired. Sign in from the Guildie app again.");
+		if (!row || row.expiresAt < Date.now())
+			throw new ConvexError("That code expired. Sign in from the Guildie app again.");
 		let sessionCode: string | undefined;
 		if (row.wantsSession) {
 			sessionCode = newToken();
@@ -437,7 +452,12 @@ type GuildDataBase = {
 	guilds: {
 		name: string;
 		region: string;
-		members: { name: string; slug: string; classId: number; professions: { name: string; skill?: number; knownRecipes: number[] }[] }[];
+		members: {
+			name: string;
+			slug: string;
+			classId: number;
+			professions: { name: string; skill?: number; knownRecipes: number[] }[];
+		}[];
 	}[];
 	/** Active guildmates (not the token owner's own characters) for gear-upgrade suggestions. */
 	upgradeMembers: UpgradeMember[];
@@ -451,7 +471,10 @@ export type GuildData = {
 	mine: string[];
 	recipesKnown: number;
 	recipesInCatalog: number;
-	reagents: Record<string, { name: string; users: { name: string; classId: number; profession: string; recipes: number }[] }>;
+	reagents: Record<
+		string,
+		{ name: string; users: { name: string; classId: number; profession: string; recipes: number }[] }
+	>;
 	/**
 	 * Gear-upgrade suggestions (addon 0.5.0+; older addons ignore it): the
 	 * rules and weights once (shared/upgrades.ts, shared/weights.ts), and each
@@ -517,7 +540,11 @@ export const guildDataBase = internalQuery({
 					name: m.name,
 					slug: m.slug,
 					classId: m.classId,
-					professions: profiles[i].professions.map((p) => ({ name: p.name, skill: p.skill, knownRecipes: p.knownRecipes ?? [] })),
+					professions: profiles[i].professions.map((p) => ({
+						name: p.name,
+						skill: p.skill,
+						knownRecipes: p.knownRecipes ?? [],
+					})),
 				})),
 			});
 		}
@@ -536,7 +563,9 @@ export const guildData = action({
 	handler: async (ctx, { token }): Promise<GuildData | null> => {
 		const base: GuildDataBase | null = await ctx.runQuery(internal.helper.guildDataBase, { token });
 		if (!base) return null;
-		const ids = [...new Set(base.guilds.flatMap((g) => g.members.flatMap((m) => m.professions.flatMap((p) => p.knownRecipes))))];
+		const ids = [
+			...new Set(base.guilds.flatMap((g) => g.members.flatMap((m) => m.professions.flatMap((p) => p.knownRecipes)))),
+		];
 		const reagentsByRecipe = new Map<number, { itemId: number; name: string }[]>();
 		for (let i = 0; i < ids.length; i += 400) {
 			for (const r of await ctx.runQuery(internal.recipes.byIds, { ids: ids.slice(i, i + 400) })) {
@@ -544,7 +573,10 @@ export const guildData = action({
 			}
 		}
 		// itemId -> member -> { profession, recipes using it }
-		const uses = new Map<number, { name: string; users: Map<string, { name: string; classId: number; profession: string; recipes: number }> }>();
+		const uses = new Map<
+			number,
+			{ name: string; users: Map<string, { name: string; classId: number; profession: string; recipes: number }> }
+		>();
 		for (const g of base.guilds) {
 			for (const m of g.members) {
 				for (const p of m.professions) {
@@ -565,7 +597,9 @@ export const guildData = action({
 		for (const [itemId, entry] of uses) {
 			reagents[itemId] = {
 				name: entry.name,
-				users: [...entry.users.values()].sort((a, b) => b.recipes - a.recipes || a.name.localeCompare(b.name)).slice(0, 8),
+				users: [...entry.users.values()]
+					.sort((a, b) => b.recipes - a.recipes || a.name.localeCompare(b.name))
+					.slice(0, 8),
 			};
 		}
 		return {

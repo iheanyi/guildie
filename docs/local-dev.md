@@ -145,9 +145,9 @@ Existing checkouts keep what they were seeded with. Set it there too
 
 ## Every checkout
 
-| Checkout | App | Convex backend |
-|---|---|---|
-| main | `https://guildie.localhost:1355` | `127.0.0.1:3270` / `3271` |
+| Checkout           | App                                       | Convex backend                                 |
+| ------------------ | ----------------------------------------- | ---------------------------------------------- |
+| main               | `https://guildie.localhost:1355`          | `127.0.0.1:3270` / `3271`                      |
 | any other worktree | `https://<folder>.guildie.localhost:1355` | a pair in `20000`–`31999`, stable per worktree |
 
 `<folder>` is the worktree's folder name, lowercased, with a leading

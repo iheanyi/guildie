@@ -4,9 +4,9 @@ import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { SectionTitle } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { type AddonInfo, type DesktopStatus, desktop, RELEASES, useInDesktopApp } from "@/lib/desktop";
 import { ago } from "@/lib/format";
 import { compareVersions } from "@/lib/versions";
-import { type AddonInfo, type DesktopStatus, desktop, RELEASES, useInDesktopApp } from "@/lib/desktop";
 
 // Settings → Addon: the Guildie addon, managed by the desktop app. Is it
 // installed, which version, install / update / reinstall / uninstall, which
@@ -58,9 +58,7 @@ function useAddon() {
 	const [info, setInfo] = useState<AddonInfo | null>(null);
 	const [status, setStatus] = useState<DesktopStatus | null>(null);
 	const refresh = useCallback(() => {
-		void desktop()
-			?.addon?.info()
-			.then(setInfo);
+		void desktop()?.addon?.info().then(setInfo);
 	}, []);
 	useEffect(() => {
 		const app = desktop();
@@ -94,7 +92,11 @@ function ManageAddon() {
 			const next = await action();
 			if (next) setInfo(next);
 		} catch (e) {
-			setError(e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, "") : "That didn't work.");
+			setError(
+				e instanceof Error
+					? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, "")
+					: "That didn't work.",
+			);
 		} finally {
 			setBusy(false);
 		}
@@ -103,15 +105,16 @@ function ManageAddon() {
 
 	const installed = info.installs.find((i) => i.version);
 	const broken = info.installs.some((i) => i.broken);
-	const state = !info.wowFolder || !info.hasForever
-		? "no-wow"
-		: installed
-			? info.bundled && compareVersions(installed.version!, info.bundled) < 0
-				? "outdated"
-				: "installed"
-			: broken
-				? "broken"
-				: "missing";
+	const state =
+		!info.wowFolder || !info.hasForever
+			? "no-wow"
+			: installed
+				? info.bundled && compareVersions(installed.version!, info.bundled) < 0
+					? "outdated"
+					: "installed"
+				: broken
+					? "broken"
+					: "missing";
 
 	return (
 		<div className="max-w-3xl pb-12">
@@ -121,9 +124,13 @@ function ManageAddon() {
 					<Row label="Status">
 						{state === "installed" && <span>Installed, up to date</span>}
 						{state === "outdated" && <span>Installed, update available</span>}
-						{state === "missing" && <span>{info.managed ? "Not installed" : "Uninstalled. The app won't reinstall it until you do."}</span>}
+						{state === "missing" && (
+							<span>{info.managed ? "Not installed" : "Uninstalled. The app won't reinstall it until you do."}</span>
+						)}
 						{state === "broken" && <span className="text-destructive">Damaged (no version found)</span>}
-						{state === "no-wow" && <span className="text-muted-foreground">Choose your World of Warcraft folder first</span>}
+						{state === "no-wow" && (
+							<span className="text-muted-foreground">Choose your World of Warcraft folder first</span>
+						)}
 					</Row>
 					<Row label="Installed version">
 						<span className="num">{installed?.version ?? "None"}</span>
@@ -158,11 +165,17 @@ function ManageAddon() {
 							Open folder
 						</Button>
 					)}
-					{(installed || broken) && <UninstallButton disabled={busy} onUninstall={(savedData) => run(() => app?.addon?.uninstall({ savedData }))} />}
+					{(installed || broken) && (
+						<UninstallButton
+							disabled={busy}
+							onUninstall={(savedData) => run(() => app?.addon?.uninstall({ savedData }))}
+						/>
+					)}
 				</div>
 				{(state === "installed" || state === "outdated") && (
 					<p className="mt-3 text-[0.8125rem] text-muted-foreground">
-						After an install or update, type <span className="font-mono text-foreground">/reload</span> in WoW (or restart it if the addon is new).
+						After an install or update, type <span className="font-mono text-foreground">/reload</span> in WoW (or
+						restart it if the addon is new).
 					</p>
 				)}
 				{error && <p className="mt-3 text-[0.8125rem] text-destructive">{error}</p>}
@@ -172,11 +185,15 @@ function ManageAddon() {
 				<SectionTitle>World of Warcraft</SectionTitle>
 				<Rows>
 					<Row label="Folder">
-						<span className="break-all">{info.wowFolder ?? <span className="text-muted-foreground">Not found</span>}</span>
+						<span className="break-all">
+							{info.wowFolder ?? <span className="text-muted-foreground">Not found</span>}
+						</span>
 					</Row>
 					{info.wowFolder && !info.hasForever && (
 						<Row label="">
-							<span className="text-destructive">No _forever_ folder here. Choose the folder that contains _forever_.</span>
+							<span className="text-destructive">
+								No _forever_ folder here. Choose the folder that contains _forever_.
+							</span>
 						</Row>
 					)}
 				</Rows>
@@ -188,7 +205,9 @@ function ManageAddon() {
 			<section className="mt-10">
 				<SectionTitle>Sync</SectionTitle>
 				<Rows>
-					<Row label="Signed in as">{status?.connected ? status.account : <span className="text-muted-foreground">Not signed in</span>}</Row>
+					<Row label="Signed in as">
+						{status?.connected ? status.account : <span className="text-muted-foreground">Not signed in</span>}
+					</Row>
 					<Row label="Last upload">
 						{status?.lastUpload ? (
 							<span>
@@ -206,16 +225,26 @@ function ManageAddon() {
 						)}
 					</Row>
 				</Rows>
-				<Button className="mt-3" variant="outline" disabled={busy || !status?.connected} onClick={() => run(() => app?.uploadNow?.())}>
+				<Button
+					className="mt-3"
+					variant="outline"
+					disabled={busy || !status?.connected}
+					onClick={() => run(() => app?.uploadNow?.())}
+				>
 					Upload now
 				</Button>
 			</section>
-
 		</div>
 	);
 }
 
-function UninstallButton({ disabled, onUninstall }: { disabled: boolean; onUninstall: (savedData: boolean) => Promise<void> }) {
+function UninstallButton({
+	disabled,
+	onUninstall,
+}: {
+	disabled: boolean;
+	onUninstall: (savedData: boolean) => Promise<void>;
+}) {
 	const [open, setOpen] = useState(false);
 	const [savedData, setSavedData] = useState(false);
 	return (
@@ -226,14 +255,16 @@ function UninstallButton({ disabled, onUninstall }: { disabled: boolean; onUnins
 				<Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-background p-5 shadow-2xl">
 					<Dialog.Title className="text-[15px] font-semibold">Uninstall the Guildie addon?</Dialog.Title>
 					<Dialog.Description className="mt-2 text-[0.8125rem] text-muted-foreground">
-						Removes the addon from World of Warcraft: Forever. The app won't put it back until you choose Install. Restart WoW
-						afterwards if it's running.
+						Removes the addon from World of Warcraft: Forever. The app won't put it back until you choose Install.
+						Restart WoW afterwards if it's running.
 					</Dialog.Description>
 					<label className="mt-4 flex items-start gap-3 text-[0.8125rem]">
 						<Switch className="mt-0.5" checked={savedData} onCheckedChange={setSavedData} />
 						<span>
 							Also delete its saved data
-							<span className="block text-muted-foreground">Talent snapshots and settings the game saved for Guildie, on every account and character.</span>
+							<span className="block text-muted-foreground">
+								Talent snapshots and settings the game saved for Guildie, on every account and character.
+							</span>
 						</span>
 					</label>
 					<div className="mt-5 flex justify-end gap-2">

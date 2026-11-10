@@ -5,7 +5,14 @@ import { matchRecipes, parseCharacter } from "./addonPayload.ts";
 const NOW = 1_794_300_000_000;
 const T = NOW / 1000 - 60;
 
-const v1 = { guid: "Player-4904-004E2B22", name: "Lich", level: 22, classToken: "PRIEST", capturedAt: T, talents: [{ id: 134214, rank: 5, name: "Wand Specialization" }] };
+const v1 = {
+	guid: "Player-4904-004E2B22",
+	name: "Lich",
+	level: 22,
+	classToken: "PRIEST",
+	capturedAt: T,
+	talents: [{ id: 134214, rank: 5, name: "Wand Specialization" }],
+};
 
 const v2 = {
 	...v1,
@@ -43,7 +50,11 @@ const v2 = {
 		],
 	},
 	recipes: [
-		{ profession: "Tailoring", capturedAt: T - 30, known: [{ name: "Bolt of Linen Cloth", item: 2996 }, { name: "Odd" }] },
+		{
+			profession: "Tailoring",
+			capturedAt: T - 30,
+			known: [{ name: "Bolt of Linen Cloth", item: 2996 }, { name: "Odd" }],
+		},
 		{ profession: "Basket Weaving", capturedAt: T, known: [] },
 	],
 };
@@ -84,12 +95,20 @@ test("version 2: gear, professions, recipes", () => {
 	]);
 	assert.equal(c.professions?.dropped, 1);
 	assert.deepEqual(c.recipes, [
-		{ professionId: 197, profession: "Tailoring", capturedAt: (T - 30) * 1000, known: [{ name: "Bolt of Linen Cloth", itemId: 2996 }, { name: "Odd" }] },
+		{
+			professionId: 197,
+			profession: "Tailoring",
+			capturedAt: (T - 30) * 1000,
+			known: [{ name: "Bolt of Linen Cloth", itemId: 2996 }, { name: "Odd" }],
+		},
 	]);
 });
 
 test("professions in a language we can't read fall back to Blizzard's", () => {
-	const r = parseCharacter({ ...v2, professions: { capturedAt: T, skills: [{ name: "Schneiderei", rank: 1, max: 75 }] } }, NOW);
+	const r = parseCharacter(
+		{ ...v2, professions: { capturedAt: T, skills: [{ name: "Schneiderei", rank: 1, max: 75 }] } },
+		NOW,
+	);
 	assert.ok(r.ok);
 	assert.equal(r.character.professions, undefined);
 	const none = parseCharacter({ ...v2, professions: { capturedAt: T, skills: [] } }, NOW);
@@ -105,9 +124,29 @@ test("rejects bad shapes, sizes and clocks, naming the field", () => {
 		[{ ...v1, talents: Array.from({ length: 121 }, () => ({ id: 1, rank: 1 })) }, /talents: more than 120/],
 		[{ ...v2, equipment: { ...v2.equipment, items: [{ ...v2.equipment.items[0], slot: 20 }] } }, /slot: out of range/],
 		[{ ...v2, equipment: { ...v2.equipment, items: [v2.equipment.items[0], v2.equipment.items[0]] } }, /slot: twice/],
-		[{ ...v2, equipment: { ...v2.equipment, items: [{ ...v2.equipment.items[0], tooltip: [{ left: "x".repeat(401) }] }] } }, /left: longer than 400/],
-		[{ ...v2, equipment: { ...v2.equipment, items: [{ ...v2.equipment.items[0], tooltip: [{ left: "a", color: "red" }] }] } }, /color: expected #rrggbb/],
-		[{ ...v2, recipes: [{ profession: "Tailoring", capturedAt: T, known: Array.from({ length: 1501 }, () => ({ name: "a" })) }] }, /known: more than 1500/],
+		[
+			{
+				...v2,
+				equipment: { ...v2.equipment, items: [{ ...v2.equipment.items[0], tooltip: [{ left: "x".repeat(401) }] }] },
+			},
+			/left: longer than 400/,
+		],
+		[
+			{
+				...v2,
+				equipment: { ...v2.equipment, items: [{ ...v2.equipment.items[0], tooltip: [{ left: "a", color: "red" }] }] },
+			},
+			/color: expected #rrggbb/,
+		],
+		[
+			{
+				...v2,
+				recipes: [
+					{ profession: "Tailoring", capturedAt: T, known: Array.from({ length: 1501 }, () => ({ name: "a" })) },
+				],
+			},
+			/known: more than 1500/,
+		],
 		[{ ...v2, guild: "Unbound" }, /guild: expected an object/],
 		["nope", /character: expected an object/],
 	];

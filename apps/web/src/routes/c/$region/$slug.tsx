@@ -1,6 +1,6 @@
 import { className, raceName } from "@convex/shared/wow";
-import { CharacterAvatar, UNFETCHED_NOTE } from "@/components/character-avatar";
 import { createFileRoute, Link, notFound, Outlet } from "@tanstack/react-router";
+import { CharacterAvatar, UNFETCHED_NOTE } from "@/components/character-avatar";
 import { characterQuery, sourceNote, useCharacter } from "@/components/character-data";
 import { ClassText } from "@/components/class-name";
 import { PageTab, PageTabs } from "@/components/page-tabs";

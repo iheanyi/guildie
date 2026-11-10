@@ -1,5 +1,5 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
+import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
@@ -33,7 +33,11 @@ function SettingsLayout() {
 						{viewer.guilds.map((g, i) => (
 							<span key={g._id}>
 								{i > 0 && ", "}
-								<Link to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} className="text-foreground hover:underline underline-offset-4">
+								<Link
+									to="/g/$region/$slug"
+									params={{ region: g.region, slug: g.slug }}
+									className="text-foreground hover:underline underline-offset-4"
+								>
 									{g.name}
 								</Link>
 							</span>

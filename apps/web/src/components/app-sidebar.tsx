@@ -1,7 +1,14 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { Dialog } from "@base-ui/react/dialog";
 import { api } from "@convex/_generated/api";
-import { AnvilIcon, Cancel01Icon, Login03Icon, Menu01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { convexQuery } from "@convex-dev/react-query";
+import {
+	AnvilIcon,
+	Cancel01Icon,
+	Login03Icon,
+	Menu01Icon,
+	Settings02Icon,
+	UserGroupIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, type LinkProps, useRouterState } from "@tanstack/react-router";
@@ -70,11 +77,20 @@ function SidebarNav() {
 										{g.name}
 									</div>
 									<div className="space-y-px">
-										<NavLink to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} activeOptions={{ exact: true }} className="pl-3">
+										<NavLink
+											to="/g/$region/$slug"
+											params={{ region: g.region, slug: g.slug }}
+											activeOptions={{ exact: true }}
+											className="pl-3"
+										>
 											<HugeiconsIcon icon={UserGroupIcon} size={15} strokeWidth={1.75} />
 											Roster
 										</NavLink>
-										<NavLink to="/g/$region/$slug/crafting" params={{ region: g.region, slug: g.slug }} className="pl-3">
+										<NavLink
+											to="/g/$region/$slug/crafting"
+											params={{ region: g.region, slug: g.slug }}
+											className="pl-3"
+										>
 											<HugeiconsIcon icon={AnvilIcon} size={15} strokeWidth={1.75} />
 											Crafting
 										</NavLink>
@@ -88,7 +104,12 @@ function SidebarNav() {
 				{characters.length > 0 && (
 					<NavSection title="Characters">
 						{characters.map((c) => (
-							<NavLink key={c._id} to="/c/$region/$slug" params={{ region: c.region, slug: c.slug }} className="h-9 pl-1.5">
+							<NavLink
+								key={c._id}
+								to="/c/$region/$slug"
+								params={{ region: c.region, slug: c.slug }}
+								className="h-9 pl-1.5"
+							>
 								<CharacterAvatar url={c.avatarUrl} size={24} className="rounded-full" />
 								<span className="min-w-0 flex-1 truncate">
 									<ClassText classId={c.classId}>{c.name}</ClassText>
@@ -108,7 +129,9 @@ function SidebarNav() {
 					<NavLink to="/settings">
 						<HugeiconsIcon icon={Settings02Icon} size={15} strokeWidth={1.75} />
 						<span className="flex-1">Settings</span>
-						<span className="min-w-0 truncate text-xs text-muted-foreground">{viewer.battletag?.split("#")[0] ?? viewer.name}</span>
+						<span className="min-w-0 truncate text-xs text-muted-foreground">
+							{viewer.battletag?.split("#")[0] ?? viewer.name}
+						</span>
 					</NavLink>
 				) : (
 					<NavLink to="/sign-in">

@@ -1,6 +1,6 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Region } from "@convex/shared/wow";
+import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";

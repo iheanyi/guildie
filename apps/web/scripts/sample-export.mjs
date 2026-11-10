@@ -9,17 +9,120 @@
 //   usage (in a checkout with `pnpm dev` running):
 //   node apps/web/scripts/sample-export.mjs [region/slug]   (default eu/unbound)
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // prettier-ignore
-const MALE = ["Aldric", "Corwin", "Garrick", "Ivo", "Jorun", "Kael", "Nils", "Pell", "Rowan", "Ulric", "Bram", "Cedric", "Dorran", "Edmar", "Faolan", "Gideon", "Halvard", "Ingram", "Jasper", "Kestrel", "Leoric", "Magnar", "Osric", "Perrin", "Roderic", "Soren", "Torvald", "Varric", "Wystan", "Alaric", "Benedikt", "Caspian", "Dunstan", "Evander", "Fenwick", "Gorm", "Hadrian", "Ivar", "Joren", "Lucan"];
+const MALE = [
+	"Aldric",
+	"Corwin",
+	"Garrick",
+	"Ivo",
+	"Jorun",
+	"Kael",
+	"Nils",
+	"Pell",
+	"Rowan",
+	"Ulric",
+	"Bram",
+	"Cedric",
+	"Dorran",
+	"Edmar",
+	"Faolan",
+	"Gideon",
+	"Halvard",
+	"Ingram",
+	"Jasper",
+	"Kestrel",
+	"Leoric",
+	"Magnar",
+	"Osric",
+	"Perrin",
+	"Roderic",
+	"Soren",
+	"Torvald",
+	"Varric",
+	"Wystan",
+	"Alaric",
+	"Benedikt",
+	"Caspian",
+	"Dunstan",
+	"Evander",
+	"Fenwick",
+	"Gorm",
+	"Hadrian",
+	"Ivar",
+	"Joren",
+	"Lucan",
+];
 // prettier-ignore
-const FEMALE = ["Brenna", "Dagny", "Fenna", "Hesper", "Liesel", "Maren", "Orla", "Sable", "Tamsin", "Vesna", "Wren", "Yarrow", "Astrid", "Briallen", "Calla", "Delphine", "Elowen", "Freya", "Gwendolyn", "Isolde", "Junia", "Katla", "Linnea", "Morwenna", "Nerys", "Ondine", "Petra", "Rhosyn", "Sigrun", "Thessaly", "Ysolde", "Aveline", "Brisa", "Cerys", "Eira", "Hollis", "Ilse", "Lark", "Mireille", "Saoirse"];
+const FEMALE = [
+	"Brenna",
+	"Dagny",
+	"Fenna",
+	"Hesper",
+	"Liesel",
+	"Maren",
+	"Orla",
+	"Sable",
+	"Tamsin",
+	"Vesna",
+	"Wren",
+	"Yarrow",
+	"Astrid",
+	"Briallen",
+	"Calla",
+	"Delphine",
+	"Elowen",
+	"Freya",
+	"Gwendolyn",
+	"Isolde",
+	"Junia",
+	"Katla",
+	"Linnea",
+	"Morwenna",
+	"Nerys",
+	"Ondine",
+	"Petra",
+	"Rhosyn",
+	"Sigrun",
+	"Thessaly",
+	"Ysolde",
+	"Aveline",
+	"Brisa",
+	"Cerys",
+	"Eira",
+	"Hollis",
+	"Ilse",
+	"Lark",
+	"Mireille",
+	"Saoirse",
+];
 // prettier-ignore
-const SURNAMES = ["Ashdown", "Brightwater", "Coldbrook", "Duskmantle", "Emberfall", "Fairwind", "Greyhollow", "Hearthstone", "Ironvale", "Larkspur", "Moonbrook", "Oakheart", "Stormcrest", "Thornfield", "Wolfsbane", "Ravenmoor", "Silverleaf", "Blackwood", "Frostmere", "Goldthorn"];
+const SURNAMES = [
+	"Ashdown",
+	"Brightwater",
+	"Coldbrook",
+	"Duskmantle",
+	"Emberfall",
+	"Fairwind",
+	"Greyhollow",
+	"Hearthstone",
+	"Ironvale",
+	"Larkspur",
+	"Moonbrook",
+	"Oakheart",
+	"Stormcrest",
+	"Thornfield",
+	"Wolfsbane",
+	"Ravenmoor",
+	"Silverleaf",
+	"Blackwood",
+	"Frostmere",
+	"Goldthorn",
+];
 
 const app = join(dirname(fileURLToPath(import.meta.url)), "..");
 const out = join(app, "fixtures/sample");
@@ -28,11 +131,18 @@ const [region, slug] = (process.argv[2] ?? "eu/unbound").split("/");
 const tmp = mkdtempSync(join(tmpdir(), "guildie-sample-"));
 try {
 	const env = { ...process.env, CONVEX_AGENT_MODE: "anonymous" };
-	execFileSync("npx", ["convex", "export", "--path", join(tmp, "snapshot.zip")], { cwd: app, env, stdio: ["ignore", "ignore", "inherit"] });
+	execFileSync("npx", ["convex", "export", "--path", join(tmp, "snapshot.zip")], {
+		cwd: app,
+		env,
+		stdio: ["ignore", "ignore", "inherit"],
+	});
 	execFileSync("unzip", ["-q", join(tmp, "snapshot.zip"), "-x", "_components/*", "-d", join(tmp, "data")]);
 	const read = (table) => {
 		try {
-			return readFileSync(join(tmp, "data", table, "documents.jsonl"), "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
+			return readFileSync(join(tmp, "data", table, "documents.jsonl"), "utf8")
+				.split("\n")
+				.filter(Boolean)
+				.map((line) => JSON.parse(line));
 		} catch {
 			return [];
 		}
@@ -105,14 +215,18 @@ try {
 		items: items.sort((a, b) => a.itemId - b.itemId),
 		recipes: recipes.sort((a, b) => a.recipeId - b.recipeId),
 		talentLayouts: read("talentLayouts").sort((a, b) => a.specId - b.specId),
-		talentTreeInfo: read("talentTreeInfo").sort((a, b) => a.classToken.localeCompare(b.classToken) || a.treeIndex - b.treeIndex),
+		talentTreeInfo: read("talentTreeInfo").sort(
+			(a, b) => a.classToken.localeCompare(b.classToken) || a.treeIndex - b.treeIndex,
+		),
 	};
 
 	// Table numbers: the ids above encode them, so the import recreates each
 	// app table (schema.ts) with its number here.
 	const schema = readFileSync(join(app, "convex/schema.ts"), "utf8");
 	const appTables = new Set([...schema.matchAll(/^\t(\w+): defineTable\(/gm)].map((m) => m[1]));
-	const tableNumbers = read("_tables").filter((t) => appTables.has(t.name)).sort((a, b) => a.id - b.id);
+	const tableNumbers = read("_tables")
+		.filter((t) => appTables.has(t.name))
+		.sort((a, b) => a.id - b.id);
 
 	rmSync(out, { recursive: true, force: true });
 	mkdirSync(out, { recursive: true });

@@ -12,7 +12,11 @@ import { fileURLToPath } from "node:url";
 const app = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fixture = join(app, "fixtures/sample");
 const read = (file) => readFileSync(join(fixture, file), "utf8");
-const rows = (table) => read(`${table}.jsonl`).split("\n").filter(Boolean).map((line) => JSON.parse(line));
+const rows = (table) =>
+	read(`${table}.jsonl`)
+		.split("\n")
+		.filter(Boolean)
+		.map((line) => JSON.parse(line));
 
 const { exportedAt } = JSON.parse(read("meta.json"));
 const shift = Date.now() - exportedAt;
@@ -35,7 +39,10 @@ const tables = rows("_tables");
 const files = [["_tables/documents.jsonl", read("_tables.jsonl")]];
 for (const { name } of tables) {
 	const data = name in times ? rows(name).map((row) => later(row, times[name])) : [];
-	files.push([`${name}/documents.jsonl`, data.map((row) => JSON.stringify(row)).join("\n") + (data.length ? "\n" : "")]);
+	files.push([
+		`${name}/documents.jsonl`,
+		data.map((row) => JSON.stringify(row)).join("\n") + (data.length ? "\n" : ""),
+	]);
 }
 
 const dir = mkdtempSync(join(tmpdir(), "guildie-sample-"));

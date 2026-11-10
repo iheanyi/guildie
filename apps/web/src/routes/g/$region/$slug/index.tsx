@@ -1,9 +1,15 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
-import { CLASSES, className, raceName, type Region } from "@convex/shared/wow";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowDown01Icon, ArrowUp01Icon, CheckmarkBadge01Icon, GameController03Icon, HourglassIcon } from "@hugeicons/core-free-icons";
+import { CLASSES, className, type Region, raceName } from "@convex/shared/wow";
+import { convexQuery } from "@convex-dev/react-query";
+import {
+	ArrowDown01Icon,
+	ArrowUp01Icon,
+	CheckmarkBadge01Icon,
+	GameController03Icon,
+	HourglassIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { useMemo, useState } from "react";
@@ -92,7 +98,10 @@ function Roster({ members }: { members: Member[] }) {
 	}, [members]);
 
 	const header = (key: SortKey, label: string, align?: "right", className?: string) => (
-		<TableHead className={cn(align === "right" && "text-right", className)} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : undefined}>
+		<TableHead
+			className={cn(align === "right" && "text-right", className)}
+			aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : undefined}
+		>
 			<button
 				type="button"
 				className={cn(
@@ -118,14 +127,14 @@ function Roster({ members }: { members: Member[] }) {
 	return (
 		<section className="pb-10">
 			<div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-				<Input
-					value={search}
-					onChange={(e) => setSearch(e.target.value)}
-					placeholder="Search"
-					className="w-64"
-				/>
+				<Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" className="w-64" />
 				<div className="flex flex-wrap gap-1">
-					<button type="button" className="chip" data-active={classFilter === null} onClick={() => setClassFilter(null)}>
+					<button
+						type="button"
+						className="chip"
+						data-active={classFilter === null}
+						onClick={() => setClassFilter(null)}
+					>
 						All <span className="num text-muted-foreground">{members.length}</span>
 					</button>
 					{Object.entries(CLASSES)
@@ -188,7 +197,11 @@ function Roster({ members }: { members: Member[] }) {
 									</TooltipContent>
 								</Tooltip>
 								{!m.synced && (
-									<span className="ml-1.5 inline-flex translate-y-[2px] text-muted-foreground/60" aria-label="Not published by Blizzard yet">
+									<span
+										className="ml-1.5 inline-flex translate-y-[2px] text-muted-foreground/60"
+										role="img"
+										aria-label="Not published by Blizzard yet"
+									>
 										<HugeiconsIcon icon={HourglassIcon} size={13} strokeWidth={1.75} />
 									</span>
 								)}
@@ -196,6 +209,7 @@ function Roster({ members }: { members: Member[] }) {
 									<span
 										className="ml-1.5 inline-flex translate-y-[2px] text-muted-foreground/70"
 										title="Claimed on Guildie"
+										role="img"
 										aria-label="Claimed on Guildie"
 									>
 										<HugeiconsIcon icon={CheckmarkBadge01Icon} size={14} strokeWidth={1.75} />
@@ -236,8 +250,8 @@ function Roster({ members }: { members: Member[] }) {
 			</Table>
 			{rows.length === 0 && <p className="py-6 text-center text-muted-foreground">Nobody matches.</p>}
 			<p className="mt-4 text-xs text-muted-foreground">
-				Talents, professions, gear and last synced fill in once a character is level 10 and has logged out.
-				Blizzard's API doesn't say who's online right now.
+				Talents, professions, gear and last synced fill in once a character is level 10 and has logged out. Blizzard's
+				API doesn't say who's online right now.
 			</p>
 		</section>
 	);
@@ -259,7 +273,13 @@ function LastSynced({ synced }: { synced: Synced }) {
 		<Tooltip>
 			<TooltipTrigger render={<span className="inline-flex items-center justify-end gap-1.5" />}>
 				{synced.kind === "app" && (
-					<HugeiconsIcon icon={GameController03Icon} size={14} strokeWidth={1.75} className="text-foreground/80" aria-label="Synced in game" />
+					<HugeiconsIcon
+						icon={GameController03Icon}
+						size={14}
+						strokeWidth={1.75}
+						className="text-foreground/80"
+						aria-label="Synced in game"
+					/>
 				)}
 				{ago(synced.at)}
 			</TooltipTrigger>

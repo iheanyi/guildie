@@ -70,7 +70,12 @@ export function TalentTree({ layout, tree }: { layout: TalentLayout; tree: Chara
 			</header>
 			<div className="flex justify-center px-3 py-4">
 				<div className="relative" style={{ width, height }}>
-					<svg className="pointer-events-none absolute inset-0 overflow-visible" width={width} height={height} aria-hidden>
+					<svg
+						className="pointer-events-none absolute inset-0 overflow-visible"
+						width={width}
+						height={height}
+						aria-hidden
+					>
 						{arrows.map(({ from, to }) => (
 							<Arrow key={`${from.talentId}-${to.talentId}`} from={from} to={to} />
 						))}

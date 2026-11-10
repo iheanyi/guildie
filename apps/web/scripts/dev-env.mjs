@@ -9,7 +9,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const siteUrl = process.argv[2] ?? "https://guildie.localhost:1355";
-const convex = (...args) => execFileSync("npx", ["convex", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+const convex = (...args) =>
+	execFileSync("npx", ["convex", ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 // One read and one write: each change to the settings makes Convex retry its push.
 const current = new Map(
 	convex("env", "list", "--include-values")

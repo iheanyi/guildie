@@ -27,9 +27,7 @@ function TalentsPage() {
 		<div className="@container w-full">
 			<div className="mb-3 flex items-baseline justify-between gap-4">
 				<span className="num text-sm font-semibold">{summary.join(" / ")}</span>
-				<span className="num text-xs text-muted-foreground">
-					{summary.reduce((a, b) => a + b, 0)} points
-				</span>
+				<span className="num text-xs text-muted-foreground">{summary.reduce((a, b) => a + b, 0)} points</span>
 			</div>
 			{/* Three 224px trees side by side need 688px; below that they stack. */}
 			<div className="grid gap-2 @[43rem]:grid-cols-3">

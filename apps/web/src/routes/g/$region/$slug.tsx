@@ -1,7 +1,7 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { AUTO_SYNC_INTERVAL_MS, MANUAL_SYNC_COOLDOWN_MS, type Region } from "@convex/shared/wow";
+import { convexQuery } from "@convex-dev/react-query";
 import { RefreshIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -59,21 +59,11 @@ function GuildLayout() {
 				title={guild.name}
 				description={
 					<span className="num">
-						{[
-							guild.region.toUpperCase(),
-							faction,
-							`${guild.memberCount} members`,
-						]
-							.filter(Boolean)
-							.join(" · ")}
+						{[guild.region.toUpperCase(), faction, `${guild.memberCount} members`].filter(Boolean).join(" · ")}
 					</span>
 				}
 				actions={
-					<GuildActions
-						guildId={guild._id}
-						syncedAt={guild.rosterSyncedAt}
-						requestedAt={guild.syncRequestedAt}
-					/>
+					<GuildActions guildId={guild._id} syncedAt={guild.rosterSyncedAt} requestedAt={guild.syncRequestedAt} />
 				}
 			>
 				{guild.lastSyncError && <p className="mt-2 text-[0.8125rem] text-destructive">{guild.lastSyncError}</p>}
@@ -120,7 +110,15 @@ const minutes = (ms: number) => {
  * The hover says when it synced, when it next syncs by itself, and when the
  * button works again.
  */
-function SyncButton({ guildId, syncedAt, requestedAt }: { guildId: Id<"guilds">; syncedAt?: number; requestedAt?: number }) {
+function SyncButton({
+	guildId,
+	syncedAt,
+	requestedAt,
+}: {
+	guildId: Id<"guilds">;
+	syncedAt?: number;
+	requestedAt?: number;
+}) {
 	const requestSync = useMutation(api.guilds.requestSync);
 	const now = useNow();
 	const [error, setError] = useState<string | null>(null);
@@ -149,17 +147,28 @@ function SyncButton({ guildId, syncedAt, requestedAt }: { guildId: Id<"guilds">;
 					/>
 				}
 			>
-				<HugeiconsIcon icon={RefreshIcon} size={14} strokeWidth={1.75} className={syncing ? "animate-spin" : undefined} />
+				<HugeiconsIcon
+					icon={RefreshIcon}
+					size={14}
+					strokeWidth={1.75}
+					className={syncing ? "animate-spin" : undefined}
+				/>
 				{syncing ? "Syncing…" : syncedAt ? `Synced ${ago(syncedAt)}` : "Sync now"}
 			</TooltipTrigger>
 			<TooltipContent side="bottom" align="end" className="block max-w-72 space-y-1 text-left">
 				{error && <p className="text-destructive">{error}</p>}
 				{syncing ? (
-					<p>Syncing with Blizzard. The roster updates by itself, then each member's details over the next few minutes.</p>
+					<p>
+						Syncing with Blizzard. The roster updates by itself, then each member's details over the next few minutes.
+					</p>
 				) : (
 					<>
 						<p>{syncedAt ? `Synced with Blizzard ${ago(syncedAt)}.` : "Not synced with Blizzard yet."}</p>
-						<p>{nextAuto > 0 ? `Syncs by itself every hour; next in about ${minutes(nextAuto)}.` : "Syncs by itself every hour; next any minute."}</p>
+						<p>
+							{nextAuto > 0
+								? `Syncs by itself every hour; next in about ${minutes(nextAuto)}.`
+								: "Syncs by itself every hour; next any minute."}
+						</p>
 						<p>{canSync ? "Click to sync now." : `You can sync again in ${minutes(cooldownLeft)}.`}</p>
 					</>
 				)}

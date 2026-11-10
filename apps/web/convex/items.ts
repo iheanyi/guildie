@@ -60,7 +60,8 @@ export function tooltipLines(p: ItemPreview): Line[] {
 	const equipSlot = p.inventory_type?.type && p.inventory_type.type !== "NON_EQUIP" ? p.inventory_type.name : undefined;
 	if (p.container_slots?.display_string) push(p.container_slots.display_string);
 	else if (equipSlot) push(equipSlot, { right: p.is_subclass_hidden ? undefined : p.item_subclass?.name });
-	if (p.weapon?.damage?.display_string) push(p.weapon.damage.display_string, { right: p.weapon.attack_speed?.display_string });
+	if (p.weapon?.damage?.display_string)
+		push(p.weapon.damage.display_string, { right: p.weapon.attack_speed?.display_string });
 	push(p.weapon?.dps?.display_string);
 	push(p.armor?.display?.display_string, { color: hex(p.armor?.display?.color) });
 	for (const s of p.stats ?? []) push(s.display?.display_string, { color: hex(s.display?.color) });
@@ -87,7 +88,8 @@ export const missing = internalQuery({
 				.unique();
 			// Gear saved before hints carried tooltips has none; refetch it when a
 			// hint can fill it in (trade goods legitimately have no lines).
-			if (!row || (refetchEmpty && row.tooltip.length === 0) || (olderThan !== undefined && row.syncedAt < olderThan)) out.push(itemId);
+			if (!row || (refetchEmpty && row.tooltip.length === 0) || (olderThan !== undefined && row.syncedAt < olderThan))
+				out.push(itemId);
 		}
 		return out;
 	},
@@ -105,7 +107,9 @@ const vHint = v.object({
 	itemId: v.number(),
 	name: v.optional(v.string()),
 	quality: v.optional(v.string()),
-	tooltip: v.optional(v.array(v.object({ left: v.string(), right: v.optional(v.string()), color: v.optional(v.string()) }))),
+	tooltip: v.optional(
+		v.array(v.object({ left: v.string(), right: v.optional(v.string()), color: v.optional(v.string()) })),
+	),
 });
 
 /** Fetch the given items we don't have yet, in staggered batches. */
@@ -150,7 +154,12 @@ export const syncRecipeItems = internalAction({
 	},
 });
 
-type Item = { name?: string; quality?: { type?: string }; item_subclass?: { name?: string }; preview_item?: ItemPreview & { name?: string } };
+type Item = {
+	name?: string;
+	quality?: { type?: string };
+	item_subclass?: { name?: string };
+	preview_item?: ItemPreview & { name?: string };
+};
 type Media = { assets?: { key: string; value: string }[] };
 
 export const syncBatch = internalAction({

@@ -179,12 +179,24 @@ html[data-desktop="true"] {
 }
 
 /* Item quality, the game's colors. */
-.q-POOR { --class: #9d9d9d; }
-.q-COMMON { --class: #ffffff; }
-.q-UNCOMMON { --class: #1eff00; }
-.q-RARE { --class: #0070dd; }
-.q-EPIC { --class: #a335ee; }
-.q-LEGENDARY { --class: #ff8000; }
+.q-POOR {
+	--class: #9d9d9d;
+}
+.q-COMMON {
+	--class: #ffffff;
+}
+.q-UNCOMMON {
+	--class: #1eff00;
+}
+.q-RARE {
+	--class: #0070dd;
+}
+.q-EPIC {
+	--class: #a335ee;
+}
+.q-LEGENDARY {
+	--class: #ff8000;
+}
 
 /* Components, so Tailwind utilities on the same elements win. */
 @layer components {
@@ -338,7 +350,9 @@ html[data-desktop="true"] {
 		background-color: var(--tooltip);
 		border: 1px solid var(--tooltip-border);
 		border-radius: 4px;
-		box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6), 0 8px 24px rgb(0 0 0 / 0.5);
+		box-shadow:
+			0 0 0 1px rgb(0 0 0 / 0.6),
+			0 8px 24px rgb(0 0 0 / 0.5);
 	}
 
 	/* ---- Tables: hairlines, quiet heads, a fill under the pointer ---- */
@@ -379,7 +393,9 @@ html[data-desktop="true"] {
 		border-radius: var(--radius);
 		color: var(--muted-foreground);
 		font-size: 0.8125rem;
-		transition: background-color 0.1s, border-color 0.1s;
+		transition:
+			background-color 0.1s,
+			border-color 0.1s;
 	}
 	.chip:hover {
 		background-color: var(--hover);

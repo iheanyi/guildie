@@ -1,15 +1,15 @@
+import { api } from "@convex/_generated/api";
 import { useSignInAnonymously } from "@convex-dev/auth/methods/anonymous/react";
 import { useOauth, useOauthSignIn } from "@convex-dev/auth/methods/oauth/react";
 import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@convex/_generated/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { Page, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { desktop, useDesktopStatus, useInDesktopApp } from "@/lib/desktop";
 import { landingPath, markSignInPending, safeNext, signInPending, startClaim, updateSignInPending } from "@/lib/claim";
+import { desktop, useDesktopStatus, useInDesktopApp } from "@/lib/desktop";
 import type { RouterContext } from "./__root";
 
 /** Fresh on the client (the cached viewer can predate the sign-in). */
@@ -167,7 +167,9 @@ function DesktopSignIn() {
 				disabled={pending}
 				onClick={async () => {
 					setPending(true);
-					await desktop()?.signIn?.().catch(() => undefined);
+					await desktop()
+						?.signIn?.()
+						.catch(() => undefined);
 					setPending(false);
 				}}
 			>
@@ -175,7 +177,9 @@ function DesktopSignIn() {
 			</Button>
 			{pairingCode && (
 				<div className="mt-6">
-					<p className="text-[13px] text-muted-foreground">Check that your browser shows this code, then click Connect there.</p>
+					<p className="text-[13px] text-muted-foreground">
+						Check that your browser shows this code, then click Connect there.
+					</p>
 					<p className="num mt-2 inline-block rounded-md border border-border bg-muted px-4 py-2 font-mono text-2xl tracking-[0.25em]">
 						{pairingCode}
 					</p>

@@ -103,7 +103,13 @@ export function ItemHover({
 	return (
 		<Tooltip>
 			<TooltipTrigger
-				render={<Link to="." search={(prev: Record<string, unknown>) => ({ ...prev, item: item.itemId })} className={className} />}
+				render={
+					<Link
+						to="."
+						search={(prev: Record<string, unknown>) => ({ ...prev, item: item.itemId })}
+						className={className}
+					/>
+				}
 			>
 				{children}
 			</TooltipTrigger>

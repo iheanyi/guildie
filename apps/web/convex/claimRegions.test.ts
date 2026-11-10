@@ -41,7 +41,12 @@ test("404 is 'none', other failures are per-region errors, the rest still count"
 		us: () =>
 			account([
 				{ id: 7, name: "Brenna", surname: "Ashvale", level: 23, playable_class: { id: 5 } },
-				{ id: 8, name: "Corwin", level: 9, character: { href: "https://us.api.blizzard.com/profile/wow/character/corwin-stone?namespace=x" } },
+				{
+					id: 8,
+					name: "Corwin",
+					level: 9,
+					character: { href: "https://us.api.blizzard.com/profile/wow/character/corwin-stone?namespace=x" },
+				},
 			]),
 		eu: () => new Response("not found", { status: 404 }),
 		kr: () => new Response("boom", { status: 500 }),
@@ -76,7 +81,10 @@ test("slugs", () => {
 });
 
 test("guild from a character profile", () => {
-	assert.deepEqual(guildOfProfile({ guild: { name: "The Long Watch" } }), { name: "The Long Watch", slug: "the-long-watch" });
+	assert.deepEqual(guildOfProfile({ guild: { name: "The Long Watch" } }), {
+		name: "The Long Watch",
+		slug: "the-long-watch",
+	});
 	assert.deepEqual(guildOfProfile({ guild: { name: "Ember", slug: "ember" } }), { name: "Ember", slug: "ember" });
 	assert.equal(guildOfProfile({}), null);
 	assert.equal(guildOfProfile(undefined), null);

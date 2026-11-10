@@ -36,7 +36,14 @@ const snapshot = (at: number) => ({
 		],
 	},
 	recipes: [
-		{ professionId: 197, profession: "Tailoring", capturedAt: at - 60_000, recipeIds: [11, 12], count: 2, unmatched: 0 },
+		{
+			professionId: 197,
+			profession: "Tailoring",
+			capturedAt: at - 60_000,
+			recipeIds: [11, 12],
+			count: 2,
+			unmatched: 0,
+		},
 		{ professionId: 333, profession: "Enchanting", capturedAt: at, recipeIds: [21], count: 1, unmatched: 0 },
 	],
 });
@@ -130,7 +137,23 @@ test("average item level, Blizzard's way", () => {
 		itemLevel,
 		tooltip: twoHand ? [{ left: "Two-Hand", right: "Staff" }] : [],
 	});
-	const gear = ["HEAD", "NECK", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "TRINKET_1", "TRINKET_2", "RANGED"].map((s) => item(s, 32));
+	const gear = [
+		"HEAD",
+		"NECK",
+		"SHOULDER",
+		"BACK",
+		"CHEST",
+		"WRIST",
+		"HANDS",
+		"WAIST",
+		"LEGS",
+		"FEET",
+		"FINGER_1",
+		"FINGER_2",
+		"TRINKET_1",
+		"TRINKET_2",
+		"RANGED",
+	].map((s) => item(s, 32));
 	assert.equal(averageItemLevel([...gear, item("SHIRT", 1), item("MAIN_HAND", 33, true)]), 32);
 	assert.equal(averageItemLevel([...gear, item("MAIN_HAND", 34)]), 30);
 	assert.equal(averageItemLevel([]), undefined);

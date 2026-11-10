@@ -61,7 +61,15 @@ const SLOT_NAMES: Record<string, string> = {
 };
 
 /** Equip locations that are weapons (item class 2). */
-export const WEAPON_INV_TYPES = new Set(["WEAPON", "2HWEAPON", "WEAPONMAINHAND", "WEAPONOFFHAND", "RANGED", "RANGEDRIGHT", "THROWN"]);
+export const WEAPON_INV_TYPES = new Set([
+	"WEAPON",
+	"2HWEAPON",
+	"WEAPONMAINHAND",
+	"WEAPONOFFHAND",
+	"RANGED",
+	"RANGEDRIGHT",
+	"THROWN",
+]);
 
 const ARMOR_NAMES: Record<string, number> = {
 	Miscellaneous: 0,
@@ -129,7 +137,10 @@ export const STAT_NAMES: Record<string, string> = {
 const EQUIP_LINES: [RegExp, string][] = [
 	[/^Equip: Increases damage and healing done by magical spells and effects by up to (\d+)\.$/, "SPELL_POWER"],
 	[/^Equip: Increases healing done by spells and effects by up to (\d+)\.$/, "SPELL_HEALING_DONE"],
-	[/^Equip: Increases damage done by (Arcane|Fire|Frost|Nature|Shadow|Holy) spells and effects by up to (\d+)\.$/, "school"],
+	[
+		/^Equip: Increases damage done by (Arcane|Fire|Frost|Nature|Shadow|Holy) spells and effects by up to (\d+)\.$/,
+		"school",
+	],
 	[/^Equip: \+(\d+) Attack Power\.$/, "ATTACK_POWER"],
 	[/^Equip: Restores (\d+) mana per 5 sec\.$/, "MANA_REGENERATION"],
 	[/^Equip: Restores (\d+) health (?:every|per) 5 sec\.$/, "HEALTH_REGEN"],

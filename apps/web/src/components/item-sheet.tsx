@@ -1,7 +1,7 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Region } from "@convex/shared/wow";
+import { convexQuery } from "@convex-dev/react-query";
 import { Cancel01Icon, LinkSquare02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,8 +22,10 @@ function useGuildContext() {
 			for (const m of s.matches) {
 				const params = m.params as { region?: string; slug?: string };
 				if (!params.region || !params.slug) continue;
-				if (m.routeId.startsWith("/g/")) return { kind: "guild" as const, region: params.region as Region, slug: params.slug };
-				if (m.routeId.startsWith("/c/")) return { kind: "character" as const, region: params.region as Region, slug: params.slug };
+				if (m.routeId.startsWith("/g/"))
+					return { kind: "guild" as const, region: params.region as Region, slug: params.slug };
+				if (m.routeId.startsWith("/c/"))
+					return { kind: "character" as const, region: params.region as Region, slug: params.slug };
 			}
 			return undefined;
 		},
@@ -35,7 +37,11 @@ export function ItemSheet() {
 	const { item: itemId } = useSearch({ strict: false }) as { item?: number };
 	const navigate = useNavigate();
 	const close = () =>
-		void navigate({ to: ".", search: (prev: Record<string, unknown>) => ({ ...prev, item: undefined }), replace: true });
+		void navigate({
+			to: ".",
+			search: (prev: Record<string, unknown>) => ({ ...prev, item: undefined }),
+			replace: true,
+		});
 	return (
 		<Dialog.Root open={itemId !== undefined} onOpenChange={(open) => !open && close()}>
 			<Dialog.Portal>
@@ -60,7 +66,10 @@ function ItemPanel({ itemId, onClose }: { itemId: number; onClose: () => void })
 			<div className="flex flex-none items-start gap-3 border-b border-border p-4">
 				<ItemIcon icon={item?.icon} quality={item?.quality} size={48} />
 				<div className="min-w-0 flex-1">
-					<Dialog.Title className="text-[15px] font-semibold leading-snug" style={{ color: QUALITY_COLORS[item?.quality ?? "COMMON"] }}>
+					<Dialog.Title
+						className="text-[15px] font-semibold leading-snug"
+						style={{ color: QUALITY_COLORS[item?.quality ?? "COMMON"] }}
+					>
 						{item?.name ?? (isPending ? "Loading…" : `Item ${itemId}`)}
 					</Dialog.Title>
 					{item?.kind && <p className="mt-0.5 text-xs text-muted-foreground">{item.kind}</p>}
@@ -118,7 +127,9 @@ function ItemPanel({ itemId, onClose }: { itemId: number; onClose: () => void })
 													>
 														<ClassText classId={c.classId}>{c.name}</ClassText>
 													</Link>
-													{c.skill !== undefined && <span className="num text-xs text-muted-foreground"> {c.skill}</span>}
+													{c.skill !== undefined && (
+														<span className="num text-xs text-muted-foreground"> {c.skill}</span>
+													)}
 												</span>
 											))
 										)}
@@ -135,13 +146,19 @@ function ItemPanel({ itemId, onClose }: { itemId: number; onClose: () => void })
 							{data.upgrades.map((u) => (
 								<div key={`${u.region}:${u.slug}`} className="space-y-0.5 px-3 py-2 text-[13px]">
 									<div className="flex items-baseline gap-2">
-										<Link to="/c/$region/$slug" params={{ region: u.region, slug: u.slug }} className="font-medium hover:underline">
+										<Link
+											to="/c/$region/$slug"
+											params={{ region: u.region, slug: u.slug }}
+											className="font-medium hover:underline"
+										>
 											<ClassText classId={u.classId}>{u.name}</ClassText>
 										</Link>
 										<span className="text-xs text-muted-foreground">
 											<span className="num">{u.level}</span> {u.spec}
 										</span>
-										<span className={u.kind === "upgrade" ? "ml-auto text-xs" : "ml-auto text-xs text-muted-foreground"}>
+										<span
+											className={u.kind === "upgrade" ? "ml-auto text-xs" : "ml-auto text-xs text-muted-foreground"}
+										>
 											{u.kind === "upgrade" ? "Upgrade" : u.at ? `Maybe, at ${u.at}` : "Maybe"}
 										</span>
 									</div>
@@ -149,7 +166,9 @@ function ItemPanel({ itemId, onClose }: { itemId: number; onClose: () => void })
 								</div>
 							))}
 						</div>
-						<p className="text-xs text-muted-foreground">A best guess from stat weights and what they wear, not a sim.</p>
+						<p className="text-xs text-muted-foreground">
+							A best guess from stat weights and what they wear, not a sim.
+						</p>
 					</Section>
 				)}
 
@@ -165,7 +184,10 @@ function ItemPanel({ itemId, onClose }: { itemId: number; onClose: () => void })
 									) : (
 										<ItemIcon size={24} />
 									)}
-									<span className="min-w-0 flex-1 truncate" style={r.item ? { color: QUALITY_COLORS[r.item.quality] } : undefined}>
+									<span
+										className="min-w-0 flex-1 truncate"
+										style={r.item ? { color: QUALITY_COLORS[r.item.quality] } : undefined}
+									>
 										{r.item?.name ?? r.name}
 									</span>
 									<span className="num text-xs text-muted-foreground">×{r.quantity}</span>

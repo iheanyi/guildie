@@ -45,7 +45,9 @@ function apply(win: BrowserWindow, set: SetAttribute, log: Log, when: string) {
 		// says E_INVALIDARG, which is fine: no such border there).
 		if (!reported) {
 			reported = true;
-			log(`Window border: ${result === 0 ? "hidden" : `DwmSetWindowAttribute returned 0x${(result >>> 0).toString(16)}`} (${when})`);
+			log(
+				`Window border: ${result === 0 ? "hidden" : `DwmSetWindowAttribute returned 0x${(result >>> 0).toString(16)}`} (${when})`,
+			);
 		}
 	} catch (e) {
 		log(`Window border: ${(e as Error).message}`);

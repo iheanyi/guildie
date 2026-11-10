@@ -1,12 +1,12 @@
-import { convexQuery, type ConvexQueryClient } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
+import { type ConvexQueryClient, convexQuery } from "@convex-dev/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouter } from "@tanstack/react-router";
 import { type ConvexReactClient, useConvexAuth } from "convex/react";
 import { type ReactNode, useEffect, useRef } from "react";
-import { DesktopBridge } from "@/components/desktop-bridge";
 import { AppSidebar, AppTopBar } from "@/components/app-sidebar";
 import { AppTitleBar } from "@/components/app-titlebar";
+import { DesktopBridge } from "@/components/desktop-bridge";
 import { ItemSheet } from "@/components/item-sheet";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getAuthToken } from "@/lib/convex-auth-start/functions";

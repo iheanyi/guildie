@@ -9,7 +9,9 @@ type GuildRef = { name: string; region: string; slug: string };
 
 export type Crumb = {
 	label: string;
-	link?: { to: "/g/$region/$slug" | "/c/$region/$slug"; params: { region: string; slug: string } } | { to: "/settings"; params?: undefined };
+	link?:
+		| { to: "/g/$region/$slug" | "/c/$region/$slug"; params: { region: string; slug: string } }
+		| { to: "/settings"; params?: undefined };
 };
 
 type Match = { routeId: string; params: Record<string, string>; loaderData?: unknown };
@@ -28,12 +30,21 @@ function crumbsOf(matches: Match[]): Crumb[] | null {
 	for (const m of matches) {
 		const data = m.loaderData as { name?: string; guild?: GuildRef } | undefined;
 		if (m.routeId === "/g/$region/$slug" && data?.name) {
-			crumbs.push({ label: data.name, link: { to: "/g/$region/$slug", params: { region: m.params.region, slug: m.params.slug } } });
+			crumbs.push({
+				label: data.name,
+				link: { to: "/g/$region/$slug", params: { region: m.params.region, slug: m.params.slug } },
+			});
 		} else if (m.routeId === "/c/$region/$slug" && data?.name) {
 			if (data.guild) {
-				crumbs.push({ label: data.guild.name, link: { to: "/g/$region/$slug", params: { region: data.guild.region, slug: data.guild.slug } } });
+				crumbs.push({
+					label: data.guild.name,
+					link: { to: "/g/$region/$slug", params: { region: data.guild.region, slug: data.guild.slug } },
+				});
 			}
-			crumbs.push({ label: data.name, link: { to: "/c/$region/$slug", params: { region: m.params.region, slug: m.params.slug } } });
+			crumbs.push({
+				label: data.name,
+				link: { to: "/c/$region/$slug", params: { region: m.params.region, slug: m.params.slug } },
+			});
 		} else if (m.routeId === "/settings") {
 			crumbs.push({ label: "Settings", link: { to: "/settings" } });
 		} else if (TAB_LABELS[m.routeId]) {
@@ -55,7 +66,8 @@ export function useCurrentGuild(): GuildRef | null {
 		select: (s) => {
 			for (const m of s.matches as unknown as Match[]) {
 				const data = m.loaderData as { name?: string; guild?: GuildRef } | undefined;
-				if (m.routeId === "/g/$region/$slug" && data?.name) return { name: data.name, region: m.params.region, slug: m.params.slug };
+				if (m.routeId === "/g/$region/$slug" && data?.name)
+					return { name: data.name, region: m.params.region, slug: m.params.slug };
 				if (m.routeId === "/c/$region/$slug" && data?.guild) return data.guild;
 			}
 			return null;

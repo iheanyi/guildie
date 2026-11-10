@@ -103,7 +103,7 @@ apps look for updates.
    release, not a draft (`publish.releaseType: release`), and becomes the
    repo's **Latest**.
 
-electron-updater reads only the repo's *Latest* release (`releases/latest`),
+electron-updater reads only the repo's _Latest_ release (`releases/latest`),
 so any other release in this repo (an addon zip, say) must be a pre-release or
 unticked as Latest, or installed apps stop finding updates. Running the
 workflow by hand on a branch builds without publishing and keeps the installer
@@ -131,18 +131,18 @@ waits for someone to approve the code it logs.
 
 ## How it's put together
 
-| File | What |
-|---|---|
-| `src/main.ts` | Start-up, single instance, the bridge's IPC handlers, tray actions |
-| `src/window.ts` | The window: title bar overlay (`TITLEBAR`), size and position, what stays in the window |
-| `src/origins.ts` | Which URLs are Guildie (bridge), sign-in hops (stay in the window), everything else (browser) |
-| `src/preload.ts` | The bridge, `window.guildieDesktop` |
-| `src/connection.ts` | Token, connect / pair / sign out, runs `SyncEngine` from `packages/sync` |
-| `src/settings.ts` | `settings.json`: window, WoW folder, encrypted tokens |
-| `src/tray.ts` | The tray menu |
-| `src/addon.ts` | Installs and updates the addon in WoW: Forever from the shipped copy |
-| `src/updater.ts` | App updates from GitHub Releases (electron-updater) |
-| `src/smoke.ts` | `--smoke-test` |
+| File                | What                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `src/main.ts`       | Start-up, single instance, the bridge's IPC handlers, tray actions                            |
+| `src/window.ts`     | The window: title bar overlay (`TITLEBAR`), size and position, what stays in the window       |
+| `src/origins.ts`    | Which URLs are Guildie (bridge), sign-in hops (stay in the window), everything else (browser) |
+| `src/preload.ts`    | The bridge, `window.guildieDesktop`                                                           |
+| `src/connection.ts` | Token, connect / pair / sign out, runs `SyncEngine` from `packages/sync`                      |
+| `src/settings.ts`   | `settings.json`: window, WoW folder, encrypted tokens                                         |
+| `src/tray.ts`       | The tray menu                                                                                 |
+| `src/addon.ts`      | Installs and updates the addon in WoW: Forever from the shipped copy                          |
+| `src/updater.ts`    | App updates from GitHub Releases (electron-updater)                                           |
+| `src/smoke.ts`      | `--smoke-test`                                                                                |
 
 The upload and download logic is `packages/sync` (`@guildie/sync`), which
 the retired helper used too. `scripts/build.mjs` bundles main and preload

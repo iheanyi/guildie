@@ -143,7 +143,9 @@ export function createWindow(url: string, options: { show: boolean; preload: str
 	});
 	// No <webview>s, and no permission prompts (camera, location...): the site needs none.
 	contents.on("will-attach-webview", (event) => event.preventDefault());
-	contents.session.setPermissionRequestHandler((_wc, permission, callback) => callback(permission === "clipboard-sanitized-write"));
+	contents.session.setPermissionRequestHandler((_wc, permission, callback) =>
+		callback(permission === "clipboard-sanitized-write"),
+	);
 
 	contents.on("did-finish-load", () => void contents.insertCSS(FALLBACK_DRAG_CSS).catch(() => undefined));
 

@@ -37,7 +37,10 @@ function ClaimCallback() {
 		if (error) return setResult({ status: "error", message: "Battle.net didn't grant access to your characters." });
 		if (!isAuthenticated) return setResult({ status: "error", message: "Sign in first, then try again." });
 		if (!code || !state || state !== expected.state) {
-			return setResult({ status: "error", message: "This didn't start in this browser. Try again from your account page." });
+			return setResult({
+				status: "error",
+				message: "This didn't start in this browser. Try again from your account page.",
+			});
 		}
 		complete({ code, state })
 			.then(async (r) => {
@@ -50,7 +53,10 @@ function ClaimCallback() {
 			.catch((err) =>
 				setResult({
 					status: "error",
-					message: err instanceof ConvexError ? String(err.data) : "Reading your characters failed. Try again from your account page.",
+					message:
+						err instanceof ConvexError
+							? String(err.data)
+							: "Reading your characters failed. Try again from your account page.",
 				}),
 			);
 	}, [code, state, error, isAuthenticated, isLoading, complete, convex, router]);

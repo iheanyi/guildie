@@ -1,5 +1,5 @@
-import { type CookieStore, ServerAuthSession, setupConvexAuthServer } from "@convex-dev/auth/ssr";
 import { api } from "@convex/_generated/api";
+import { type CookieStore, ServerAuthSession, setupConvexAuthServer } from "@convex-dev/auth/ssr";
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 import { ConvexHttpClient } from "convex/browser";
 
@@ -11,11 +11,7 @@ export const authServer = setupConvexAuthServer({
 	refreshSession: api.auth.refreshSession,
 	signOut: api.auth.signOut,
 	// Allowlist: every function that mints a session, and nothing else.
-	signIn: [
-		api.auth.completeSignInWithBattlenet,
-		api.auth.signInWithDesktopCode,
-		api.auth.signInAsGuest,
-	],
+	signIn: [api.auth.completeSignInWithBattlenet, api.auth.signInWithDesktopCode, api.auth.signInAsGuest],
 	cookieOptions,
 	// The CSRF check also needs the app's public origin when a proxy rewrites Host.
 	allowedOrigins: [import.meta.env.VITE_SITE_URL as string].filter(Boolean),

@@ -3,10 +3,10 @@
 Cloudflare Workers Builds deploys every push to `natedunn/guildie`. The
 Worker `guildie` has two build triggers, the same model as Kino:
 
-| Trigger | Branches | Deploy command | `CONVEX_DEPLOY_KEY` | Result |
-|---|---|---|---|---|
-| Deploy default branch | `main` | `sh scripts/cloudflare-deploy.sh` | prod deploy key | Convex prod `scintillating-gnat-539`, then `https://guildie.club` |
-| Deploy non-production branches | everything else | `sh scripts/preview-deploy.sh` | preview deploy key | a Convex preview named after the branch, then a Worker Preview at `https://<branch>.preview.guildie.club` |
+| Trigger                        | Branches        | Deploy command                    | `CONVEX_DEPLOY_KEY` | Result                                                                                                    |
+| ------------------------------ | --------------- | --------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------- |
+| Deploy default branch          | `main`          | `sh scripts/cloudflare-deploy.sh` | prod deploy key     | Convex prod `scintillating-gnat-539`, then `https://guildie.club`                                         |
+| Deploy non-production branches | everything else | `sh scripts/preview-deploy.sh`    | preview deploy key  | a Convex preview named after the branch, then a Worker Preview at `https://<branch>.preview.guildie.club` |
 
 Both run with root directory `apps/web` and an empty build command; the
 deploy scripts build. Each trigger has
@@ -44,23 +44,23 @@ The branch name becomes one DNS label: lowercased, anything outside
 
 ## Where things are
 
-| Thing | Where |
-|---|---|
-| Convex project | `guildie` (id 3403136, team `nate-dunn`) |
-| Convex deployments | cloud dev `merry-fish-229`, prod `scintillating-gnat-539` (`apps/web/scripts/deployments.sh`) |
-| Worker | `guildie` on account "Nate", domains `guildie.club` and `preview.guildie.club` (previews only) |
-| Build token | "guildie build token" (created by the dashboard import; used by both triggers) |
-| Gateways | docs/auth-environments.md |
+| Thing              | Where                                                                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| Convex project     | `guildie` (id 3403136, team `nate-dunn`)                                                       |
+| Convex deployments | cloud dev `merry-fish-229`, prod `scintillating-gnat-539` (`apps/web/scripts/deployments.sh`)  |
+| Worker             | `guildie` on account "Nate", domains `guildie.club` and `preview.guildie.club` (previews only) |
+| Build token        | "guildie build token" (created by the dashboard import; used by both triggers)                 |
+| Gateways           | docs/auth-environments.md                                                                      |
 
 ## GitHub secrets for preview cleanup
 
 `natedunn/guildie` → Settings → Secrets and variables → Actions:
 
-| Secret | Value |
-|---|---|
-| `CLOUDFLARE_ACCOUNT_ID` | `fc87b44f5832b25053fec2efb19fc208` |
-| `CLOUDFLARE_API_TOKEN` | a Cloudflare API token with **Account → Workers Scripts → Edit** on "Nate" |
-| `CONVEX_MANAGEMENT_TOKEN` | a Convex team access token (team `nate-dunn`) |
+| Secret                    | Value                                                                      |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `CLOUDFLARE_ACCOUNT_ID`   | `fc87b44f5832b25053fec2efb19fc208`                                         |
+| `CLOUDFLARE_API_TOKEN`    | a Cloudflare API token with **Account → Workers Scripts → Edit** on "Nate" |
+| `CONVEX_MANAGEMENT_TOKEN` | a Convex team access token (team `nate-dunn`)                              |
 
 ## Changing settings
 

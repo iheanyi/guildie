@@ -16,7 +16,7 @@ export type GuildData = {
 export type Pairing = { code: string; pollSecret: string; expiresInSeconds: number; connectUrl: string };
 export type PairingResult =
 	| { status: "pending" | "expired" }
-	| { status: "approved"; token: string; /** When pairing asked for a session. */ sessionCode?: string };
+	| { status: "approved"; token: string /** When pairing asked for a session. */; sessionCode?: string };
 
 /** What the client calls to reach the site: the global fetch by default. The
  * helper passes one that accepts *.localhost's self-signed certificate (Bun's
@@ -65,7 +65,10 @@ export class Api {
 	}
 
 	async pollPairing(code: string, pollSecret: string): Promise<PairingResult> {
-		const res = await this.fetch("/api/helper/pair/poll", { method: "POST", body: JSON.stringify({ code, pollSecret }) });
+		const res = await this.fetch("/api/helper/pair/poll", {
+			method: "POST",
+			body: JSON.stringify({ code, pollSecret }),
+		});
 		if (!res.ok) throw new Error(`Guildie answered ${res.status}`);
 		return (await res.json()) as PairingResult;
 	}

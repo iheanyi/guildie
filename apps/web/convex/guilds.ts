@@ -2,12 +2,12 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, mutation, type MutationCtx, type QueryCtx, query } from "./_generated/server";
-import { vRegion, vVisibility } from "./schema";
+import { internalMutation, type MutationCtx, mutation, type QueryCtx, query } from "./_generated/server";
 import { pickProfile } from "./helper";
-import { requireUserId } from "./users";
+import { vRegion, vVisibility } from "./schema";
 import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { guildSlug, MANUAL_SYNC_COOLDOWN_MS } from "./shared/wow";
+import { requireUserId } from "./users";
 
 /** Manual "sync now" is allowed once per this window. */
 
@@ -61,7 +61,14 @@ export const search = query({
 			.query("guilds")
 			.withSearchIndex("search_name", (s) => s.search("name", text).eq("visibility", "public"))
 			.take(8);
-		return guilds.map((g) => ({ _id: g._id, name: g.name, slug: g.slug, region: g.region, memberCount: g.memberCount, faction: g.faction }));
+		return guilds.map((g) => ({
+			_id: g._id,
+			name: g.name,
+			slug: g.slug,
+			region: g.region,
+			memberCount: g.memberCount,
+			faction: g.faction,
+		}));
 	},
 });
 
@@ -75,7 +82,10 @@ export const get = query({
 		if (!guild) return null;
 		const { canView, isOwner, isMember } = await access(ctx, guild);
 		if (!canView) {
-			return { guild: { _id: guild._id, name: guild.name, region: guild.region, visibility: guild.visibility }, hidden: true as const };
+			return {
+				guild: { _id: guild._id, name: guild.name, region: guild.region, visibility: guild.visibility },
+				hidden: true as const,
+			};
 		}
 		const characters = await ctx.db
 			.query("characters")
@@ -117,7 +127,13 @@ export const get = query({
 				rank: c.rank,
 				lastLoginAt: c.lastLoginAt,
 				averageItemLevel: profiles[i].averageItemLevel,
-				professions: profiles[i].professions.map(({ id, name, skill, maxSkill, secondary }) => ({ id, name, skill, maxSkill, secondary })),
+				professions: profiles[i].professions.map(({ id, name, skill, maxSkill, secondary }) => ({
+					id,
+					name,
+					skill,
+					maxSkill,
+					secondary,
+				})),
 				talentTrees: profiles[i].talentTrees?.map(({ id, name, points }) => ({ id, name, points })),
 				talentSource: profiles[i].sources.talents,
 				// When this character's data was last current, and from where: an
@@ -240,7 +256,12 @@ export const requestSync = mutation({
 			throw new ConvexError("Synced a few minutes ago. Try again later.");
 		}
 		// One at a time: a sync asked for in the last two minutes is still running.
-		if (guild.syncRequestedAt && guild.syncRequestedAt > (guild.rosterSyncedAt ?? 0) && now - guild.syncRequestedAt < 2 * 60_000) return;
+		if (
+			guild.syncRequestedAt &&
+			guild.syncRequestedAt > (guild.rosterSyncedAt ?? 0) &&
+			now - guild.syncRequestedAt < 2 * 60_000
+		)
+			return;
 		await ctx.db.patch(guildId, { syncRequestedAt: now });
 		await ctx.scheduler.runAfter(0, internal.sync.syncGuild, { guildId });
 	},

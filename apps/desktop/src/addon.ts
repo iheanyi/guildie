@@ -5,7 +5,17 @@
 //
 // No Electron imports here, so the tests run under plain Node.
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 
 export const ADDON = "Guildie";
@@ -38,7 +48,11 @@ export function readAddonVersion(folder: string): string | undefined {
 
 /** Compares "0.10.0" and "0.9.2" by number, part by part (missing parts are 0). */
 export function compareVersions(a: string, b: string): number {
-	const parts = (v: string) => v.replace(/^v/i, "").split(/[.-]/).map((p) => Number.parseInt(p, 10) || 0);
+	const parts = (v: string) =>
+		v
+			.replace(/^v/i, "")
+			.split(/[.-]/)
+			.map((p) => Number.parseInt(p, 10) || 0);
 	const pa = parts(a);
 	const pb = parts(b);
 	for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
@@ -185,7 +199,9 @@ export function ensureAddon(source: string, wow: string, log: Log, force = false
 		if (action === "none") return { folder, action, version: installed ?? undefined };
 		try {
 			replaceAddon(source, join(flavor, "Interface", "AddOns"), log);
-			log(`Addon: ${action === "install" ? "installed" : `updated ${installed ?? "(unknown)"} ->`} ${bundled} in ${folder}`);
+			log(
+				`Addon: ${action === "install" ? "installed" : `updated ${installed ?? "(unknown)"} ->`} ${bundled} in ${folder}`,
+			);
 			return { folder, action, version: bundled };
 		} catch (e) {
 			log(`Addon: ${action} failed in ${folder}: ${(e as Error).message}`);

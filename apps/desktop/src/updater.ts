@@ -39,7 +39,11 @@ export type Updater = {
 	restart: () => void;
 };
 
-export function startUpdater(log: Log, notify: (title: string, body: string) => void, onChange: (state: UpdateState) => void): Updater {
+export function startUpdater(
+	log: Log,
+	notify: (title: string, body: string) => void,
+	onChange: (state: UpdateState) => void,
+): Updater {
 	autoUpdater.logger = {
 		info: (m: unknown) => log(`Update: ${String(m)}`),
 		warn: (m: unknown) => log(`Update: ${String(m)}`),
@@ -76,7 +80,10 @@ export function startUpdater(log: Log, notify: (title: string, body: string) => 
 	autoUpdater.on("update-downloaded", (info) => {
 		if (state.state === "ready" && state.version === info.version) return;
 		set({ state: "ready", version: info.version });
-		notify(`Guildie ${info.version} is ready`, "Choose Restart to update in the tray, or it installs when you quit Guildie.");
+		notify(
+			`Guildie ${info.version} is ready`,
+			"Choose Restart to update in the tray, or it installs when you quit Guildie.",
+		);
 	});
 	// Offline or GitHub down: try again at the next check, quietly.
 	autoUpdater.on("error", (e) => {

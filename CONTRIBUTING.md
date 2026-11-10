@@ -45,13 +45,17 @@ any API keys or secrets to work on the site.
 Every PR runs these; run them before pushing:
 
 ```sh
+pnpm lint:fix                                # format and lint (Biome); CI runs `biome ci`
 pnpm check                                   # typecheck, every package
 pnpm test                                    # unit tests, every package
-for t in apps/addon/tests/*_test.lua; do luajit "$t"; done   # addon tests (Lua)
+pnpm test:addon                              # addon tests (Lua; needs luajit)
 pnpm --filter @guildie/desktop smoke --url https://guildie.localhost:1355   # desktop app, with pnpm dev running
 ```
 
-CI also runs Biome (formatting and lint). Tabs, double quotes, semicolons.
+CI (`.github/workflows/ci.yml`) runs all of these, the smoke test on Windows
+against guildie.club, and checks for a CHANGELOG line (label the PR
+`skip-changelog` for changes players won't notice). Tabs, double quotes,
+semicolons; Biome formats the rest.
 
 ## What a good PR looks like
 
@@ -69,15 +73,15 @@ CI also runs Biome (formatting and lint). Tabs, double quotes, semicolons.
 
 ## Where things live
 
-| Folder | What |
-|---|---|
-| `apps/web` | The site: TanStack Start (React) + Convex. `src/routes` pages, `src/components` UI, `convex/` backend |
-| `apps/web/convex/shared` | Code both sides use: game data (`wow.ts`), gear-upgrade rules |
-| `apps/desktop` | The Windows app (Electron): the site in a window, installs the addon, uploads its data |
-| `apps/addon` | The in-game addon (Lua). Ships inside the desktop app |
-| `packages/sync` | The desktop app's uploader: reads the addon's saved data, writes `GuildieData.lua` |
-| `apps/gateway` | The sign-in gateway Worker (maintainers) |
-| `docs/` | How things work: [addon.md](docs/addon.md), [local-dev.md](docs/local-dev.md), [deploy.md](docs/deploy.md), auth docs |
+| Folder                   | What                                                                                                                  |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`               | The site: TanStack Start (React) + Convex. `src/routes` pages, `src/components` UI, `convex/` backend                 |
+| `apps/web/convex/shared` | Code both sides use: game data (`wow.ts`), gear-upgrade rules                                                         |
+| `apps/desktop`           | The Windows app (Electron): the site in a window, installs the addon, uploads its data                                |
+| `apps/addon`             | The in-game addon (Lua). Ships inside the desktop app                                                                 |
+| `packages/sync`          | The desktop app's uploader: reads the addon's saved data, writes `GuildieData.lua`                                    |
+| `apps/gateway`           | The sign-in gateway Worker (maintainers)                                                                              |
+| `docs/`                  | How things work: [addon.md](docs/addon.md), [local-dev.md](docs/local-dev.md), [deploy.md](docs/deploy.md), auth docs |
 
 ## Working with an AI assistant
 
@@ -115,9 +119,11 @@ review):
 
 ## Releases
 
-Maintainers cut releases with a script: it turns `## Unreleased` into the
-new version's section, bumps the app (and the addon when it changed) and tags
-`desktop-v<version>`. GitHub Actions builds the Windows installer and
+Maintainers cut releases with `pnpm release <version> --push` (on an
+up-to-date `main`): it turns `## Unreleased` into the new version's section,
+bumps the app and tags `desktop-v<version>`. The addon's version lives in
+`apps/addon/Guildie/Guildie.toc`; bump it in the PR that changes the addon,
+since installed copies only update when that number goes up. GitHub Actions builds the Windows installer and
 publishes it; installed apps update themselves. The site deploys on every
 merge to `main`. Contributors don't need to bump versions.
 

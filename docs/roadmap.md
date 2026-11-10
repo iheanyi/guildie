@@ -8,18 +8,18 @@ Where Guildie is headed, roughly in order. Ideas and votes: open an issue
 - [x] Battle.net sign-in (Convex Auth v2), claim your characters
 - [x] Add a guild by name and region; hourly roster sync from Blizzard
 - [x] Per member: level, class, race, rank, gear, talents, professions and
-      recipes, last seen
+  recipes, last seen
 - [x] Guild ownership (whoever claims the guild master), public or
-      members-only guilds
+  members-only guilds
 - [x] Guild crafting: who can make what, and who needs a reagent
 - [x] Worktrees, branch previews and an OAuth gateway; production on
-      guildie.club
+  guildie.club
 - [x] The addon: saves level, gear with tooltips, professions, recipes and
-      talents in game
+  talents in game
 - [x] The Windows app: the site in a window, installs and updates the addon,
-      uploads its data, updates itself (replaced the tray-only helper)
+  uploads its data, updates itself (replaced the tray-only helper)
 - [x] In-game tooltips: guildmates who need a reagent, gear-upgrade
-      suggestions from stat weights
+  suggestions from stat weights
 
 ## Now
 

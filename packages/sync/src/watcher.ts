@@ -133,7 +133,10 @@ export class Watcher {
 					this.log(`Upload failed: ${e.message}`);
 					return false;
 				});
-				this.seen.set(file, ok ? { mtime, payload } : { mtime: 0, payload: before?.payload ?? null, retryAt: Date.now() + 30_000 });
+				this.seen.set(
+					file,
+					ok ? { mtime, payload } : { mtime: 0, payload: before?.payload ?? null, retryAt: Date.now() + 30_000 },
+				);
 			} else {
 				this.seen.set(file, { mtime, payload: before?.payload ?? payload });
 			}

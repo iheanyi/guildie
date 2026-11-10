@@ -1,4 +1,5 @@
 ---
+
 name: design-system
 description: Guildie's visual rules, tokens and shared UI components, and how to check UI changes with screenshots. Use when building or restyling any page or component in apps/web/src, adding a shadcn component, choosing colors, type or spacing, showing items, characters or classes, or reviewing how something looks on the web, on phones and in the Windows app.
 ---
@@ -46,18 +47,18 @@ the shadcn CLI (`components.json`), then restyle them through the tokens in
 
 ## Components to reuse
 
-| Component | File | For |
-|---|---|---|
-| `PageHeader`, `Page`, `SectionTitle` | `components/page-header.tsx` | Every page: title, description, actions; body width |
-| `PageTabs`, `PageTab` | `components/page-tabs.tsx` | Tabs that are routes |
-| `ItemIcon`, `ItemHover`, `ItemTooltipBody` | `components/item.tsx` | Item icons with quality edge; hover tooltip like the game's; click opens the item panel (`?item=`) |
-| `ItemSheet` | `components/item-sheet.tsx` | The item panel (who can craft it, upgrade for whom) |
-| `ClassText` | `components/class-name.tsx` | Names in class color, or item quality with `quality` |
-| `CharacterAvatar`, `UNFETCHED_NOTE` | `components/character-avatar.tsx` | Portraits, with a silhouette for characters Blizzard hasn't published |
-| `PaperDoll` | `components/paper-doll.tsx` | Equipped gear in slot order |
-| `TalentTree` | `components/talent-tree.tsx` | Talent trees from Blizzard's layout |
-| `RecipeItem`, `Reagents` | `components/recipe-row.tsx` | Recipes and their reagents |
-| Icons | `@hugeicons/react` + `@hugeicons/core-free-icons` | UI icons (most use `strokeWidth={1.75}`) |
+| Component                                  | File                                              | For                                                                                                |
+| ------------------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `PageHeader`, `Page`, `SectionTitle`       | `components/page-header.tsx`                      | Every page: title, description, actions; body width                                                |
+| `PageTabs`, `PageTab`                      | `components/page-tabs.tsx`                        | Tabs that are routes                                                                               |
+| `ItemIcon`, `ItemHover`, `ItemTooltipBody` | `components/item.tsx`                             | Item icons with quality edge; hover tooltip like the game's; click opens the item panel (`?item=`) |
+| `ItemSheet`                                | `components/item-sheet.tsx`                       | The item panel (who can craft it, upgrade for whom)                                                |
+| `ClassText`                                | `components/class-name.tsx`                       | Names in class color, or item quality with `quality`                                               |
+| `CharacterAvatar`, `UNFETCHED_NOTE`        | `components/character-avatar.tsx`                 | Portraits, with a silhouette for characters Blizzard hasn't published                              |
+| `PaperDoll`                                | `components/paper-doll.tsx`                       | Equipped gear in slot order                                                                        |
+| `TalentTree`                               | `components/talent-tree.tsx`                      | Talent trees from Blizzard's layout                                                                |
+| `RecipeItem`, `Reagents`                   | `components/recipe-row.tsx`                       | Recipes and their reagents                                                                         |
+| Icons                                      | `@hugeicons/react` + `@hugeicons/core-free-icons` | UI icons (most use `strokeWidth={1.75}`)                                                           |
 
 ## Checking your change
 

@@ -54,7 +54,10 @@ export function createTray(actions: TrayActions) {
 					? { label: `Addon: ${status.addonVersion}`, enabled: false }
 					: { label: "Addon: not installed — Install", enabled: !!status.wowFolder, click: actions.reinstallAddon },
 				...(status.updateReady
-					? [{ type: "separator" as const }, { label: `Restart to update (${status.updateReady})`, click: actions.restartToUpdate }]
+					? [
+							{ type: "separator" as const },
+							{ label: `Restart to update (${status.updateReady})`, click: actions.restartToUpdate },
+						]
 					: []),
 				{ type: "separator" },
 				{ label: "Open Guildie", click: actions.open },
@@ -87,7 +90,8 @@ export function createTray(actions: TrayActions) {
 function updateItem(status: Status, actions: TrayActions): Electron.MenuItemConstructorOptions {
 	const u = status.update;
 	if (u?.state === "checking") return { label: "Checking for updates...", enabled: false };
-	if (u?.state === "downloading") return { label: `Downloading ${u.version}${u.percent !== undefined ? ` (${u.percent}%)` : ""}...`, enabled: false };
+	if (u?.state === "downloading")
+		return { label: `Downloading ${u.version}${u.percent !== undefined ? ` (${u.percent}%)` : ""}...`, enabled: false };
 	// Ready: "Restart to update" is already at the top of the menu.
 	if (u?.state === "ready") return { label: "Check for updates", visible: false };
 	return { label: "Check for updates", click: actions.checkForUpdates };

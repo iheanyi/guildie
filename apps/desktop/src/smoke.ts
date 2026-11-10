@@ -37,7 +37,13 @@ function fakeWow() {
 	return { wow, addon };
 }
 
-export async function runSmokeTest(win: BrowserWindow, connection: Connection, url: string, log: Log, addonSource: string) {
+export async function runSmokeTest(
+	win: BrowserWindow,
+	connection: Connection,
+	url: string,
+	log: Log,
+	addonSource: string,
+) {
 	// The page's own errors and warnings, so a failing check shows why.
 	win.webContents.on("console-message", (details) => {
 		if (details.level === "error" || details.level === "warning") log(`page ${details.level}: ${details.message}`);
@@ -50,7 +56,10 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 	const page = <T>(code: string) => win.webContents.executeJavaScript(code, true) as Promise<T>;
 
 	try {
-		const loaded = await until(() => !win.webContents.isLoading() && win.webContents.getURL().startsWith("http"), 60_000);
+		const loaded = await until(
+			() => !win.webContents.isLoading() && win.webContents.getURL().startsWith("http"),
+			60_000,
+		);
 		check("page loads", !!loaded, win.webContents.getURL());
 		await wait(1_500); // let the site hydrate
 
@@ -67,7 +76,8 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		check("bridge exposed on the site", security.bridge === "object" && security.isDesktop === "true", security);
 		check(
 			"bridge has exactly the agreed functions",
-			security.keys === "addon,checkForUpdates,chooseWowFolder,getState,getStatus,isDesktop,onStatus,restartToUpdate,setToken,signIn,signOut,uploadNow,version",
+			security.keys ===
+				"addon,checkForUpdates,chooseWowFolder,getState,getStatus,isDesktop,onStatus,restartToUpdate,setToken,signIn,signOut,uploadNow,version",
 			security.keys,
 		);
 		check('html[data-desktop="true"]', security.dataset === "true");
@@ -82,7 +92,10 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		check("user agent says GuildieDesktop", String(shell.userAgent).includes(" GuildieDesktop/"), shell.userAgent);
 		check("server renders the app layout", shell.serverRendered === true);
 		check("title bar shown, page doesn't scroll", shell.titlebar === "flex" && shell.pageScrolls === false, shell);
-		check("no Node or Electron in the page", security.require === "undefined" && security.electron === "false" && security.ipc === "undefined");
+		check(
+			"no Node or Electron in the page",
+			security.require === "undefined" && security.electron === "false" && security.ipc === "undefined",
+		);
 
 		const state = await page<{ connected: boolean }>("window.guildieDesktop.getState()");
 		check("getState()", typeof state?.connected === "boolean", state);
@@ -114,7 +127,9 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		);
 
 		// The sync engine: point it at a fake WoW folder and watch the status reach the page.
-		await page("window.__statuses = []; window.__off = window.guildieDesktop.onStatus((s) => window.__statuses.push(s)); 1");
+		await page(
+			"window.__statuses = []; window.__off = window.guildieDesktop.onStatus((s) => window.__statuses.push(s)); 1",
+		);
 		const { wow, addon } = fakeWow();
 		connection.setWowFolder(wow);
 		check("older addon updated to the shipped version", readAddonVersion(addon) === shipped, readAddonVersion(addon));
@@ -135,7 +150,11 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		// uninstalled), install again. Saved data goes only when asked.
 		type Info = { bundled?: string; managed: boolean; installs: { version?: string }[] };
 		const info = await page<Info>("window.guildieDesktop.addon.info()");
-		check("addon.info() shows the installed version", info.installs[0]?.version === shipped && info.bundled === shipped, info);
+		check(
+			"addon.info() shows the installed version",
+			info.installs[0]?.version === shipped && info.bundled === shipped,
+			info,
+		);
 		const saved = join(wow, "_forever_", "WTF", "Account", "SMOKE", "SavedVariables", "Guildie.lua");
 		const after = await page<Info>("window.guildieDesktop.addon.uninstall({ savedData: false })");
 		check(
@@ -157,7 +176,10 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 			const connected = await page<{ connected: boolean; account?: string }>("window.guildieDesktop.getState()");
 			check("setToken connects (checked with /api/helper/me)", connected.connected, connected);
 			const stored = readFileSync(join(app.getPath("userData"), "settings.json"), "utf8");
-			check("token saved encrypted, under the site's origin", !stored.includes(token) && stored.includes(connection.origin));
+			check(
+				"token saved encrypted, under the site's origin",
+				!stored.includes(token) && stored.includes(connection.origin),
+			);
 			connection.uploadNow();
 			const synced = await until(() => {
 				const s = connection.status;
@@ -198,7 +220,9 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 			// The window goes to /desktop/session, which signs in and moves on to the guild or /me.
 			await until(() => win.webContents.getURL().includes("/desktop/session"), 30_000);
 			await until(() => !win.webContents.getURL().includes("/desktop/session") && !win.webContents.isLoading(), 30_000);
-			const signedIn = await page<boolean>("fetch('/me', { redirect: 'manual' }).then((r) => r.type !== 'opaqueredirect' && r.status === 200)");
+			const signedIn = await page<boolean>(
+				"fetch('/me', { redirect: 'manual' }).then((r) => r.type !== 'opaqueredirect' && r.status === 200)",
+			);
 			check("the window is signed in with the session code", signedIn, win.webContents.getURL());
 			await connection.disconnect();
 			await win.loadURL(url);

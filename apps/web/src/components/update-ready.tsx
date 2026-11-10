@@ -13,7 +13,9 @@ export function UpdateReady() {
 	return (
 		<div className="mx-0.5 mb-2 rounded-md border border-border bg-[var(--selected)] px-3 py-2.5 text-[0.8125rem]">
 			<p className="font-medium">Update ready</p>
-			<p className="mt-0.5 text-xs text-muted-foreground">Guildie {status.updateReady} is downloaded. Restart to use it.</p>
+			<p className="mt-0.5 text-xs text-muted-foreground">
+				Guildie {status.updateReady} is downloaded. Restart to use it.
+			</p>
 			<button
 				type="button"
 				disabled={restarting}

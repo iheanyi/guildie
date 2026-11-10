@@ -8,17 +8,17 @@ cloud dev share one client. Same design as Onda and Sportsball.
 
 ## Tiers
 
-| Tier | Serves | Gateway Worker | Battle.net client | Convex |
-|---|---|---|---|---|
-| Dev | local worktrees, cloud dev, branch previews | `guildie-gateway-dev` on `https://gateway-dev.guildie.club` | `guildie-dev` | cloud dev `merry-fish-229`, plus preview defaults |
-| Prod | guildie.club | `guildie-gateway` on `https://gateway.guildie.club` | `guildie` | prod `scintillating-gnat-539` |
+| Tier | Serves                                      | Gateway Worker                                              | Battle.net client | Convex                                            |
+| ---- | ------------------------------------------- | ----------------------------------------------------------- | ----------------- | ------------------------------------------------- |
+| Dev  | local worktrees, cloud dev, branch previews | `guildie-gateway-dev` on `https://gateway-dev.guildie.club` | `guildie-dev`     | cloud dev `merry-fish-229`, plus preview defaults |
+| Prod | guildie.club                                | `guildie-gateway` on `https://gateway.guildie.club`         | `guildie`         | prod `scintillating-gnat-539`                     |
 
 Each Battle.net client registers two redirect URLs, and they never change:
 
-| Tier | Sign-in | Read characters (claim) |
-|---|---|---|
-| Dev | `https://gateway-dev.guildie.club/oauth/battlenet/callback` | `https://gateway-dev.guildie.club/oauth/claim/callback` |
-| Prod | `https://gateway.guildie.club/oauth/battlenet/callback` | `https://gateway.guildie.club/oauth/claim/callback` |
+| Tier | Sign-in                                                     | Read characters (claim)                                 |
+| ---- | ----------------------------------------------------------- | ------------------------------------------------------- |
+| Dev  | `https://gateway-dev.guildie.club/oauth/battlenet/callback` | `https://gateway-dev.guildie.club/oauth/claim/callback` |
+| Prod | `https://gateway.guildie.club/oauth/battlenet/callback`     | `https://gateway.guildie.club/oauth/claim/callback`     |
 
 Sign-in asks for `openid wow.profile`, so Battle.net shows one consent
 screen. Convex Auth doesn't hand us the sign-in's access token, so reading the
@@ -31,12 +31,12 @@ tokens.
 **Convex**, on cloud dev, on prod, and in the preview defaults (each with its
 own values per tier):
 
-| Variable | What |
-|---|---|
-| `AUTH_PRIVATE_KEY`, `AUTH_JWKS` | Session signing key pair. Its own pair per deployment (previews share one). |
-| `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET` | The tier's Battle.net client. Also used for the roster sync. |
-| `AUTH_GATEWAY_SECRET` | The tier's routing secret (same value as its gateway's `ROUTING_SECRET`). |
-| `AUTH_BATTLENET_CALLBACK_URL` | The tier's gateway sign-in callback. The claim callback is derived from it (`/oauth/claim/callback`). |
+| Variable                                                   | What                                                                                                  |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `AUTH_PRIVATE_KEY`, `AUTH_JWKS`                            | Session signing key pair. Its own pair per deployment (previews share one).                           |
+| `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET` | The tier's Battle.net client. Also used for the roster sync.                                          |
+| `AUTH_GATEWAY_SECRET`                                      | The tier's routing secret (same value as its gateway's `ROUTING_SECRET`).                             |
+| `AUTH_BATTLENET_CALLBACK_URL`                              | The tier's gateway sign-in callback. The claim callback is derived from it (`/oauth/claim/callback`). |
 
 That's six. There is no `SITE_URL` on cloud deployments: prod and each preview
 get their app origin baked in at deploy (`apps/web/convex/buildSite.ts`, written by the
@@ -97,11 +97,11 @@ first owner until the guild master claims.
 
 ## What we carry on top of the package
 
-| Thing | Where | Remove when |
-|---|---|---|
-| **Patch:** optional `CALLBACK_URL` component env | `patches/@convex-dev__auth.patch` | Upstream supports a configurable callback (convex-auth#1) |
-| `viaGateway` wrapper (calls the package's mutation through the undocumented `_handler`) | `apps/web/convex/authGateway.ts` | Same |
-| Gateway Worker | `apps/gateway` | Same |
+| Thing                                                                                   | Where                             | Remove when                                               |
+| --------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------- |
+| **Patch:** optional `CALLBACK_URL` component env                                        | `patches/@convex-dev__auth.patch` | Upstream supports a configurable callback (convex-auth#1) |
+| `viaGateway` wrapper (calls the package's mutation through the undocumented `_handler`) | `apps/web/convex/authGateway.ts`  | Same                                                      |
+| Gateway Worker                                                                          | `apps/gateway`                    | Same                                                      |
 
 The patch is Onda's. When upgrading the package, check it still applies
 (`pnpm install` fails if it doesn't); docs/convex-auth.md tracks upstream.

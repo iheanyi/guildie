@@ -5,9 +5,9 @@ import { type QueryCtx, query } from "./_generated/server";
 import { access, itemRow } from "./guilds";
 import { pickProfile } from "./helper";
 import { vRegion } from "./schema";
-import { CLASS_TOKENS } from "./shared/weights";
 import { type ItemInfo, itemInfoFromTooltip } from "./shared/itemInfo";
 import { explain, suggest, upgradeRules } from "./shared/upgrades";
+import { CLASS_TOKENS } from "./shared/weights";
 import { memberForUpgrades } from "./upgradeProfiles";
 
 // What characters can craft: their professions' known recipes (Blizzard's
@@ -34,7 +34,14 @@ async function recipeView(ctx: QueryCtx, recipe: Doc<"recipes">, items: Map<numb
 		profession: recipe.profession,
 		professionId: recipe.professionId,
 		item: made
-			? { itemId: made.itemId, name: made.name, quality: made.quality, icon: made.icon, kind: made.kind, tooltip: made.tooltip }
+			? {
+					itemId: made.itemId,
+					name: made.name,
+					quality: made.quality,
+					icon: made.icon,
+					kind: made.kind,
+					tooltip: made.tooltip,
+				}
 			: null,
 		reagents: await Promise.all(
 			recipe.reagents.map(async (r) => {
@@ -118,7 +125,10 @@ export const guildCrafting = query({
 		for (const [recipeId, who] of crafters) {
 			const recipe = await recipeRow(ctx, recipeId);
 			if (!recipe) continue;
-			out.push({ ...(await recipeView(ctx, recipe, items)), crafters: who.sort((a, b) => (b.skill ?? 0) - (a.skill ?? 0)) });
+			out.push({
+				...(await recipeView(ctx, recipe, items)),
+				crafters: who.sort((a, b) => (b.skill ?? 0) - (a.skill ?? 0)),
+			});
 		}
 		return out.sort((a, b) => a.profession.localeCompare(b.profession) || a.name.localeCompare(b.name));
 	},
@@ -132,16 +142,23 @@ const PANEL_UPGRADES = 5;
  * a short why each, leaving out the viewer's own characters. Empty when we
  * can't read the item's stats.
  */
-async function upgradesFor(ctx: QueryCtx, item: Doc<"items"> | null, members: Doc<"characters">[], profiles: Awaited<ReturnType<typeof pickProfile>>[]) {
+async function upgradesFor(
+	ctx: QueryCtx,
+	item: Doc<"items"> | null,
+	members: Doc<"characters">[],
+	profiles: Awaited<ReturnType<typeof pickProfile>>[],
+) {
 	const info = item ? itemInfoFromTooltip(item.tooltip) : undefined;
 	if (!item || !info) return [];
 	const userId = (await getAuthUserId(ctx)) as Id<"users"> | null;
 	const own = userId
 		? new Set(
-				(await ctx.db
-					.query("ownedCharacters")
-					.withIndex("by_user", (q) => q.eq("userId", userId))
-					.collect()).map((c) => `${c.region}:${c.slug}`),
+				(
+					await ctx.db
+						.query("ownedCharacters")
+						.withIndex("by_user", (q) => q.eq("userId", userId))
+						.collect()
+				).map((c) => `${c.region}:${c.slug}`),
 			)
 		: new Set<string>();
 	const rules = upgradeRules();
@@ -152,7 +169,12 @@ async function upgradesFor(ctx: QueryCtx, item: Doc<"items"> | null, members: Do
 		const f = await memberForUpgrades(ctx, m, profiles[i], rules, cache);
 		if (f) found.push({ ...f, character: m });
 	}
-	const picks = suggest(info, found.map((f) => f.member), rules, { now: Date.now() / 1000, itemId: item.itemId, max: PANEL_UPGRADES });
+	const picks = suggest(
+		info,
+		found.map((f) => f.member),
+		rules,
+		{ now: Date.now() / 1000, itemId: item.itemId, max: PANEL_UPGRADES },
+	);
 	return picks.map(({ member, verdict }) => {
 		const f = found.find((x) => x.member === member)!;
 		return {
@@ -180,7 +202,9 @@ async function upgradesFor(ctx: QueryCtx, item: Doc<"items"> | null, members: Do
 export const itemDetail = query({
 	args: {
 		itemId: v.number(),
-		guild: v.optional(v.object({ region: vRegion, slug: v.string(), kind: v.union(v.literal("guild"), v.literal("character")) })),
+		guild: v.optional(
+			v.object({ region: vRegion, slug: v.string(), kind: v.union(v.literal("guild"), v.literal("character")) }),
+		),
 	},
 	handler: async (ctx, { itemId, guild: where }) => {
 		const items = new Map<number, Doc<"items"> | null>();
@@ -227,14 +251,22 @@ export const itemDetail = query({
 			const reagent = r.reagents.find((x) => x.itemId === itemId);
 			if (!reagent) continue;
 			const view = await recipeView(ctx, r, items);
-			usedIn.push({ recipeId: view.recipeId, name: view.name, profession: view.profession, item: view.item, quantity: reagent.quantity });
+			usedIn.push({
+				recipeId: view.recipeId,
+				name: view.name,
+				profession: view.profession,
+				item: view.item,
+				quantity: reagent.quantity,
+			});
 			if (usedIn.length >= 40) break;
 		}
 		usedIn.sort((a, b) => a.profession.localeCompare(b.profession) || a.name.localeCompare(b.name));
 
 		return {
 			itemId,
-			item: item ? { name: item.name, quality: item.quality, icon: item.icon, kind: item.kind, tooltip: item.tooltip } : null,
+			item: item
+				? { name: item.name, quality: item.quality, icon: item.icon, kind: item.kind, tooltip: item.tooltip }
+				: null,
 			guild: guild ? { name: guild.name, region: guild.region, slug: guild.slug } : null,
 			craftedBy,
 			usedIn,

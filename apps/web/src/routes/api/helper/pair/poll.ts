@@ -13,7 +13,10 @@ export const Route = createFileRoute("/api/helper/pair/poll")({
 					return json(400, { error: "Expected { code, pollSecret }" });
 				}
 				try {
-					return json(200, await convex().mutation(api.helper.pollPairing, { code: body.code, pollSecret: body.pollSecret }));
+					return json(
+						200,
+						await convex().mutation(api.helper.pollPairing, { code: body.code, pollSecret: body.pollSecret }),
+					);
 				} catch (error) {
 					return errorResponse(error);
 				}

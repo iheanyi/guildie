@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { type ActionCtx, internalMutation, internalQuery } from "./_generated/server";
-import { vRegion } from "./schema";
 import { BATTLENET_TOKEN } from "./authBattlenet";
+import { vRegion } from "./schema";
 import { FLAVORS, type Flavor, type NamespaceKind, type Region } from "./shared/wow";
 
 // A thin Blizzard API client for actions. The app authenticates with the
@@ -58,9 +58,7 @@ export const storeToken = internalMutation({
 export async function appToken(ctx: ActionCtx, region: Region) {
 	const cached = await ctx.runQuery(internal.blizzard.cachedToken, { region });
 	if (cached) return cached;
-	const { access_token, expires_in } = await exchangeToken(
-		new URLSearchParams({ grant_type: "client_credentials" }),
-	);
+	const { access_token, expires_in } = await exchangeToken(new URLSearchParams({ grant_type: "client_credentials" }));
 	await ctx.runMutation(internal.blizzard.storeToken, {
 		region,
 		token: access_token,

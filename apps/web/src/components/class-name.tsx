@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from "react";
 import { CLASSES } from "@convex/shared/wow";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** Text in a WoW class color (or item quality color with `quality`). */

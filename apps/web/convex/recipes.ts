@@ -49,11 +49,16 @@ export const syncCatalog = internalAction({
 			const detail = await blizzardGet<Profession>({ ...common, token, path: `/data/wow/profession/${p.id}` });
 			if (!detail.ok) continue;
 			for (const tier of detail.data.skill_tiers ?? []) {
-				const t = await blizzardGet<Tier>({ ...common, token, path: `/data/wow/profession/${p.id}/skill-tier/${tier.id}` });
+				const t = await blizzardGet<Tier>({
+					...common,
+					token,
+					path: `/data/wow/profession/${p.id}/skill-tier/${tier.id}`,
+				});
 				if (!t.ok) continue;
 				for (const r of (t.data.categories ?? []).flatMap((c) => c.recipes ?? [])) {
 					const last = known.get(r.id);
-					if (force || !last || Date.now() - last > REFRESH_MS) due.push({ professionId: p.id, profession: p.name, id: r.id });
+					if (force || !last || Date.now() - last > REFRESH_MS)
+						due.push({ professionId: p.id, profession: p.name, id: r.id });
 				}
 			}
 		}
@@ -90,7 +95,11 @@ export const syncBatch = internalAction({
 					craftedItemId: (d.crafted_item ?? d.alliance_crafted_item ?? d.horde_crafted_item)?.id,
 					reagents: (d.reagents ?? [])
 						.filter((x) => x.reagent?.id)
-						.map((x) => ({ itemId: x.reagent!.id!, name: x.reagent!.name ?? `Item ${x.reagent!.id}`, quantity: x.quantity ?? 1 })),
+						.map((x) => ({
+							itemId: x.reagent!.id!,
+							name: x.reagent!.name ?? `Item ${x.reagent!.id}`,
+							quantity: x.quantity ?? 1,
+						})),
 				};
 			}),
 		);
@@ -136,6 +145,8 @@ export const byIds = internalQuery({
 					.unique(),
 			),
 		);
-		return rows.filter((r) => r !== null).map(({ recipeId, profession, reagents }) => ({ recipeId, profession, reagents }));
+		return rows
+			.filter((r) => r !== null)
+			.map(({ recipeId, profession, reagents }) => ({ recipeId, profession, reagents }));
 	},
 });

@@ -3,13 +3,13 @@ import { setupOauth } from "@convex-dev/auth/methods/oauth/server";
 import { setupConvexAuth } from "@convex-dev/auth/server";
 import type { RegisteredMutation } from "convex/server";
 import { type Infer, v } from "convex/values";
+import { components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { DatabaseWriter } from "./_generated/server";
-import { sha256 } from "./claims";
-import { components, internal } from "./_generated/api";
-import { viaGateway } from "./authGateway";
-import { allowedRedirectOrigins } from "./origins";
 import { type BattlenetProfile, type BattlenetUserInfo, battlenetCatalog } from "./authBattlenet";
+import { viaGateway } from "./authGateway";
+import { sha256 } from "./claims";
+import { allowedRedirectOrigins } from "./origins";
 
 const auth = setupConvexAuth({
 	component: components.auth,
@@ -20,11 +20,8 @@ const auth = setupConvexAuth({
 
 export const { signOut, refreshSession, isAuthenticated } = auth;
 
-
 // Annotated: inferring the type from `internal.users` is circular.
-type BattlenetSignIn = ReturnType<
-	typeof setupOauth<"battlenet", BattlenetProfile, "users", BattlenetUserInfo>
->;
+type BattlenetSignIn = ReturnType<typeof setupOauth<"battlenet", BattlenetProfile, "users", BattlenetUserInfo>>;
 const battlenet: BattlenetSignIn = setupOauth(
 	auth,
 	"battlenet",
@@ -55,7 +52,11 @@ type DesktopSignIn =
 	| { status: "complete"; tokens: Infer<typeof vTokens> }
 	| { status: "error"; userError: { error: "EXPIRED" } };
 // Annotated: inferring it from `internal.users` is circular (like Discord's in Onda).
-export const signInWithDesktopCode: RegisteredMutation<"public", { code: string }, Promise<DesktopSignIn>> = desktop.authMutation({
+export const signInWithDesktopCode: RegisteredMutation<
+	"public",
+	{ code: string },
+	Promise<DesktopSignIn>
+> = desktop.authMutation({
 	args: { code: v.string() },
 	returns: v.union(
 		v.object({ status: v.literal("complete"), tokens: vTokens }),

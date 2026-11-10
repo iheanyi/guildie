@@ -3,16 +3,16 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { action, internalMutation, internalQuery, mutation } from "./_generated/server";
+import { BATTLENET_AUTHORIZE } from "./authBattlenet";
+import { routingPrefix } from "./authGateway";
+import { exchangeToken } from "./blizzard";
 import { fetchAccountCharacters } from "./claimRegions";
 import { setOwner } from "./guilds";
-import { discoverGuilds } from "./sync";
-import { routingPrefix } from "./authGateway";
 import { allowedRedirectOrigins } from "./origins";
-import { BATTLENET_AUTHORIZE } from "./authBattlenet";
-import { exchangeToken } from "./blizzard";
-import { requireUserId } from "./users";
 import { vRegion } from "./schema";
 import { FLAVORS, REGIONS, type Region } from "./shared/wow";
+import { discoverGuilds } from "./sync";
+import { requireUserId } from "./users";
 
 // Claiming characters: a second Battle.net authorization with the wow.profile
 // scope, run right after every sign-in (and from "Refresh my characters").
@@ -33,7 +33,10 @@ const REQUEST_TTL_MS = 10 * 60_000;
 
 function randomToken() {
 	const bytes = crypto.getRandomValues(new Uint8Array(32));
-	return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+	return btoa(String.fromCharCode(...bytes))
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=+$/, "");
 }
 
 export async function sha256(value: string) {
@@ -190,7 +193,11 @@ export const complete = action({
 			namespace: (region) => FLAVORS.forever.namespace("profile", region),
 		});
 		const answered = results.flatMap((r) =>
-			r.status === "ok" ? [{ region: r.region, characters: r.characters }] : r.status === "none" ? [{ region: r.region, characters: [] }] : [],
+			r.status === "ok"
+				? [{ region: r.region, characters: r.characters }]
+				: r.status === "none"
+					? [{ region: r.region, characters: [] }]
+					: [],
 		);
 		const failedRegions = results.flatMap((r) => (r.status === "error" ? [r.region] : []));
 		for (const r of results) if (r.status === "error") console.warn(`claim: ${r.region} failed: ${r.error}`);

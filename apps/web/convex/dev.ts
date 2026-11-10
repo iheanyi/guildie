@@ -12,9 +12,57 @@ import { CLASSES, FLAVORS, guildSlug, SLOT_ORDER } from "./shared/wow";
 // `pnpm seed`: a fake guild so the directory can be built and reviewed before
 // Blizzard keys exist. Local backends only.
 
-const FIRST = ["Aldric", "Brenna", "Corwin", "Dagny", "Edris", "Fenna", "Garrick", "Hesper", "Ivo", "Jorun", "Kael", "Liesel", "Maren", "Nils", "Orla", "Pell", "Quill", "Rowan", "Sable", "Tamsin", "Ulric", "Vesna", "Wren", "Yarrow"];
-const LAST = ["Ashdown", "Brightwater", "Coldbrook", "Duskmantle", "Emberfall", "Fairwind", "Greyhollow", "Hearthstone", "Ironvale", "Larkspur", "Moonbrook", "Oakheart"];
-const PROFESSIONS = ["Alchemy", "Blacksmithing", "Enchanting", "Engineering", "Herbalism", "Leatherworking", "Mining", "Skinning", "Tailoring"];
+const FIRST = [
+	"Aldric",
+	"Brenna",
+	"Corwin",
+	"Dagny",
+	"Edris",
+	"Fenna",
+	"Garrick",
+	"Hesper",
+	"Ivo",
+	"Jorun",
+	"Kael",
+	"Liesel",
+	"Maren",
+	"Nils",
+	"Orla",
+	"Pell",
+	"Quill",
+	"Rowan",
+	"Sable",
+	"Tamsin",
+	"Ulric",
+	"Vesna",
+	"Wren",
+	"Yarrow",
+];
+const LAST = [
+	"Ashdown",
+	"Brightwater",
+	"Coldbrook",
+	"Duskmantle",
+	"Emberfall",
+	"Fairwind",
+	"Greyhollow",
+	"Hearthstone",
+	"Ironvale",
+	"Larkspur",
+	"Moonbrook",
+	"Oakheart",
+];
+const PROFESSIONS = [
+	"Alchemy",
+	"Blacksmithing",
+	"Enchanting",
+	"Engineering",
+	"Herbalism",
+	"Leatherworking",
+	"Mining",
+	"Skinning",
+	"Tailoring",
+];
 const QUALITIES = ["COMMON", "UNCOMMON", "UNCOMMON", "RARE", "RARE", "EPIC"];
 const ALLIANCE_RACES = [1, 3, 4, 7];
 const TREES: Record<number, string[]> = {
@@ -49,7 +97,9 @@ export const seed = internalMutation({
 			memberCount: FIRST.length,
 			rosterSyncedAt: Date.now(),
 		});
-		const classIds = Object.keys(CLASSES).map(Number).filter((id) => id !== 7);
+		const classIds = Object.keys(CLASSES)
+			.map(Number)
+			.filter((id) => id !== 7);
 		let seedValue = 7;
 		const rand = () => (seedValue = (seedValue * 16807) % 2147483647) / 2147483647;
 		const pick = <T>(list: T[]) => list[Math.floor(rand() * list.length)];
@@ -206,8 +256,16 @@ export const helperTest = internalMutation({
 			claimedAt: Date.now(),
 		});
 		const bytes = crypto.getRandomValues(new Uint8Array(24));
-		const token = `gld_${btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
-		await ctx.db.insert("helperTokens", { userId, tokenHash: await sha256(token), label: "dev test", createdAt: Date.now() });
+		const token = `gld_${btoa(String.fromCharCode(...bytes))
+			.replace(/\+/g, "-")
+			.replace(/\//g, "_")
+			.replace(/=+$/, "")}`;
+		await ctx.db.insert("helperTokens", {
+			userId,
+			tokenHash: await sha256(token),
+			label: "dev test",
+			createdAt: Date.now(),
+		});
 		return { token, blizzardId: character.blizzardId, talentTrees: character.talentTrees };
 	},
 });

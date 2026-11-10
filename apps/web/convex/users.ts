@@ -1,12 +1,12 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import { internalMutation, type MutationCtx, mutation, type QueryCtx, query } from "./_generated/server";
 import { vBattlenetProfile } from "./authBattlenet";
 import { guildsOf } from "./guilds";
 import { pickProfile } from "./helper";
 import { isLocalBackend } from "./origins";
 import { claimSampleCharacter } from "./sample";
-import type { Id } from "./_generated/dataModel";
-import { internalMutation, mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 
 export async function requireUserId(ctx: QueryCtx | MutationCtx) {
 	const userId = await getAuthUserId(ctx);
@@ -47,7 +47,11 @@ export const onBattlenetSignIn = internalMutation({
 /** The desktop app's sign-in (auth:signInWithDesktopCode): the account belongs to an existing user. */
 export const createFromDesktop = internalMutation({
 	args: {
-		provider: v.object({ name: v.literal("desktop"), accountId: v.string(), profile: v.object({ userId: v.id("users") }) }),
+		provider: v.object({
+			name: v.literal("desktop"),
+			accountId: v.string(),
+			profile: v.object({ userId: v.id("users") }),
+		}),
 	},
 	returns: v.id("users"),
 	handler: async (ctx, { provider: { profile } }) => {

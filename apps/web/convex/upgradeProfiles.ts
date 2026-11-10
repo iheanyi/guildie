@@ -25,11 +25,24 @@ export async function itemInfoById(ctx: QueryCtx, itemId: number, cache: Map<num
  * enchants included), else from the items table (the addon's tooltip in a
  * language we don't read), else none (shared/upgrades.ts estimates it).
  */
-async function wornItems(ctx: QueryCtx, equipment: NonNullable<Profile["equipment"]>, cache: Map<number, ItemInfo | undefined>) {
+async function wornItems(
+	ctx: QueryCtx,
+	equipment: NonNullable<Profile["equipment"]>,
+	cache: Map<number, ItemInfo | undefined>,
+) {
 	const out: WornItem[] = [];
 	for (const item of equipment) {
-		const info = (item.tooltip?.length ? itemInfoFromTooltip(item.tooltip) : undefined) ?? (await itemInfoById(ctx, item.itemId, cache));
-		out.push({ slot: item.slot, itemId: item.itemId, name: item.name, quality: item.quality, itemLevel: item.itemLevel, info });
+		const info =
+			(item.tooltip?.length ? itemInfoFromTooltip(item.tooltip) : undefined) ??
+			(await itemInfoById(ctx, item.itemId, cache));
+		out.push({
+			slot: item.slot,
+			itemId: item.itemId,
+			name: item.name,
+			quality: item.quality,
+			itemLevel: item.itemLevel,
+			info,
+		});
 	}
 	return out;
 }

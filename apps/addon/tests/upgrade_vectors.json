@@ -235,9 +235,7 @@
 			"stats": {
 				"STRENGTH": 6
 			},
-			"classes": [
-				2
-			]
+			"classes": [2]
 		},
 		"fireCloak": {
 			"invType": "CLOAK",
@@ -298,9 +296,7 @@
 				"11": 2,
 				"12": 2
 			},
-			"worn": [
-				5001
-			]
+			"worn": [5001]
 		},
 		"Miller": {
 			"name": "Miller",
@@ -370,9 +366,7 @@
 				"spec": "DRUID:1",
 				"at": null,
 				"second": false,
-				"against": [
-					10
-				]
+				"against": [10]
 			}
 		},
 		{
@@ -391,9 +385,7 @@
 				"spec": "WARRIOR:0",
 				"at": null,
 				"second": false,
-				"against": [
-					10
-				]
+				"against": [10]
 			}
 		},
 		{
@@ -406,9 +398,7 @@
 				"spec": "MAGE:2",
 				"at": null,
 				"second": false,
-				"against": [
-					1
-				]
+				"against": [1]
 			}
 		},
 		{
@@ -421,9 +411,7 @@
 				"spec": "DRUID:2",
 				"at": null,
 				"second": true,
-				"against": [
-					1
-				]
+				"against": [1]
 			}
 		},
 		{
@@ -436,10 +424,7 @@
 				"spec": "WARRIOR:1",
 				"at": null,
 				"second": false,
-				"against": [
-					16,
-					17
-				]
+				"against": [16, 17]
 			}
 		},
 		{
@@ -452,10 +437,7 @@
 				"spec": "WARRIOR:0",
 				"at": 25,
 				"second": false,
-				"against": [
-					16,
-					17
-				]
+				"against": [16, 17]
 			}
 		},
 		{
@@ -476,9 +458,7 @@
 				"spec": "DRUID:1",
 				"at": null,
 				"second": false,
-				"against": [
-					12
-				]
+				"against": [12]
 			}
 		},
 		{
@@ -491,9 +471,7 @@
 				"spec": "HUNTER:0",
 				"at": 40,
 				"second": false,
-				"against": [
-					5
-				]
+				"against": [5]
 			}
 		},
 		{
@@ -506,9 +484,7 @@
 				"spec": "WARRIOR:1",
 				"at": null,
 				"second": false,
-				"against": [
-					5
-				]
+				"against": [5]
 			}
 		},
 		{
@@ -521,9 +497,7 @@
 				"spec": "WARRIOR:1",
 				"at": null,
 				"second": false,
-				"against": [
-					5
-				]
+				"against": [5]
 			}
 		},
 		{
@@ -536,9 +510,7 @@
 				"spec": "WARRIOR:1",
 				"at": null,
 				"second": false,
-				"against": [
-					17
-				]
+				"against": [17]
 			}
 		},
 		{
@@ -557,9 +529,7 @@
 				"spec": "HUNTER:0",
 				"at": null,
 				"second": false,
-				"against": [
-					18
-				]
+				"against": [18]
 			}
 		},
 		{
@@ -584,9 +554,7 @@
 				"spec": "MAGE:2",
 				"at": null,
 				"second": false,
-				"against": [
-					15
-				]
+				"against": [15]
 			}
 		},
 		{
@@ -599,9 +567,7 @@
 				"spec": "DRUID:2",
 				"at": null,
 				"second": true,
-				"against": [
-					5
-				]
+				"against": [5]
 			}
 		},
 		{
@@ -614,10 +580,7 @@
 				"spec": "DRUID:1",
 				"at": null,
 				"second": false,
-				"against": [
-					16,
-					17
-				]
+				"against": [16, 17]
 			}
 		}
 	],
@@ -741,25 +704,15 @@
 			"now": 2003600,
 			"skip": [],
 			"max": 3,
-			"expect": [
-				"Arrow:upgrade",
-				"Rage:upgrade",
-				"Miller:upgrade"
-			]
+			"expect": ["Arrow:upgrade", "Rage:upgrade", "Miller:upgrade"]
 		},
 		{
 			"name": "own characters skipped",
 			"item": "leatherAgiGloves",
 			"now": 2003600,
-			"skip": [
-				"Arrow"
-			],
+			"skip": ["Arrow"],
 			"max": 3,
-			"expect": [
-				"Rage:upgrade",
-				"Miller:upgrade",
-				"Brisket:upgrade"
-			]
+			"expect": ["Rage:upgrade", "Miller:upgrade", "Brisket:upgrade"]
 		},
 		{
 			"name": "inactive members skipped",
@@ -775,11 +728,7 @@
 			"now": 2003600,
 			"skip": [],
 			"max": 3,
-			"expect": [
-				"Brisket:upgrade",
-				"Frosty:upgrade",
-				"Miller:upgrade"
-			]
+			"expect": ["Brisket:upgrade", "Frosty:upgrade", "Miller:upgrade"]
 		},
 		{
 			"name": "two-hander: upgrades before maybes",
@@ -787,10 +736,7 @@
 			"now": 2003600,
 			"skip": [],
 			"max": 3,
-			"expect": [
-				"Rage:upgrade",
-				"Miller:maybe"
-			]
+			"expect": ["Rage:upgrade", "Miller:maybe"]
 		}
 	]
 }

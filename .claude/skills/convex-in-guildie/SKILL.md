@@ -1,4 +1,5 @@
 ---
+
 name: convex-in-guildie
 description: How Guildie's Convex backend is organized and changed safely. Use when adding or editing queries, mutations, actions, crons or the schema in apps/web/convex, when running Convex functions by hand (locally or against a cloud deployment), or when TypeScript reports circular types in Convex code.
 ---
@@ -11,18 +12,18 @@ wrappers, no ORM.
 
 ## Where things are
 
-| File | What |
-|---|---|
-| `schema.ts` | Tables and shared validators (`vRegion`, `vEquippedItem`, ...) |
-| `guilds.ts`, `users.ts`, `crafting.ts` | What pages read and write |
-| `sync.ts` | Roster and character sync from Blizzard (hourly cron, "Sync now") |
-| `blizzard.ts` | The Blizzard client: `appToken`, `blizzardGet` (blizzard-forever-api skill) |
-| `items.ts`, `recipes.ts`, `talents.ts` | Static game data from Blizzard, synced in staggered batches |
-| `helper.ts`, `addonPayload.ts`, `profile.ts` | Addon uploads, guild data for the addon, newest-wins merge (docs/addon.md) |
-| `auth*.ts`, `claims.ts`, `http.ts` | Sign-in (auth-and-sign-in skill; ask before changing) |
-| `crons.ts` | `sync guild rosters` hourly, `sync recipe catalog` weekly (also talent layouts) |
-| `dev.ts` | `seed`, `probe`, `addGuild`: dev helpers |
-| `shared/` | Code the site and backend both import (`wow.ts`, gear rules). No Convex imports here, so `node --test` can run it; imports use `.ts` extensions |
+| File                                         | What                                                                                                                                            |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema.ts`                                  | Tables and shared validators (`vRegion`, `vEquippedItem`, ...)                                                                                  |
+| `guilds.ts`, `users.ts`, `crafting.ts`       | What pages read and write                                                                                                                       |
+| `sync.ts`                                    | Roster and character sync from Blizzard (hourly cron, "Sync now")                                                                               |
+| `blizzard.ts`                                | The Blizzard client: `appToken`, `blizzardGet` (blizzard-forever-api skill)                                                                     |
+| `items.ts`, `recipes.ts`, `talents.ts`       | Static game data from Blizzard, synced in staggered batches                                                                                     |
+| `helper.ts`, `addonPayload.ts`, `profile.ts` | Addon uploads, guild data for the addon, newest-wins merge (docs/addon.md)                                                                      |
+| `auth*.ts`, `claims.ts`, `http.ts`           | Sign-in (auth-and-sign-in skill; ask before changing)                                                                                           |
+| `crons.ts`                                   | `sync guild rosters` hourly, `sync recipe catalog` weekly (also talent layouts)                                                                 |
+| `dev.ts`                                     | `seed`, `probe`, `addGuild`: dev helpers                                                                                                        |
+| `shared/`                                    | Code the site and backend both import (`wow.ts`, gear rules). No Convex imports here, so `node --test` can run it; imports use `.ts` extensions |
 
 ## Rules
 

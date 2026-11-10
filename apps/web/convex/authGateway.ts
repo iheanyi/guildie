@@ -13,19 +13,17 @@ import { type MutationCtx, mutation } from "./_generated/server";
 // ROUTING_SECRET); the AUTH_<PROVIDER>_CALLBACK_URL vars must then point at
 // the gateway too. See docs/auth-environments.md.
 
-type StartSignIn = RegisteredMutation<
-	"public",
-	{ redirectTo: string },
-	Promise<{ redirect: string; state: string }>
->;
+type StartSignIn = RegisteredMutation<"public", { redirectTo: string }, Promise<{ redirect: string; state: string }>>;
 
 /** Wrap a provider's `startSignIn` so its callback routes through the gateway. */
 export function viaGateway(provider: string, startSignIn: StartSignIn) {
 	// `_handler` is undocumented but stable across Convex releases; the
 	// package doesn't export the unregistered handler.
-	const handler = (startSignIn as unknown as {
-		_handler: (ctx: MutationCtx, args: { redirectTo: string }) => Promise<{ redirect: string; state: string }>;
-	})._handler;
+	const handler = (
+		startSignIn as unknown as {
+			_handler: (ctx: MutationCtx, args: { redirectTo: string }) => Promise<{ redirect: string; state: string }>;
+		}
+	)._handler;
 	return mutation({
 		args: { redirectTo: v.string() },
 		returns: v.object({ redirect: v.string(), state: v.string() }),

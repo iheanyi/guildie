@@ -8,7 +8,8 @@ import { dirname, join } from "node:path";
 export const DEFAULT_API = "https://guildie.club";
 
 export function configDir() {
-	if (process.platform === "win32") return join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), "guildie");
+	if (process.platform === "win32")
+		return join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), "guildie");
 	if (process.platform === "darwin") return join(homedir(), "Library", "Application Support", "guildie");
 	return join(homedir(), ".config", "guildie");
 }

@@ -60,9 +60,14 @@ test("a newer upload from the game wins, and the game's recipe count counts", ()
 		level: 23,
 		talentTrees: [{ id: 613, name: "Discipline", points: 9, talents: [{ id: 200, name: "A", rank: 9 }] }],
 		equipment: { capturedAt: at, items: [{ slot: "MAIN_HAND", itemId: 2520, name: "Sword", quality: "UNCOMMON" }] },
-		professions: { capturedAt: at, list: [{ id: 197, name: "Tailoring", skill: 120, maxSkill: 150, secondary: false }] },
+		professions: {
+			capturedAt: at,
+			list: [{ id: 197, name: "Tailoring", skill: 120, maxSkill: 150, secondary: false }],
+		},
 		// The game listed 5; the catalog matched 3 of them.
-		recipes: [{ professionId: 197, profession: "Tailoring", capturedAt: at, recipeIds: [10, 11, 12], count: 5, unmatched: 2 }],
+		recipes: [
+			{ professionId: 197, profession: "Tailoring", capturedAt: at, recipeIds: [10, 11, 12], count: 5, unmatched: 2 },
+		],
 	});
 	assert.equal(view.level, 23);
 	assert.deepEqual(view.gear, { 16: 2520 });
@@ -73,7 +78,12 @@ test("a newer upload from the game wins, and the game's recipe count counts", ()
 
 test("talents without ids: no ranks string; nothing known: empty", () => {
 	const view = addonView(
-		{ ...character, talentTrees: [{ id: 1, name: "X", points: 1, talents: [{ name: "Y", rank: 1 }] }], equipment: undefined, professions: undefined },
+		{
+			...character,
+			talentTrees: [{ id: 1, name: "X", points: 1, talents: [{ name: "Y", rank: 1 }] }],
+			equipment: undefined,
+			professions: undefined,
+		},
 		null,
 	);
 	assert.equal(view.talents.ranks, undefined);

@@ -1,6 +1,15 @@
 import { FOREVER_TALENT_TREES, TALENT_TREE_BY_ID } from "./foreverTalents.ts";
 import { type ItemInfo, WEAPON_INV_TYPES } from "./itemInfo.ts";
-import { CLASS_RULES, CLASS_TOKENS, type ClassRules, DEFAULT_TREE, SPECS, STAT_POINTS, THRESHOLDS, type Weights } from "./weights.ts";
+import {
+	CLASS_RULES,
+	CLASS_TOKENS,
+	type ClassRules,
+	DEFAULT_TREE,
+	SPECS,
+	STAT_POINTS,
+	THRESHOLDS,
+	type Weights,
+} from "./weights.ts";
 
 // Gear-upgrade suggestions: would this item help a guildmate? A best guess
 // from stat weights (weights.ts), not a sim.
@@ -125,7 +134,8 @@ export function specsOf(classId: number, trees: Tree[] | undefined) {
 	}
 	let second: number | undefined;
 	for (let i = 0; i < 3; i++) {
-		if (i !== main && points[i] >= THRESHOLDS.minSpecPoints && (second === undefined || points[i] > points[second])) second = i;
+		if (i !== main && points[i] >= THRESHOLDS.minSpecPoints && (second === undefined || points[i] > points[second]))
+			second = i;
 	}
 	return { spec: `${token}:${main}`, spec2: second !== undefined ? `${token}:${second}` : undefined };
 }
@@ -193,7 +203,8 @@ function bestArmor(rules: ClassRules, level: number) {
 }
 
 /** True when it's body armor (cloth to plate) other than a cloak. */
-const isBodyArmor = (item: ItemInfo) => item.cls === 4 && item.invType !== "CLOAK" && BODY_ARMOR.includes(item.subclass ?? 0);
+const isBodyArmor = (item: ItemInfo) =>
+	item.cls === 4 && item.invType !== "CLOAK" && BODY_ARMOR.includes(item.subclass ?? 0);
 
 /**
  * An item's worth to a spec. `stat`: the stats' part alone; `total`: the
@@ -218,7 +229,11 @@ export function scoreItem(
 	}
 	let score = stat + (w.ARMOR ?? 0) * (item.armor ?? 0);
 	if (item.dps) {
-		const dpsKey = RANGED_TYPES.has(item.invType) ? "RANGED_DPS" : offHand || item.invType === "WEAPONOFFHAND" ? "OFFHAND_DPS" : "DPS";
+		const dpsKey = RANGED_TYPES.has(item.invType)
+			? "RANGED_DPS"
+			: offHand || item.invType === "WEAPONOFFHAND"
+				? "OFFHAND_DPS"
+				: "DPS";
 		score += (w[dpsKey] ?? 0) * item.dps;
 	}
 	if (isBodyArmor(item) && level >= rules.preferBestFrom && (item.subclass ?? 0) < bestArmor(classRules, level)) {
@@ -237,7 +252,12 @@ export function suits(s: { score: number; stat: number; total: number }, rules: 
  * The level from which a member can use the item (theirs or a few above), or
  * undefined when they can't (or not within `levelsAhead`).
  */
-export function usableAt(item: ItemInfo, m: Pick<UpgradeMember, "classId" | "level" | "worn">, rules: Rules, itemId?: number) {
+export function usableAt(
+	item: ItemInfo,
+	m: Pick<UpgradeMember, "classId" | "level" | "worn">,
+	rules: Rules,
+	itemId?: number,
+) {
 	const cls = rules.classes[m.classId];
 	if (!cls || !SLOTS_BY_INV_TYPE[item.invType]) return undefined;
 	if (item.classes && !item.classes.includes(m.classId)) return undefined;
@@ -315,7 +335,14 @@ export function judge(item: ItemInfo, m: UpgradeMember, rules: Rules, itemId?: n
 	if (m.spec2 && m.slots2) {
 		const second = gainFor(item, m, m.spec2, m.slots2, rules);
 		if (second && second.gain >= rules.maybe) {
-			return { kind: "maybe", gain: second.gain, spec: m.spec2, second: true, against: second.against, ...(later ? { at: later } : {}) };
+			return {
+				kind: "maybe",
+				gain: second.gain,
+				spec: m.spec2,
+				second: true,
+				against: second.against,
+				...(later ? { at: later } : {}),
+			};
 		}
 	}
 	return undefined;
@@ -325,7 +352,12 @@ export function judge(item: ItemInfo, m: UpgradeMember, rules: Rules, itemId?: n
  * Who the item would help: upgrades first, then by gain, at most `max`.
  * `skip`: names to leave out (the viewer's own characters). `now` in seconds.
  */
-export function suggest(item: ItemInfo, members: UpgradeMember[], rules: Rules, opts: { now: number; skip?: string[]; itemId?: number; max?: number }) {
+export function suggest(
+	item: ItemInfo,
+	members: UpgradeMember[],
+	rules: Rules,
+	opts: { now: number; skip?: string[]; itemId?: number; max?: number },
+) {
 	const out: { member: UpgradeMember; verdict: Verdict }[] = [];
 	for (const m of members) {
 		if (opts.skip?.includes(m.name)) continue;
@@ -345,15 +377,47 @@ export function suggest(item: ItemInfo, members: UpgradeMember[], rules: Rules, 
 // ---- What they wear --------------------------------------------------------------
 
 /** A worn item as the profile has it, with what's known about it. */
-export type WornItem = { slot: string; itemId: number; name: string; quality: string; itemLevel?: number; info?: ItemInfo };
+export type WornItem = {
+	slot: string;
+	itemId: number;
+	name: string;
+	quality: string;
+	itemLevel?: number;
+	info?: ItemInfo;
+};
 
 // Unknown items (no English tooltip, no item data) are estimated from item
 // level: roughly the stat points Blizzard budgets per item level for each
 // quality and slot, as if all of it suited them (they chose to wear it), and
 // a weapon's DPS likewise. Rough on purpose; better than counting the slot as
 // empty, which would make anything look like an upgrade.
-const QUALITY_BUDGET: Record<string, number> = { POOR: 0.05, COMMON: 0.15, UNCOMMON: 0.45, RARE: 0.6, EPIC: 0.75, LEGENDARY: 0.9 };
-const SLOT_BUDGET: Record<number, number> = { 1: 1, 2: 0.6, 3: 0.75, 5: 1, 6: 0.75, 7: 1, 8: 0.75, 9: 0.55, 10: 0.75, 11: 0.6, 12: 0.6, 13: 0.6, 14: 0.6, 15: 0.55, 16: 0.45, 17: 0.45, 18: 0.3 };
+const QUALITY_BUDGET: Record<string, number> = {
+	POOR: 0.05,
+	COMMON: 0.15,
+	UNCOMMON: 0.45,
+	RARE: 0.6,
+	EPIC: 0.75,
+	LEGENDARY: 0.9,
+};
+const SLOT_BUDGET: Record<number, number> = {
+	1: 1,
+	2: 0.6,
+	3: 0.75,
+	5: 1,
+	6: 0.75,
+	7: 1,
+	8: 0.75,
+	9: 0.55,
+	10: 0.75,
+	11: 0.6,
+	12: 0.6,
+	13: 0.6,
+	14: 0.6,
+	15: 0.55,
+	16: 0.45,
+	17: 0.45,
+	18: 0.3,
+};
 
 export function estimateScore(slot: number, itemLevel: number | undefined, quality: string, w: Weights) {
 	if (!itemLevel) return 0;
@@ -391,14 +455,17 @@ export function wornScores(items: WornItem[], level: number, classId: number, sp
 }
 
 /** A guild member's compact profile for upgrade checks, or undefined if nothing's known (no gear read). */
-export function upgradeMember(c: {
-	name: string;
-	classId: number;
-	level: number;
-	seenMs: number;
-	talentTrees: Tree[] | undefined;
-	equipment: WornItem[] | undefined;
-}, rules: Rules): UpgradeMember | undefined {
+export function upgradeMember(
+	c: {
+		name: string;
+		classId: number;
+		level: number;
+		seenMs: number;
+		talentTrees: Tree[] | undefined;
+		equipment: WornItem[] | undefined;
+	},
+	rules: Rules,
+): UpgradeMember | undefined {
 	if (!c.equipment) return undefined;
 	const specs = specsOf(c.classId, c.talentTrees);
 	if (!specs) return undefined;
@@ -471,9 +538,15 @@ export function explain(item: ItemInfo, verdict: Verdict, worn: WornItem[], rule
 		.slice(0, 3)
 		.map(([k, v]) => `${signed(v)} ${STAT_LABELS[k]}`);
 	const dpsKey = RANGED_TYPES.has(item.invType) ? "RANGED_DPS" : "DPS";
-	if (WEAPON_INV_TYPES.has(item.invType) && Math.abs(dps) >= 0.1 && (w[dpsKey] ?? 0) > 0) parts.unshift(`${signed(Math.round(dps * 10) / 10)} DPS`);
+	if (WEAPON_INV_TYPES.has(item.invType) && Math.abs(dps) >= 0.1 && (w[dpsKey] ?? 0) > 0)
+		parts.unshift(`${signed(Math.round(dps * 10) / 10)} DPS`);
 	const what = parts.join(", ") || "about the same stats";
-	const over = replaced.length ? ` over ${replaced.map((i) => i.name).join(" and ")}${unknown ? " (estimated)" : ""}` : " (nothing worn there)";
-	const notes = [verdict.second ? rules.specs[verdict.spec]?.name : undefined, verdict.at ? `at ${verdict.at}` : undefined].filter(Boolean);
+	const over = replaced.length
+		? ` over ${replaced.map((i) => i.name).join(" and ")}${unknown ? " (estimated)" : ""}`
+		: " (nothing worn there)";
+	const notes = [
+		verdict.second ? rules.specs[verdict.spec]?.name : undefined,
+		verdict.at ? `at ${verdict.at}` : undefined,
+	].filter(Boolean);
 	return `${what}${over}${notes.length ? `; ${notes.join(", ")}` : ""}`;
 }

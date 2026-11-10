@@ -12,17 +12,17 @@ production. Do the parts in order; each ends with a check.
 
 Save the secrets in one password-manager item as you go.
 
-| Value | Kind | Made in | Goes to |
-|---|---|---|---|
-| Dev deployment name | note | Part 1 | `cloud_dev=` in `apps/web/scripts/deployments.sh` |
-| Prod deployment name | note | Part 1 | `ALLOWED_TARGETS` in `apps/gateway/wrangler.jsonc` (`https://<name>.convex.site`) |
-| Project id | note | Part 1 | `convex_project=` in `apps/web/scripts/deployments.sh` |
-| Battle.net dev client ID + secret | secret | Part 2 | cloud dev `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET` |
-| Battle.net prod client ID + secret | secret | Part 2 | prod `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET` |
-| Dev routing secret | secret | Part 3 | Worker `guildie-gateway-dev` `ROUTING_SECRET` **and** cloud dev `AUTH_GATEWAY_SECRET` |
-| Prod routing secret | secret | Part 3 | Worker `guildie-gateway` `ROUTING_SECRET` **and** prod `AUTH_GATEWAY_SECRET` |
-| Prod deploy key | secret | Part 6 | build variable `CONVEX_DEPLOY_KEY` on the `main` trigger |
-| Preview deploy key | secret | Part 6 | build variable `CONVEX_DEPLOY_KEY` on the other-branches trigger |
+| Value                              | Kind   | Made in | Goes to                                                                               |
+| ---------------------------------- | ------ | ------- | ------------------------------------------------------------------------------------- |
+| Dev deployment name                | note   | Part 1  | `cloud_dev=` in `apps/web/scripts/deployments.sh`                                     |
+| Prod deployment name               | note   | Part 1  | `ALLOWED_TARGETS` in `apps/gateway/wrangler.jsonc` (`https://<name>.convex.site`)     |
+| Project id                         | note   | Part 1  | `convex_project=` in `apps/web/scripts/deployments.sh`                                |
+| Battle.net dev client ID + secret  | secret | Part 2  | cloud dev `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET`                  |
+| Battle.net prod client ID + secret | secret | Part 2  | prod `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET`                       |
+| Dev routing secret                 | secret | Part 3  | Worker `guildie-gateway-dev` `ROUTING_SECRET` **and** cloud dev `AUTH_GATEWAY_SECRET` |
+| Prod routing secret                | secret | Part 3  | Worker `guildie-gateway` `ROUTING_SECRET` **and** prod `AUTH_GATEWAY_SECRET`          |
+| Prod deploy key                    | secret | Part 6  | build variable `CONVEX_DEPLOY_KEY` on the `main` trigger                              |
+| Preview deploy key                 | secret | Part 6  | build variable `CONVEX_DEPLOY_KEY` on the other-branches trigger                      |
 
 Signing keys are generated straight into Convex; nothing to save.
 
@@ -42,12 +42,12 @@ Signing keys are generated straight into Convex; nothing to save.
 
 <https://develop.battle.net> → **API Access → Create Client**, twice:
 
-| Field | Dev | Prod |
-|---|---|---|
-| Client Name | `guildie-dev` | `guildie` |
-| Redirect URLs | `https://gateway-dev.guildie.club/oauth/battlenet/callback` and `https://gateway-dev.guildie.club/oauth/claim/callback` | `https://gateway.guildie.club/oauth/battlenet/callback` and `https://gateway.guildie.club/oauth/claim/callback` |
-| Service URL | your repo URL | same |
-| Intended Use | `Guild roster directory for World of Warcraft: Forever. Reads public guild rosters and character profiles. Players sign in with Battle.net to link their own characters.` | same |
+| Field         | Dev                                                                                                                                                                       | Prod                                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Client Name   | `guildie-dev`                                                                                                                                                             | `guildie`                                                                                                       |
+| Redirect URLs | `https://gateway-dev.guildie.club/oauth/battlenet/callback` and `https://gateway-dev.guildie.club/oauth/claim/callback`                                                   | `https://gateway.guildie.club/oauth/battlenet/callback` and `https://gateway.guildie.club/oauth/claim/callback` |
+| Service URL   | your repo URL                                                                                                                                                             | same                                                                                                            |
+| Intended Use  | `Guild roster directory for World of Warcraft: Forever. Reads public guild rosters and character profiles. Players sign in with Battle.net to link their own characters.` | same                                                                                                            |
 
 Copy each Client ID and Client Secret (the secret is shown once).
 
@@ -154,10 +154,10 @@ workflow fails, and previews still expire on their own.
 
 ## When something fails
 
-| Symptom | Fix |
-|---|---|
-| Battle.net: "invalid redirect URI" | The client's redirect URLs don't match the gateway URLs exactly |
-| Gateway: "This sign-in link is invalid" | `AUTH_GATEWAY_SECRET` isn't that tier's `ROUTING_SECRET`; or (prod) `ALLOWED_TARGETS` isn't your prod `.convex.site` URL |
-| Back on the app but not signed in | Locally: `SITE_URL` on the local backend isn't the page's origin (`pnpm dev` sets it) |
-| Convex push: "declared as required … not set" | A Part 4 value is missing |
-| Build: "not a preview deploy key" / "is a preview key" | The two triggers' `CONVEX_DEPLOY_KEY` values are swapped |
+| Symptom                                                | Fix                                                                                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Battle.net: "invalid redirect URI"                     | The client's redirect URLs don't match the gateway URLs exactly                                                          |
+| Gateway: "This sign-in link is invalid"                | `AUTH_GATEWAY_SECRET` isn't that tier's `ROUTING_SECRET`; or (prod) `ALLOWED_TARGETS` isn't your prod `.convex.site` URL |
+| Back on the app but not signed in                      | Locally: `SITE_URL` on the local backend isn't the page's origin (`pnpm dev` sets it)                                    |
+| Convex push: "declared as required … not set"          | A Part 4 value is missing                                                                                                |
+| Build: "not a preview deploy key" / "is a preview key" | The two triggers' `CONVEX_DEPLOY_KEY` values are swapped                                                                 |

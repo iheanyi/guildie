@@ -1,6 +1,6 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
@@ -23,8 +23,8 @@ function GuildSettings() {
 		<div className="max-w-3xl pb-12">
 			<SectionTitle>Your guilds</SectionTitle>
 			<p className="mt-1 text-[0.8125rem] text-muted-foreground">
-				Found from your characters each time you sign in. The guild master's player owns a guild on Guildie and can make it
-				members only.
+				Found from your characters each time you sign in. The guild master's player owns a guild on Guildie and can make
+				it members only.
 			</p>
 			{viewer.guilds.length === 0 ? (
 				<p className="mt-4 text-[0.8125rem] text-muted-foreground">None yet.</p>
@@ -33,7 +33,11 @@ function GuildSettings() {
 					{viewer.guilds.map((g) => (
 						<li key={g._id} className="px-3 py-3 text-[0.8125rem]">
 							<div className="flex items-baseline justify-between gap-3">
-								<Link to="/g/$region/$slug" params={{ region: g.region, slug: g.slug }} className="font-medium hover:underline underline-offset-4">
+								<Link
+									to="/g/$region/$slug"
+									params={{ region: g.region, slug: g.slug }}
+									className="font-medium hover:underline underline-offset-4"
+								>
 									{g.name}
 								</Link>
 								<span className="num text-muted-foreground">
@@ -44,7 +48,9 @@ function GuildSettings() {
 								<MembersOnly guildId={g._id} on={g.visibility === "members"} />
 							) : (
 								<p className="mt-1 text-muted-foreground">
-									{g.visibility === "members" ? "Members only: only its members can see it." : "Public: anyone with the link can see it."}
+									{g.visibility === "members"
+										? "Members only: only its members can see it."
+										: "Public: anyone with the link can see it."}
 								</p>
 							)}
 						</li>
@@ -75,8 +81,8 @@ function MembersOnly({ guildId, on }: { guildId: Id<"guilds">; on: boolean }) {
 			<span>
 				Members only
 				<span className="block text-muted-foreground">
-					Only people who've claimed a character in this guild can see its roster, crafting and characters, and it doesn't
-					show up in search. Off: anyone with the link or the guild's name can look.
+					Only people who've claimed a character in this guild can see its roster, crafting and characters, and it
+					doesn't show up in search. Off: anyone with the link or the guild's name can look.
 				</span>
 				{error && <span className="mt-1 block text-destructive">{error}</span>}
 			</span>

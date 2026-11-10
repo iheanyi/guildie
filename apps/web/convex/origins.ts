@@ -5,10 +5,7 @@ import { BUILD_SITE_URL } from "./buildSite";
  * Prod and previews get theirs baked in at deploy (buildSite.ts); local
  * backends get SITE_URL (comma-separated) from scripts/dev-seed.sh.
  */
-export const allowedRedirectOrigins = [
-	...(process.env.SITE_URL ?? "").split(","),
-	BUILD_SITE_URL,
-]
+export const allowedRedirectOrigins = [...(process.env.SITE_URL ?? "").split(","), BUILD_SITE_URL]
 	.map((origin) => origin.trim())
 	.filter(Boolean);
 

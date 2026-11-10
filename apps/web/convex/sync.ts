@@ -2,13 +2,13 @@ import { type Infer, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { type ActionCtx, internalAction, internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
+import { appToken, blizzardGet } from "./blizzard";
 import { guildOfProfile } from "./claimRegions";
 import { setOwner } from "./guilds";
-import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
-import { appToken, blizzardGet } from "./blizzard";
 import { type ItemPreview, tooltipLines } from "./items";
 import { isSampleGuild } from "./sample";
 import { vEquippedItem, vTalentTree } from "./schema";
+import { TALENT_TREE_BY_ID } from "./shared/foreverTalents";
 import { FLAVORS, type Region } from "./shared/wow";
 
 // Roster sync (hourly cron + on demand) and per-character profile sync.
@@ -61,7 +61,8 @@ export const syncGuild = internalAction({
 			if (!roster.ok) {
 				await ctx.runMutation(internal.sync.recordError, {
 					guildId,
-					error: "Blizzard doesn't know this guild yet. Check the name and region; new guilds can take a while to appear.",
+					error:
+						"Blizzard doesn't know this guild yet. Check the name and region; new guilds can take a while to appear.",
 				});
 				return;
 			}
@@ -246,13 +247,12 @@ function mapProfessions(data: Professions | undefined) {
 			skill: entry.skill_points ?? tier?.skill_points,
 			maxSkill: entry.max_skill_points ?? tier?.max_skill_points,
 			secondary,
-			knownRecipes: [...(entry.known_recipes ?? []), ...(entry.tiers ?? []).flatMap((t) => t.known_recipes ?? [])].map((r) => r.id),
+			knownRecipes: [...(entry.known_recipes ?? []), ...(entry.tiers ?? []).flatMap((t) => t.known_recipes ?? [])].map(
+				(r) => r.id,
+			),
 		};
 	};
-	return [
-		...(data.primaries ?? []).map((e) => map(e, false)),
-		...(data.secondaries ?? []).map((e) => map(e, true)),
-	];
+	return [...(data.primaries ?? []).map((e) => map(e, false)), ...(data.secondaries ?? []).map((e) => map(e, true))];
 }
 
 export const getCharacter = internalQuery({
@@ -313,7 +313,12 @@ export const syncCharacter = internalAction({
 			if (worn.length) {
 				await ctx.scheduler.runAfter(0, internal.items.ensure, {
 					itemIds: worn.map((i) => i.item.id),
-					hints: worn.map((i) => ({ itemId: i.item.id, name: i.name, quality: i.quality.type, tooltip: tooltipLines(i) })),
+					hints: worn.map((i) => ({
+						itemId: i.item.id,
+						name: i.name,
+						quality: i.quality.type,
+						tooltip: tooltipLines(i),
+					})),
 				});
 			}
 		}

@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { markSeen } from "@/lib/release-notes";
 import { HelperTokens } from "@/components/helper-tokens";
-import { WhatsNew } from "@/components/whats-new";
 import { SectionTitle } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { WhatsNew } from "@/components/whats-new";
 import { desktop, RELEASES, type UpdateState, useDesktopStatus, useInDesktopApp } from "@/lib/desktop";
 import { ago } from "@/lib/format";
+import { markSeen } from "@/lib/release-notes";
 import { Row, Rows } from "./addon";
 
 // Settings → App: the Guildie app for Windows. In the app, its version and
@@ -92,11 +92,21 @@ function UpdateLine({ update, ready }: { update?: UpdateState; ready?: string })
 		case "current":
 			return <span>Up to date. Checked {ago(update.checkedAt)}</span>;
 		case "failed":
-			return <span className="text-muted-foreground">Couldn't check {ago(update.checkedAt)}. It tries again by itself.</span>;
+			return (
+				<span className="text-muted-foreground">Couldn't check {ago(update.checkedAt)}. It tries again by itself.</span>
+			);
 		case "off":
-			return <span className="text-muted-foreground">Off: this copy can't update itself. Install Guildie from the App tab on guildie.club.</span>;
+			return (
+				<span className="text-muted-foreground">
+					Off: this copy can't update itself. Install Guildie from the App tab on guildie.club.
+				</span>
+			);
 		default:
-			return <span className="text-muted-foreground">Checked automatically every few hours, and downloaded in the background</span>;
+			return (
+				<span className="text-muted-foreground">
+					Checked automatically every few hours, and downloaded in the background
+				</span>
+			);
 	}
 }
 
@@ -112,8 +122,8 @@ function GetTheApp() {
 				Get Guildie for Windows
 			</Button>
 			<p className="mt-3 text-muted-foreground">
-				Download <span className="text-foreground">Guildie-Setup.exe</span> from the latest release and run it. Windows may
-				warn that it's from an unknown publisher: choose More info, then Run anyway.
+				Download <span className="text-foreground">Guildie-Setup.exe</span> from the latest release and run it. Windows
+				may warn that it's from an unknown publisher: choose More info, then Run anyway.
 			</p>
 		</section>
 	);

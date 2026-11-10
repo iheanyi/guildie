@@ -16,9 +16,7 @@ export default defineConfig({
 		alias: {
 			// See src/lib/convex-auth-start/README.md. Resolved to the real (pnpm)
 			// path so it's the same module instance the package's hooks import.
-			"#convex-auth-react-internal": realpathSync(
-				"node_modules/@convex-dev/auth/dist/react/client.js",
-			),
+			"#convex-auth-react-internal": realpathSync("node_modules/@convex-dev/auth/dist/react/client.js"),
 		},
 	},
 	// Pre-bundling would give @convex-dev/auth/react its own copy of that module.

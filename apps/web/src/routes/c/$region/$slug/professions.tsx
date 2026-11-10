@@ -1,6 +1,6 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Region } from "@convex/shared/wow";
+import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
@@ -46,7 +46,9 @@ function ProfessionsPage() {
 
 	if (!data) return <Empty>This character's professions aren't visible to you.</Empty>;
 	if (professions.length === 0) {
-		return <Empty>No professions reported. Blizzard shares them once the character has logged in since the last sync.</Empty>;
+		return (
+			<Empty>No professions reported. Blizzard shares them once the character has logged in since the last sync.</Empty>
+		);
 	}
 
 	const wanted = search.profession?.toLowerCase();
@@ -59,31 +61,31 @@ function ProfessionsPage() {
 		// (sidebar open or not, desktop window size) rather than the viewport.
 		<div className="@container w-full pb-6">
 			<div className="grid gap-6 @2xl:grid-cols-[13rem_minmax(0,1fr)]">
-			<nav className="flex flex-col gap-px self-start" aria-label="Professions">
-				{professions.map((p, i) => (
-					<div key={p.id}>
-						{i === firstSecondary && i > 0 ? <div className="my-2 border-t border-border" /> : null}
-						<Link
-							from={Route.fullPath}
-							search={{ profession: p.name }}
-							replace
-							resetScroll={false}
-							className={cn(
-								"block rounded-md px-2.5 py-2 transition-colors hover:bg-accent/60",
-								p.id === selected.id && "bg-accent",
-							)}
-						>
-							<div className="flex items-baseline justify-between gap-2 text-sm">
-								<span className={cn(p.id === selected.id ? "text-foreground" : "text-foreground/85")}>{p.name}</span>
-								<span className="num text-xs text-muted-foreground">
-									{p.skill ?? "?"} / {p.maxSkill ?? "?"}
-								</span>
-							</div>
-							<SkillBar skill={p.skill} max={p.maxSkill} />
-						</Link>
-					</div>
-				))}
-			</nav>
+				<nav className="flex flex-col gap-px self-start" aria-label="Professions">
+					{professions.map((p, i) => (
+						<div key={p.id}>
+							{i === firstSecondary && i > 0 ? <div className="my-2 border-t border-border" /> : null}
+							<Link
+								from={Route.fullPath}
+								search={{ profession: p.name }}
+								replace
+								resetScroll={false}
+								className={cn(
+									"block rounded-md px-2.5 py-2 transition-colors hover:bg-accent/60",
+									p.id === selected.id && "bg-accent",
+								)}
+							>
+								<div className="flex items-baseline justify-between gap-2 text-sm">
+									<span className={cn(p.id === selected.id ? "text-foreground" : "text-foreground/85")}>{p.name}</span>
+									<span className="num text-xs text-muted-foreground">
+										{p.skill ?? "?"} / {p.maxSkill ?? "?"}
+									</span>
+								</div>
+								<SkillBar skill={p.skill} max={p.maxSkill} />
+							</Link>
+						</div>
+					))}
+				</nav>
 				<RecipeList key={selected.id} profession={selected} />
 			</div>
 		</div>

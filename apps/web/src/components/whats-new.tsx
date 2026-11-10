@@ -1,16 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { compareVersions } from "@/lib/versions";
 import { desktop } from "@/lib/desktop";
 import { markSeen, type ReleaseNotes, seenVersion, useReleaseNotes } from "@/lib/release-notes";
+import { compareVersions } from "@/lib/versions";
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+const formatDate = (iso: string) =>
+	new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
 
 /** Release notes, newest first: up to `upTo` (the app's version) when given. */
 export function WhatsNew({ upTo }: { upTo?: string }) {
 	const { data, isPending, isError } = useReleaseNotes();
 	if (isPending) return <p className="mt-2 text-[0.8125rem] text-muted-foreground">Loading…</p>;
-	if (isError || !data) return <p className="mt-2 text-[0.8125rem] text-muted-foreground">Couldn't load the release notes right now.</p>;
+	if (isError || !data)
+		return <p className="mt-2 text-[0.8125rem] text-muted-foreground">Couldn't load the release notes right now.</p>;
 	const shown = data.filter((r) => !upTo || compareVersions(r.version, upTo) <= 0).slice(0, 6);
 	return (
 		<div className="mt-3 space-y-6">

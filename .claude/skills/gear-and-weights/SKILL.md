@@ -1,4 +1,5 @@
 ---
+
 name: gear-and-weights
 description: How Guildie's gear-upgrade suggestions work ("upgrade for Brisket (Feral), maybe Miller (at 24)") on the site's item panel and in the addon's tooltips, and how to change stat weights, thresholds or the rules without the TypeScript and Lua versions drifting. Use when touching apps/web/convex/shared/weights.ts, shared/upgrades.ts, shared/itemInfo.ts, upgradeProfiles.ts, apps/addon/Guildie/Upgrades.lua, or upgrade_vectors.json, or when a suggestion looks wrong.
 ---
@@ -11,17 +12,17 @@ rules: TypeScript on the site, Lua in the addon. Overview: docs/addon.md,
 
 ## Pieces
 
-| File | What |
-|---|---|
-| `apps/web/convex/shared/weights.ts` | Plain data: `SPECS` (3 trees per class, stat weights, main stat = 1), `DEFAULT_TREE`, `CLASS_RULES` (armor/weapon types by level, dual wield), `STAT_POINTS`, `THRESHOLDS` |
-| `apps/web/convex/shared/upgrades.ts` | The rules: `specsOf`, `scoreItem`, `suits`, `usableAt`, `baseline`, `judge`, `suggest`, `explain`, `upgradeMember`, `upgradeRules()` |
-| `apps/web/convex/shared/itemInfo.ts` | Reads an item from its (English) tooltip lines: slot, armor/weapon type, stats, class restriction, Unique |
-| `apps/web/convex/upgradeProfiles.ts` | A guildmate as the rules see them: spec(s) and the score of what they wear per slot |
-| `apps/web/convex/crafting.ts` (`itemDetail`) | The site's item panel ("Upgrade for", with the reason) |
-| `apps/web/convex/helper.ts` (guild data) | Puts `upgradeRules()` and each active member into `GuildieData.lua` |
-| `apps/addon/Guildie/Upgrades.lua` | Lua port of `upgrades.ts`; reads the hovered item with the game's APIs |
-| `apps/addon/tests/upgrade_vectors.json` | Shared cases, run by both test suites |
-| `apps/web/scripts/gen-upgrade-vectors.ts` | Writes the vectors from the TypeScript |
+| File                                         | What                                                                                                                                                                       |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/convex/shared/weights.ts`          | Plain data: `SPECS` (3 trees per class, stat weights, main stat = 1), `DEFAULT_TREE`, `CLASS_RULES` (armor/weapon types by level, dual wield), `STAT_POINTS`, `THRESHOLDS` |
+| `apps/web/convex/shared/upgrades.ts`         | The rules: `specsOf`, `scoreItem`, `suits`, `usableAt`, `baseline`, `judge`, `suggest`, `explain`, `upgradeMember`, `upgradeRules()`                                       |
+| `apps/web/convex/shared/itemInfo.ts`         | Reads an item from its (English) tooltip lines: slot, armor/weapon type, stats, class restriction, Unique                                                                  |
+| `apps/web/convex/upgradeProfiles.ts`         | A guildmate as the rules see them: spec(s) and the score of what they wear per slot                                                                                        |
+| `apps/web/convex/crafting.ts` (`itemDetail`) | The site's item panel ("Upgrade for", with the reason)                                                                                                                     |
+| `apps/web/convex/helper.ts` (guild data)     | Puts `upgradeRules()` and each active member into `GuildieData.lua`                                                                                                        |
+| `apps/addon/Guildie/Upgrades.lua`            | Lua port of `upgrades.ts`; reads the hovered item with the game's APIs                                                                                                     |
+| `apps/addon/tests/upgrade_vectors.json`      | Shared cases, run by both test suites                                                                                                                                      |
+| `apps/web/scripts/gen-upgrade-vectors.ts`    | Writes the vectors from the TypeScript                                                                                                                                     |
 
 ## The decision, in short
 

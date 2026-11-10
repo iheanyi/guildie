@@ -40,7 +40,12 @@ test("Battle.net sign-in pages open in the browser, not the window", () => {
 		// Google (via Battle.net) blocks sign-in inside apps: these go to the browser.
 		assert.ok(!staysInWindow(url), url);
 	}
-	for (const url of ["https://battle.net.evil.com/", "http://oauth.battle.net/", "https://convex.site.evil.com/", "http://10.0.0.1/"]) {
+	for (const url of [
+		"https://battle.net.evil.com/",
+		"http://oauth.battle.net/",
+		"https://convex.site.evil.com/",
+		"http://10.0.0.1/",
+	]) {
 		assert.ok(!staysInWindow(url), url);
 	}
 });

@@ -131,7 +131,8 @@ export class Connection {
 		this.account = me.battletag ?? this.account ?? "you";
 		if (this.api.token) saveToken(this.origin, this.api.token, this.account);
 		this.log(`Connected to ${this.origin} as ${this.account}`);
-		if (!me.characters.length) this.onNotice("Guildie", "No claimed characters yet. Claim them on your Guildie account page.");
+		if (!me.characters.length)
+			this.onNotice("Guildie", "No claimed characters yet. Claim them on your Guildie account page.");
 		this.emit();
 		return true;
 	}
@@ -139,13 +140,15 @@ export class Connection {
 	/** The site hands over a token after the user signs in. Checked with the site before it's kept. */
 	async setToken(token: unknown, account?: unknown) {
 		if (!isTokenShaped(token)) throw new Error("That isn't a Guildie token.");
-		if (account !== undefined && (typeof account !== "string" || account.length > 100)) throw new Error("Invalid account name.");
+		if (account !== undefined && (typeof account !== "string" || account.length > 100))
+			throw new Error("Invalid account name.");
 		if (token === this.api.token && this.account) return;
 		const me = await new Api(this.origin, token, (url, init) => net.fetch(url, init)).me();
 		if (!me) throw new Error("Guildie didn't accept that token.");
 		this.api.token = token;
 		this.account = me.battletag ?? account ?? "you";
-		if (!saveToken(this.origin, token, this.account)) this.log("Can't encrypt the token on this computer; it's kept until the app quits.");
+		if (!saveToken(this.origin, token, this.account))
+			this.log("Can't encrypt the token on this computer; it's kept until the app quits.");
 		this.sync.reset();
 		this.log(`Connected to ${this.origin} as ${this.account}`);
 		this.emit();
@@ -167,7 +170,8 @@ export class Connection {
 	}
 
 	setWowFolder(folder: string) {
-		if (!isWowFolder(folder)) throw new Error("That folder doesn't look like World of Warcraft (no _classic_ or _forever_ folder inside).");
+		if (!isWowFolder(folder))
+			throw new Error("That folder doesn't look like World of Warcraft (no _classic_ or _forever_ folder inside).");
 		settings.wow = folder;
 		this.sync.setWow(folder);
 		this.log(`WoW folder: ${folder}`);
@@ -202,7 +206,10 @@ export class Connection {
 					this.account = undefined;
 					await this.setToken(result.token);
 					if (result.sessionCode) signedIn(result.sessionCode);
-					this.onNotice("Guildie", `Signed in as ${this.account}. Your addon data uploads when you log out of WoW or /reload.`);
+					this.onNotice(
+						"Guildie",
+						`Signed in as ${this.account}. Your addon data uploads when you log out of WoW or /reload.`,
+					);
 					return;
 				}
 				if (result.status === "expired") break;

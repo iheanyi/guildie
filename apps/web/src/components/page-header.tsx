@@ -33,7 +33,15 @@ export function PageHeader({
 }
 
 /** A page's body. Reading pages set a width; tables fill the pane. */
-export function Page({ width, className, children }: { width?: "narrow" | "medium"; className?: string; children: ReactNode }) {
+export function Page({
+	width,
+	className,
+	children,
+}: {
+	width?: "narrow" | "medium";
+	className?: string;
+	children: ReactNode;
+}) {
 	return (
 		<div className={cn("pb-12", width === "narrow" && "max-w-xl", width === "medium" && "max-w-3xl", className)}>
 			{children}

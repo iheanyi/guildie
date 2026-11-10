@@ -23,7 +23,9 @@ export async function claimSampleCharacter(ctx: MutationCtx, userId: Id<"users">
 	if (!isLocalBackend()) return;
 	const guild = await ctx.db
 		.query("guilds")
-		.withIndex("by_key", (q) => q.eq("flavor", "forever").eq("region", SAMPLE_GUILD.region).eq("slug", SAMPLE_GUILD.slug))
+		.withIndex("by_key", (q) =>
+			q.eq("flavor", "forever").eq("region", SAMPLE_GUILD.region).eq("slug", SAMPLE_GUILD.slug),
+		)
 		.unique();
 	if (!guild) return;
 	const members = await ctx.db

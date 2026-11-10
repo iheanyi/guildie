@@ -77,7 +77,11 @@ export function Reagents({ reagents, className }: { reagents: Recipe["reagents"]
 // --- Search ---------------------------------------------------------------
 
 /** Lowercase, punctuation to spaces, padded so `" " + word` finds word starts. */
-const normalize = (s: string) => ` ${s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
+const normalize = (s: string) =>
+	` ${s
+		.toLowerCase()
+		.replace(/[^\p{L}\p{N}]+/gu, " ")
+		.trim()} `;
 
 export const queryWords = (q: string) => normalize(q).trim().split(" ").filter(Boolean);
 

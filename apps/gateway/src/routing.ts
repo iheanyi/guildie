@@ -77,7 +77,12 @@ function matchesOrigin(url: URL, pattern: string): boolean {
 function decodeBytes(value: string): Uint8Array | null {
 	if (!/^[A-Za-z0-9_-]+$/.test(value)) return null;
 	try {
-		const binary = atob(value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "="));
+		const binary = atob(
+			value
+				.replace(/-/g, "+")
+				.replace(/_/g, "/")
+				.padEnd(Math.ceil(value.length / 4) * 4, "="),
+		);
 		return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 	} catch {
 		return null;

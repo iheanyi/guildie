@@ -9,9 +9,23 @@ import { cn } from "@/lib/utils";
  */
 export function CharacterAvatar({ url, size, className }: { url?: string; size: number; className?: string }) {
 	const frame = cn("shrink-0 overflow-hidden border border-border bg-muted", className);
-	if (url) return <img src={url} alt="" width={size} height={size} className={cn(frame, "object-cover")} style={{ width: size, height: size }} />;
+	if (url)
+		return (
+			<img
+				src={url}
+				alt=""
+				width={size}
+				height={size}
+				className={cn(frame, "object-cover")}
+				style={{ width: size, height: size }}
+			/>
+		);
 	return (
-		<span className={cn(frame, "grid place-items-center text-muted-foreground/60")} style={{ width: size, height: size }} aria-hidden="true">
+		<span
+			className={cn(frame, "grid place-items-center text-muted-foreground/60")}
+			style={{ width: size, height: size }}
+			aria-hidden="true"
+		>
 			<HugeiconsIcon icon={UserIcon} size={Math.round(size * 0.55)} strokeWidth={1.5} />
 		</span>
 	);

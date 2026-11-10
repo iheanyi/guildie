@@ -1,8 +1,8 @@
-import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { className } from "@convex/shared/wow";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { convexQuery } from "@convex-dev/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
@@ -12,8 +12,8 @@ import { SectionTitle } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { desktop, useInDesktopApp } from "@/lib/desktop";
 import { startClaim } from "@/lib/claim";
+import { desktop, useInDesktopApp } from "@/lib/desktop";
 
 // Settings → Account: who you are, your characters, privacy, sign out.
 export const Route = createFileRoute("/settings/")({
@@ -25,12 +25,11 @@ function Account() {
 	if (!viewer) return null;
 	return (
 		<div className="max-w-3xl pb-12">
-
 			<section>
 				<SectionTitle>Your characters</SectionTitle>
 				<p className="mt-1 text-muted-foreground">
-					Read from your Battle.net account each time you sign in, in every region. It proves which
-					guild members are yours, so guildmates can find you and, later, so we can notify you.
+					Read from your Battle.net account each time you sign in, in every region. It proves which guild members are
+					yours, so guildmates can find you and, later, so we can notify you.
 				</p>
 				{viewer.characters.length > 0 && (
 					<Table className="mt-3">
@@ -46,7 +45,11 @@ function Account() {
 							{viewer.characters.map((c) => (
 								<TableRow key={c._id}>
 									<TableCell>
-										<Link to="/c/$region/$slug" params={{ region: c.region, slug: c.slug }} className="font-medium hover:underline underline-offset-4">
+										<Link
+											to="/c/$region/$slug"
+											params={{ region: c.region, slug: c.slug }}
+											className="font-medium hover:underline underline-offset-4"
+										>
 											<ClassText classId={c.classId}>{c.name}</ClassText>
 										</Link>
 									</TableCell>
@@ -66,14 +69,18 @@ function Account() {
 				<BattletagSetting hidden={!!viewer.hideBattletag} />
 			</section>
 
-
 			<section className="mt-10 border-t border-border pt-6">
 				<SignOutButton />
 				<p className="mt-6 flex gap-4 text-xs text-muted-foreground">
 					<Link to="/data" className="hover:text-foreground">
 						Where the data comes from
 					</Link>
-					<a href="https://github.com/natedunn/guildie" target="_blank" rel="noreferrer" className="hover:text-foreground">
+					<a
+						href="https://github.com/natedunn/guildie"
+						target="_blank"
+						rel="noreferrer"
+						className="hover:text-foreground"
+					>
 						Source on GitHub
 					</a>
 				</p>
@@ -90,8 +97,8 @@ function ClaimCharacters() {
 	if (useInDesktopApp()) {
 		return (
 			<p className="mt-4 text-[0.8125rem] text-muted-foreground">
-				Your characters refresh every time you sign in. To refresh them now, use "Refresh my characters"
-				on guildie.club in your browser.
+				Your characters refresh every time you sign in. To refresh them now, use "Refresh my characters" on guildie.club
+				in your browser.
 			</p>
 		);
 	}

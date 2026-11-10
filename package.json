@@ -1,30 +1,38 @@
 {
-  "name": "guildie",
-  "private": true,
-  "type": "module",
-  "license": "MIT",
-  "packageManager": "pnpm@10.28.2",
-  "scripts": {
-    "dev": "pnpm --filter @guildie/web dev",
-    "build": "pnpm --filter @guildie/web build",
-    "check": "pnpm -r check",
-    "test": "pnpm -r --if-present test",
-    "seed": "pnpm --filter @guildie/web seed",
-    "blizzard-keys": "pnpm --filter @guildie/web blizzard-keys"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "workerd"
-    ],
-    "overrides": {
-      "electron>@types/node": "^26.6.5"
-    },
-    "patchedDependencies": {
-      "@convex-dev/auth": "patches/@convex-dev__auth.patch"
-    },
-    "ignoredBuiltDependencies": [
-      "electron-winstaller"
-    ]
-  }
+	"name": "guildie",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"packageManager": "pnpm@10.28.2",
+	"scripts": {
+		"dev": "pnpm --filter @guildie/web dev",
+		"build": "pnpm --filter @guildie/web build",
+		"check": "pnpm -r check",
+		"test": "pnpm -r --if-present test",
+		"seed": "pnpm --filter @guildie/web seed",
+		"blizzard-keys": "pnpm --filter @guildie/web blizzard-keys",
+		"format": "biome format --write .",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"test:addon": "for t in apps/addon/tests/*_test.lua; do luajit \"$t\" || exit 1; done",
+		"release": "node scripts/release.mjs"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"workerd"
+		],
+		"overrides": {
+			"electron>@types/node": "^26.6.5"
+		},
+		"patchedDependencies": {
+			"@convex-dev/auth": "patches/@convex-dev__auth.patch"
+		},
+		"ignoredBuiltDependencies": [
+			"electron-winstaller"
+		]
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.6.4"
+	}
 }
