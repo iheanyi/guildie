@@ -14,7 +14,7 @@ export const Route = createFileRoute("/c/$region/$slug")({
 		if (!data) throw notFound();
 		return { name: `${data.character.name} ${data.character.surname ?? ""}`.trim() };
 	},
-	head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.name ?? "Character"} · guildie` }] }),
+	head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.name ?? "Character"} · Guildie` }] }),
 	component: CharacterPage,
 });
 

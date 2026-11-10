@@ -139,3 +139,17 @@ Addon data is player-provided; Blizzard's can't be edited by the player.
 - The addon's window, minimap button, and whether "Upload while I'm AFK" is
   allowed by the game.
 - Whether `/reload` alone also makes Blizzard refresh the profile.
+
+## Desktop app sign-in
+
+Signing in never happens inside the app's window: Battle.net's "Sign in with
+Google/Apple" can't run in an embedded browser. Instead:
+
+1. The app (Sign in on the site, or the tray) starts pairing with
+   `session: true` and opens `/helper/connect?code=…` in the player's browser.
+2. They sign in there (any Battle.net login) and click Connect.
+3. The app's poll returns its upload token and a one-time `sessionCode`
+   (5 minutes, single use, hash stored in `desktopSessionCodes`).
+4. The app opens `/desktop/session?code=…` in its window, which swaps the code
+   for a normal session through the sign-in proxy (`auth:signInWithDesktopCode`)
+   and goes on to the player's guild.

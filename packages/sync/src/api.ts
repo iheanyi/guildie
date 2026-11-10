@@ -5,7 +5,9 @@ export type Me = { battletag: string | null; characters: string[] };
 export type UploadResult = { accepted?: string[]; unmatched?: string[]; error?: string };
 export type GuildData = { generatedAt: number; guilds: string[]; reagents: Record<string, unknown> };
 export type Pairing = { code: string; pollSecret: string; expiresInSeconds: number; connectUrl: string };
-export type PairingResult = { status: "pending" | "expired" } | { status: "approved"; token: string };
+export type PairingResult =
+	| { status: "pending" | "expired" }
+	| { status: "approved"; token: string; /** When pairing asked for a session. */ sessionCode?: string };
 
 /** What the client calls to reach the site: the global fetch by default. The
  * helper passes one that accepts *.localhost's self-signed certificate (Bun's
@@ -46,8 +48,9 @@ export class Api {
 		return (await res.json()) as Me;
 	}
 
-	async startPairing(label: string): Promise<Pairing> {
-		const res = await this.fetch("/api/helper/pair", { method: "POST", body: JSON.stringify({ label }) });
+	/** `session`: also get a one-time code to sign an app window in (the desktop app). */
+	async startPairing(label: string, session = false): Promise<Pairing> {
+		const res = await this.fetch("/api/helper/pair", { method: "POST", body: JSON.stringify({ label, session }) });
 		if (!res.ok) throw new Error(`Guildie answered ${res.status}`);
 		return (await res.json()) as Pairing;
 	}

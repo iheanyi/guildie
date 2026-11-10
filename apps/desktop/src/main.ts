@@ -172,14 +172,24 @@ app.whenReady().then(async () => {
 			void dialog.showMessageBox({ type: "warning", message: (e as Error).message });
 		}
 	};
+	// Sign in through the player's own browser (Battle.net's login, Google
+	// included, can't run inside the app), then sign the window in with the
+	// one-time code that comes back with the token.
+	const signIn = () =>
+		void connection.pair(
+			(connectUrl) => void shell.openExternal(connectUrl),
+			(sessionCode) => {
+				void win?.loadURL(`${origin}/desktop/session?code=${encodeURIComponent(sessionCode)}`);
+				showWindow();
+			},
+		);
+	ipcMain.handle("guildie:sign-in", (event) => {
+		if (!fromSite(event)) throw new Error("Not allowed from this page.");
+		signIn();
+	});
 	const { update } = createTray({
 		open: showWindow,
-		connect: () =>
-			void connection.pair((connectUrl) => {
-				if (!isGuildieUrl(connectUrl)) return void shell.openExternal(connectUrl);
-				void win?.loadURL(connectUrl);
-				showWindow();
-			}),
+		connect: signIn,
 		uploadNow: () => connection.uploadNow(),
 		chooseWow: () => void chooseWow(),
 		startWithSystem,

@@ -7,6 +7,7 @@ import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { desktop, useInDesktopApp } from "@/lib/desktop";
 import { landingPath, markSignInPending, safeNext, signInPending, startClaim, updateSignInPending } from "@/lib/claim";
 import type { RouterContext } from "./__root";
 
@@ -42,6 +43,10 @@ function SignIn() {
 	const [pending, setPending] = useState(false);
 	const [startError, setStartError] = useState(false);
 	const claiming = useFinishSignIn(!!flowError);
+	const inApp = useInDesktopApp();
+
+	// In the desktop app, signing in happens in the player's own browser.
+	if (inApp) return <DesktopSignIn />;
 
 	return (
 		<div className="max-w-md py-10">
@@ -134,6 +139,32 @@ function GuestSignIn() {
 				}}
 			>
 				Sign in as a guest
+			</Button>
+		</div>
+	);
+}
+
+/** The desktop app: sign in in the browser, and the app signs its window in when you approve it. */
+function DesktopSignIn() {
+	const [pending, setPending] = useState(false);
+	return (
+		<div className="max-w-md py-10">
+			<h1 className="text-4xl">Sign in</h1>
+			<p className="mt-3 text-muted-foreground">
+				You'll sign in with Battle.net in your web browser, where any of your usual logins work. Then
+				click Connect there, and the app signs in by itself.
+			</p>
+			<Button
+				size="lg"
+				className="mt-6"
+				disabled={pending}
+				onClick={async () => {
+					setPending(true);
+					await desktop()?.signIn?.().catch(() => undefined);
+					setPending(false);
+				}}
+			>
+				{pending ? "Continue in your browser…" : "Sign in with your browser"}
 			</Button>
 		</div>
 	);

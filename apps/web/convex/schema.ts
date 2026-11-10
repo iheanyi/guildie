@@ -159,7 +159,22 @@ export default defineSchema({
 		/** Set when approved; handed to the helper once, then the row is deleted. */
 		token: v.optional(v.string()),
 		userId: v.optional(v.id("users")),
+		/** The desktop app also wants a signed-in session for its window. */
+		wantsSession: v.optional(v.boolean()),
+		/** Set when approved (if wanted): a one-time code for desktopSessionCodes. */
+		sessionCode: v.optional(v.string()),
 	}).index("by_code", ["code"]),
+
+	/**
+	 * One-time codes the desktop app swaps for a signed-in session in its own
+	 * window (auth:signInWithDesktopCode), issued when the player approves the
+	 * app in their browser. Five minutes, single use; only the hash is stored.
+	 */
+	desktopSessionCodes: defineTable({
+		codeHash: v.string(),
+		userId: v.id("users"),
+		expiresAt: v.number(),
+	}).index("by_codeHash", ["codeHash"]),
 
 	/**
 	 * The latest in-game snapshot per character, uploaded by the helper from

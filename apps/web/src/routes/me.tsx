@@ -9,6 +9,7 @@ import { useState } from "react";
 import { ClassText } from "@/components/class-name";
 import { HelperTokens } from "@/components/helper-tokens";
 import { Button } from "@/components/ui/button";
+import { useInDesktopApp } from "@/lib/desktop";
 import { isAuthReturn } from "@/lib/auth-return";
 import { startClaim } from "@/lib/claim";
 
@@ -79,6 +80,15 @@ function ClaimCharacters() {
 	const start = useMutation(api.claims.start);
 	const [error, setError] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
+	// The claim is a trip to Battle.net that has to happen in the browser you signed in with.
+	if (useInDesktopApp()) {
+		return (
+			<p className="mt-4 text-sm text-muted-foreground">
+				Your characters refresh every time you sign in. To refresh them now, use "Refresh my characters"
+				on guildie.club in your browser.
+			</p>
+		);
+	}
 	return (
 		<div className="mt-4">
 			<Button

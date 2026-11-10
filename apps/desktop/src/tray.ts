@@ -29,7 +29,7 @@ export function createTray(actions: TrayActions) {
 
 	const update = (status: Status) => {
 		const statusLine = status.pairingCode
-			? `Approve ${status.pairingCode} in the window`
+			? `Approve ${status.pairingCode} in your browser`
 			: status.connected
 				? `Connected as ${status.account}`
 				: "Not connected";
@@ -44,7 +44,7 @@ export function createTray(actions: TrayActions) {
 				{ label: status.wowFolder ? `WoW: ${status.wowFolder}` : "WoW folder not found", enabled: false },
 				{ type: "separator" },
 				{ label: "Open Guildie", click: actions.open },
-				{ label: "Connect...", visible: !status.connected && !status.pairingCode, click: actions.connect },
+				{ label: "Sign in...", visible: !status.connected && !status.pairingCode, click: actions.connect },
 				{ label: "Upload now", enabled: status.connected, click: actions.uploadNow },
 				{ label: "Choose World of Warcraft folder...", click: actions.chooseWow },
 				...(actions.startWithSystem

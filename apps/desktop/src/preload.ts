@@ -7,6 +7,7 @@
 //     getState(): Promise<{ connected, account? }>,
 //     setToken(token, account?): Promise<void>,   // after the user signs in
 //     signOut(): Promise<void>,                   // when the user signs out
+//     signIn(): Promise<void>,                    // sign in via the browser (see connection.ts pair)
 //     getStatus(): Promise<Status>,               // sync status, see connection.ts
 //     onStatus(cb): () => void,                   // ...and its changes
 //   }
@@ -23,6 +24,7 @@ if (isGuildieUrl(location.href)) {
 		getState: () => ipcRenderer.invoke("guildie:get-state"),
 		setToken: (token: unknown, account?: unknown) => ipcRenderer.invoke("guildie:set-token", token, account),
 		signOut: () => ipcRenderer.invoke("guildie:sign-out"),
+		signIn: () => ipcRenderer.invoke("guildie:sign-in"),
 		getStatus: () => ipcRenderer.invoke("guildie:get-status"),
 		onStatus: (callback: unknown) => {
 			if (typeof callback !== "function") throw new TypeError("onStatus needs a function");

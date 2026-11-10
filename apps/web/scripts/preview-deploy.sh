@@ -30,7 +30,9 @@ trap 'git checkout -- convex/buildSite.ts 2>/dev/null || true' EXIT
 printf 'export const BUILD_SITE_URL: string = "%s";\n' "$site" > convex/buildSite.ts
 
 # --cmd also gets VITE_CONVEX_SITE_URL.
-VITE_SITE_URL="$site" npx convex deploy --preview-name "$name" \
+# A new preview's database is empty: fill the recipe catalog (reagent tooltips
+# need it) on its first deploy. Guilds sync once someone signs in.
+VITE_SITE_URL="$site" npx convex deploy --preview-name "$name" --preview-run recipes:syncCatalog \
 	--cmd "pnpm run build" --cmd-url-env-var-name VITE_CONVEX_URL
 # The Cloudflare Vite plugin writes the built Worker's config here.
 npx wrangler preview --config dist/server/wrangler.json --name "$name"

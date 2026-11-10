@@ -204,7 +204,7 @@ if (useTray) {
 	tray = new WindowsTray(configDir(), iconPath, (item) => void onClick(item), quit);
 }
 
-log(`guildie helper for ${base}`);
+log(`Guildie helper for ${base}`);
 ui.status("Starting");
 ui.connected(null);
 const connected = await checkToken().catch((e: Error) => {

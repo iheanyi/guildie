@@ -152,28 +152,38 @@ export class Connection {
 	}
 
 	/**
-	 * The fallback when the site doesn't hand over a token itself: the pairing
-	 * flow the helper uses. `show` opens the approval page in the window.
+	 * Sign in: the player approves this app in their own browser (any
+	 * Battle.net login works there, Google included; inside the app's window it
+	 * wouldn't), and the app gets its upload token plus a one-time code that
+	 * `signedIn` uses to sign the window in. `openBrowser` opens the approval page.
 	 */
-	async pair(show: (connectUrl: string) => void) {
-		if (this.pairingCode || this.account) return;
+	async pair(openBrowser: (connectUrl: string) => void, signedIn: (sessionCode: string) => void) {
+		if (this.pairingCode) return;
+		const previousToken = this.api.token;
 		try {
-			const { code, pollSecret, expiresInSeconds, connectUrl } = await this.api.startPairing(`Guildie app on ${hostname() || "this PC"}`);
+			const { code, pollSecret, expiresInSeconds, connectUrl } = await this.api.startPairing(
+				`Guildie app on ${hostname() || "this PC"}`,
+				true,
+			);
 			this.pairingCode = code;
 			this.emit();
-			show(connectUrl);
+			openBrowser(connectUrl);
 			const until = Date.now() + expiresInSeconds * 1000;
-			while (Date.now() < until && !this.account) {
+			while (Date.now() < until) {
 				await new Promise((resolve) => setTimeout(resolve, 2_000));
 				const result = await this.api.pollPairing(code, pollSecret).catch(() => ({ status: "pending" as const }));
 				if (result.status === "approved") {
+					// Already connected (signing the window in again): retire the old token.
+					if (previousToken && previousToken !== result.token) await this.api.signOut();
+					this.account = undefined;
 					await this.setToken(result.token);
-					this.onNotice("Guildie", `Connected as ${this.account}. Your addon data uploads when you log out of WoW or /reload.`);
+					if (result.sessionCode) signedIn(result.sessionCode);
+					this.onNotice("Guildie", `Signed in as ${this.account}. Your addon data uploads when you log out of WoW or /reload.`);
 					return;
 				}
 				if (result.status === "expired") break;
 			}
-			if (!this.account) this.onNotice("Guildie", 'Connecting timed out. Choose "Connect" in the tray menu to try again.');
+			this.onNotice("Guildie", "Signing in timed out. Choose Sign in to try again.");
 		} catch (e) {
 			this.log(`Connecting failed: ${(e as Error).message}`);
 			this.onNotice("Guildie", `Couldn't connect to ${this.origin}.`);

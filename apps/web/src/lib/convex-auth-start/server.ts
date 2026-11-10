@@ -13,6 +13,7 @@ export const authServer = setupConvexAuthServer({
 	// Allowlist: every function that mints a session, and nothing else.
 	signIn: [
 		api.auth.completeSignInWithBattlenet,
+		api.auth.signInWithDesktopCode,
 		api.auth.signInAsGuest,
 	],
 	cookieOptions,

@@ -27,7 +27,7 @@ test("Guildie's own sites get the bridge", () => {
 	}
 });
 
-test("sign-in hops stay in the window, without the bridge", () => {
+test("Battle.net sign-in pages open in the browser, not the window", () => {
 	for (const url of [
 		"https://oauth.battle.net/authorize?x=1",
 		"https://account.battle.net/login",
@@ -37,7 +37,8 @@ test("sign-in hops stay in the window, without the bridge", () => {
 		"http://127.0.0.1:3271/oauth/claim/callback",
 	]) {
 		assert.ok(isSignInUrl(url), url);
-		assert.ok(staysInWindow(url), url);
+		// Google (via Battle.net) blocks sign-in inside apps: these go to the browser.
+		assert.ok(!staysInWindow(url), url);
 	}
 	for (const url of ["https://battle.net.evil.com/", "http://oauth.battle.net/", "https://convex.site.evil.com/", "http://10.0.0.1/"]) {
 		assert.ok(!staysInWindow(url), url);

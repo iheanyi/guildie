@@ -24,7 +24,7 @@ export const Route = createFileRoute("/g/$region/$slug")({
 		if (!data) throw notFound();
 		return { name: data.guild.name };
 	},
-	head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.name ?? "Guild"} · guildie` }] }),
+	head: ({ loaderData }) => ({ meta: [{ title: `${loaderData?.name ?? "Guild"} · Guildie` }] }),
 	component: GuildPage,
 });
 

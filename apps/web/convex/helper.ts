@@ -244,8 +244,9 @@ export const issueDesktopToken = mutation({
 
 /** The helper starts connecting: returns the code to show and the secret to poll with. */
 export const startPairing = mutation({
-	args: { label: v.string() },
-	handler: async (ctx, { label }) => {
+	/** `session`: the desktop app, which also wants its window signed in. */
+	args: { label: v.string(), session: v.optional(v.boolean()) },
+	handler: async (ctx, { label, session }) => {
 		const pollSecret = newToken();
 		const code = pairingCode();
 		await ctx.db.insert("helperPairings", {
@@ -253,6 +254,7 @@ export const startPairing = mutation({
 			pollSecretHash: await sha256(pollSecret),
 			label: label.trim().slice(0, 40) || "Helper",
 			expiresAt: Date.now() + PAIRING_TTL_MS,
+			wantsSession: session || undefined,
 		});
 		return { code, pollSecret, expiresInSeconds: PAIRING_TTL_MS / 1000 };
 	},
@@ -282,7 +284,16 @@ export const approvePairing = mutation({
 			.unique();
 		if (!row || row.expiresAt < Date.now()) throw new ConvexError("That code expired. Start again from the helper.");
 		if (row.token) return;
-		await ctx.db.patch(row._id, { userId, token: await insertToken(ctx, userId, row.label) });
+		let sessionCode: string | undefined;
+		if (row.wantsSession) {
+			sessionCode = newToken();
+			await ctx.db.insert("desktopSessionCodes", {
+				codeHash: await sha256(sessionCode),
+				userId,
+				expiresAt: Date.now() + 5 * 60_000,
+			});
+		}
+		await ctx.db.patch(row._id, { userId, token: await insertToken(ctx, userId, row.label), sessionCode });
 	},
 });
 
@@ -301,7 +312,7 @@ export const pollPairing = mutation({
 		}
 		if (!row.token) return { status: "pending" as const };
 		await ctx.db.delete(row._id);
-		return { status: "approved" as const, token: row.token };
+		return { status: "approved" as const, token: row.token, sessionCode: row.sessionCode };
 	},
 });
 

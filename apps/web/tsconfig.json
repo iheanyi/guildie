@@ -4,6 +4,8 @@
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
+		// Convex Auth hides bindProvider's type (still internal in the beta) behind this condition.
+		"customConditions": ["convex-auth-internal-types"],
 		"jsx": "react-jsx",
 		"strict": true,
 		"skipLibCheck": true,
@@ -17,7 +19,7 @@
 			"@/*": ["./src/*"],
 			"@convex/*": ["./convex/*"],
 			// Convex Auth v2 doesn't export its React context yet; see src/lib/convex-auth-start.
-			"#convex-auth-react-internal": ["./node_modules/@convex-dev/auth/dist/react/client"]
+			"#convex-auth-react-internal": ["./node_modules/@convex-dev/auth/dist/internal-types/react/client"]
 		}
 	},
 	"include": ["src", "convex", "vite.config.ts"]

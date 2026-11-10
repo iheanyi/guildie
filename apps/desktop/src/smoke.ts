@@ -36,6 +36,10 @@ function fakeWow() {
 }
 
 export async function runSmokeTest(win: BrowserWindow, connection: Connection, url: string, log: Log) {
+	// The page's own errors and warnings, so a failing check shows why.
+	win.webContents.on("console-message", (details) => {
+		if (details.level === "error" || details.level === "warning") log(`page ${details.level}: ${details.message}`);
+	});
 	const results: { check: string; ok: boolean; detail?: string }[] = [];
 	const check = (name: string, ok: boolean, detail?: unknown) => {
 		results.push({ check: name, ok, detail: detail === undefined ? undefined : JSON.stringify(detail) });
@@ -61,7 +65,7 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 		check("bridge exposed on the site", security.bridge === "object" && security.isDesktop === "true", security);
 		check(
 			"bridge has exactly the agreed functions",
-			security.keys === "getState,getStatus,isDesktop,onStatus,setToken,signOut,version",
+			security.keys === "getState,getStatus,isDesktop,onStatus,setToken,signIn,signOut,version",
 			security.keys,
 		);
 		check('html[data-desktop="true"]', security.dataset === "true");
@@ -124,14 +128,26 @@ export async function runSmokeTest(win: BrowserWindow, connection: Connection, u
 
 		// The pairing fallback: someone approves the logged code on the site meanwhile.
 		if (process.env.GUILDIE_SMOKE_PAIR) {
-			const pairing = connection.pair((connectUrl) => {
-				log(`Pairing: showing ${connectUrl}`);
-				void win.loadURL(connectUrl);
-			});
+			// Signing in: the approval page would open in the browser; the session
+			// code that comes back signs the window in (/desktop/session).
+			let sessionCode: string | undefined;
+			const pairing = connection.pair(
+				(connectUrl) => log(`Pairing: the browser would open ${connectUrl}`),
+				(code) => {
+					sessionCode = code;
+					void win.loadURL(`${new URL(url).origin}/desktop/session?code=${encodeURIComponent(code)}`);
+				},
+			);
 			const code = await until(() => connection.status.pairingCode, 10_000);
 			log(`Pairing code: ${code}`);
 			await pairing;
 			check("pairing connects", connection.status.connected, connection.status);
+			check("pairing returns a session code", !!sessionCode);
+			// The window goes to /desktop/session, which signs in and moves on to the guild or /me.
+			await until(() => win.webContents.getURL().includes("/desktop/session"), 30_000);
+			await until(() => !win.webContents.getURL().includes("/desktop/session") && !win.webContents.isLoading(), 30_000);
+			const signedIn = await page<boolean>("fetch('/me', { redirect: 'manual' }).then((r) => r.type !== 'opaqueredirect' && r.status === 200)");
+			check("the window is signed in with the session code", signedIn, win.webContents.getURL());
 			await connection.disconnect();
 			await win.loadURL(url);
 			await until(() => !win.webContents.isLoading(), 30_000);

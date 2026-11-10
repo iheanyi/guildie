@@ -30,7 +30,12 @@ export function isGuildieUrl(url: string) {
 	return u.protocol === "http:" && (host === "guildie.localhost" || host.endsWith(".guildie.localhost"));
 }
 
-/** The hops of a Battle.net sign-in, which also stay in the window (but get no bridge). */
+/**
+ * Battle.net's sign-in and its hops. These open in the player's browser, not
+ * the window: Battle.net's "Sign in with Google/Apple" can't work inside an
+ * app (Google blocks embedded browsers), so signing in happens in the browser
+ * and the app signs its window in afterwards (connection.ts pair).
+ */
 export function isSignInUrl(url: string) {
 	const u = parse(url);
 	if (!u) return false;
@@ -50,7 +55,7 @@ export function isSignInUrl(url: string) {
 }
 
 /** Whether a navigation may happen inside the window (everything else opens in the browser). */
-export const staysInWindow = (url: string) => isGuildieUrl(url) || isSignInUrl(url);
+export const staysInWindow = (url: string) => isGuildieUrl(url);
 
 /** Links we hand to the default browser: web pages and mail only, never files or custom schemes. */
 export function isExternalOpenable(url: string) {

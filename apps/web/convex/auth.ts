@@ -1,6 +1,11 @@
 import { setupAnonymous } from "@convex-dev/auth/methods/anonymous/server";
 import { setupOauth } from "@convex-dev/auth/methods/oauth/server";
 import { setupConvexAuth } from "@convex-dev/auth/server";
+import type { RegisteredMutation } from "convex/server";
+import { type Infer, v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { DatabaseWriter } from "./_generated/server";
+import { sha256 } from "./claims";
 import { components, internal } from "./_generated/api";
 import { viaGateway } from "./authGateway";
 import { allowedRedirectOrigins } from "./origins";
@@ -29,6 +34,53 @@ const battlenet: BattlenetSignIn = setupOauth(
 );
 export const startSignInWithBattlenet = viaGateway("battlenet", battlenet.startSignIn);
 export const completeSignInWithBattlenet = battlenet.completeSignIn;
+
+// The desktop app's window: after the player approves the app in their own
+// browser (where any Battle.net login works, Google included), the app swaps a
+// one-time code for a session here. The account is "the user who approved",
+// so createFromDesktop returns that existing user. bindProvider is Convex
+// Auth's provider builder, still internal in this beta (docs/convex-auth.md).
+const vTokens = v.object({
+	accessToken: v.string(),
+	accessTokenExpiresAt: v.number(),
+	refreshToken: v.string(),
+	refreshTokenExpiresAt: v.number(),
+	userId: v.string(),
+});
+const desktop = auth.bindProvider<"desktop", { userId: Id<"users"> }>({
+	name: "desktop",
+	createUser: internal.users.createFromDesktop,
+});
+type DesktopSignIn =
+	| { status: "complete"; tokens: Infer<typeof vTokens> }
+	| { status: "error"; userError: { error: "EXPIRED" } };
+// Annotated: inferring it from `internal.users` is circular (like Discord's in Onda).
+export const signInWithDesktopCode: RegisteredMutation<"public", { code: string }, Promise<DesktopSignIn>> = desktop.authMutation({
+	args: { code: v.string() },
+	returns: v.union(
+		v.object({ status: v.literal("complete"), tokens: vTokens }),
+		v.object({ status: v.literal("error"), userError: v.object({ error: v.literal("EXPIRED") }) }),
+	),
+	handler: async (ctx, { code }) => {
+		const codeHash = await sha256(code);
+		// authMutation's ctx isn't typed with our schema.
+		const db = ctx.db as unknown as DatabaseWriter;
+		const row = await db
+			.query("desktopSessionCodes")
+			.withIndex("by_codeHash", (q) => q.eq("codeHash", codeHash))
+			.unique();
+		if (row) await db.delete(row._id);
+		if (!row || row.expiresAt < Date.now() || !(await db.get(row.userId))) {
+			return { status: "error" as const, userError: { error: "EXPIRED" as const } };
+		}
+		const providerAccountId = `user:${row.userId}`;
+		const profile = { userId: row.userId };
+		const tokens = (await ctx.convexAuth.resolveUserId(providerAccountId))
+			? await ctx.convexAuth.completeSignIn({ providerAccountId, profile })
+			: await ctx.convexAuth.completeSignUp({ providerAccountId, profile });
+		return { status: "complete" as const, tokens };
+	},
+});
 
 // Dev-only guest accounts so the app can be exercised without Blizzard keys.
 // createFromGuest refuses anywhere but a local backend (origins.ts).

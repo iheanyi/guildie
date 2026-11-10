@@ -42,6 +42,18 @@ export const onBattlenetSignIn = internalMutation({
 	},
 });
 
+/** The desktop app's sign-in (auth:signInWithDesktopCode): the account belongs to an existing user. */
+export const createFromDesktop = internalMutation({
+	args: {
+		provider: v.object({ name: v.literal("desktop"), accountId: v.string(), profile: v.object({ userId: v.id("users") }) }),
+	},
+	returns: v.id("users"),
+	handler: async (ctx, { provider: { profile } }) => {
+		if (!(await ctx.db.get(profile.userId))) throw new ConvexError("No such user");
+		return profile.userId;
+	},
+});
+
 export const createFromGuest = internalMutation({
 	args: {
 		provider: v.object({ name: v.literal("anonymous"), accountId: v.string(), profile: v.object({}) }),
