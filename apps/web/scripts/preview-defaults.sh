@@ -5,7 +5,9 @@
 # baked in by scripts/preview-deploy.sh. Re-run after changing a dev
 # setting; only new previews pick it up. See docs/deploy.md.
 set -eu
-. "$(dirname "$0")/deployments.sh"
+# Run from apps/web (the Convex project and Worker), wherever this was started.
+cd "$(dirname "$0")/.."
+. scripts/deployments.sh
 [ -n "$cloud_dev" ] || { echo "preview-defaults: set cloud_dev in scripts/deployments.sh first" >&2; exit 1; }
 export CONVEX_DEPLOYMENT="dev:$cloud_dev"
 

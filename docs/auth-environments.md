@@ -36,20 +36,20 @@ own values per tier):
 | `AUTH_BATTLENET_CALLBACK_URL` | The tier's gateway sign-in callback. The claim callback is derived from it (`/oauth/claim/callback`). |
 
 That's six. There is no `SITE_URL` on cloud deployments: prod and each preview
-get their app origin baked in at deploy (`convex/buildSite.ts`, written by the
-deploy scripts). Local backends get `SITE_URL` from `scripts/dev-seed.sh`, and
+get their app origin baked in at deploy (`apps/web/convex/buildSite.ts`, written by the
+deploy scripts). Local backends get `SITE_URL` from `apps/web/scripts/dev-seed.sh`, and
 guest sign-in turns itself on there only (`isLocalBackend` in
-`convex/origins.ts`).
+`apps/web/convex/origins.ts`).
 
 **Gateway Workers:** one secret each, `ROUTING_SECRET`. Their
-`ALLOWED_TARGETS` is in `workers/gateway/wrangler.jsonc`.
+`ALLOWED_TARGETS` is in `apps/gateway/wrangler.jsonc`.
 
 **App Worker (`guildie`):** no runtime settings. Build settings are in
 docs/deploy.md.
 
 ## How a sign-in flows
 
-1. `auth:startSignInWithBattlenet` (`viaGateway` in `convex/authGateway.ts`)
+1. `auth:startSignInWithBattlenet` (`viaGateway` in `apps/web/convex/authGateway.ts`)
    runs the package's start, then prefixes `state` in Battle.net's URL with
    `<b64url(CONVEX_SITE_URL)>.<b64url(HMAC(secret, "battlenet\n" + site))>.`.
    The browser keeps the plain state. `redirect_uri` is the gateway (patch).
@@ -64,12 +64,12 @@ docs/deploy.md.
 
 ## How claiming flows
 
-The same routing, with provider `claim` (`convex/claims.ts`):
+The same routing, with provider `claim` (`apps/web/convex/claims.ts`):
 
 1. `claims:start` records the request (user, region, app origin) and sends
    the browser to Battle.net with the prefixed state.
 2. The gateway forwards to `<CONVEX_SITE_URL>/oauth/claim/callback`
-   (`convex/http.ts`), which bounces the browser to `<app>/claim/callback`.
+   (`apps/web/convex/http.ts`), which bounces the browser to `<app>/claim/callback`.
 3. The app checks the state against sessionStorage and calls
    `claims:complete` as the signed-in user, which exchanges the code and
    reads the account's characters. Only the person who started, in the same
@@ -80,8 +80,8 @@ The same routing, with provider `claim` (`convex/claims.ts`):
 | Thing | Where | Remove when |
 |---|---|---|
 | **Patch:** optional `CALLBACK_URL` component env | `patches/@convex-dev__auth.patch` | Upstream supports a configurable callback (convex-auth#1) |
-| `viaGateway` wrapper (calls the package's mutation through the undocumented `_handler`) | `convex/authGateway.ts` | Same |
-| Gateway Worker | `workers/gateway` | Same |
+| `viaGateway` wrapper (calls the package's mutation through the undocumented `_handler`) | `apps/web/convex/authGateway.ts` | Same |
+| Gateway Worker | `apps/gateway` | Same |
 
 The patch is Onda's. When upgrading the package, check it still applies
 (`pnpm install` fails if it doesn't); docs/convex-auth.md tracks upstream.
@@ -91,15 +91,15 @@ The patch is Onda's. When upgrading the package, check it still applies
 Pipe secrets in so they stay out of shell history.
 
 - **A Convex value:** `pbpaste | npx convex env set --deployment <name> NAME`.
-  After changing cloud dev, re-run `sh scripts/preview-defaults.sh` so new
+  After changing cloud dev, re-run `sh apps/web/scripts/preview-defaults.sh` so new
   previews get it too.
 - **A routing secret:** generate one (`openssl rand -base64 32`) and set it on
   the gateway and on every deployment of the tier together:
   `pnpm wrangler secret put ROUTING_SECRET -c wrangler.jsonc --env <dev|prod>`
-  (from `workers/gateway`), then `AUTH_GATEWAY_SECRET` on Convex, then (dev)
+  (from `apps/gateway`), then `AUTH_GATEWAY_SECRET` on Convex, then (dev)
   preview defaults.
-- **Signing keys:** generate a pair as in `scripts/preview-defaults.sh` and
+- **Signing keys:** generate a pair as in `apps/web/scripts/preview-defaults.sh` and
   set both. Everyone on that deployment signs in again.
-- **Gateway code:** from `workers/gateway`, `pnpm test && pnpm check`, then
+- **Gateway code:** from `apps/gateway`, `pnpm test && pnpm check`, then
   `pnpm deploy:dev` / `pnpm deploy:prod`. `https://<gateway>/` answers
   "guildie sign-in gateway." when it's up.

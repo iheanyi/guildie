@@ -6,9 +6,11 @@
 # Until the settings are in, Convex holds the first push and retries it.
 #   usage: dev-seed.sh <cloud port> <app url>
 set -eu
+# Run from apps/web (the Convex project and Worker), wherever this was started.
+cd "$(dirname "$0")/.."
 cloud="$1"
 url="$2"
-. "$(dirname "$0")/deployments.sh"
+. scripts/deployments.sh
 
 i=0
 until curl -s -o /dev/null --max-time 1 "http://127.0.0.1:$cloud/version"; do

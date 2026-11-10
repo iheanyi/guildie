@@ -35,7 +35,7 @@ Setting it all up from scratch: [docs/setup.md](docs/setup.md).
 
 ## How data flows
 
-- **Rosters**: `convex/sync.ts` pulls each guild's roster from Blizzard's API
+- **Rosters**: `apps/web/convex/sync.ts` pulls each guild's roster from Blizzard's API
   every hour (and on "Sync now"), then each member's profile, equipment,
   professions and avatar, staggered under Blizzard's rate limits.
 - **Sign-in**: Battle.net OpenID Connect. We learn the BattleTag, nothing else.
@@ -57,7 +57,7 @@ Setting it all up from scratch: [docs/setup.md](docs/setup.md).
 ## Other game versions
 
 `flavor` on guilds and characters is there so realm-based versions (Classic
-Era, Anniversary) can be added. `convex/shared/wow.ts` has the per-flavor API
+Era, Anniversary) can be added. `apps/web/convex/shared/wow.ts` has the per-flavor API
 details; a realm-based flavor needs realm slugs in the guild and character
 paths.
 

@@ -5,8 +5,8 @@ Worker `guildie` has two build triggers, the same model as Kino:
 
 | Trigger | Branches | Deploy command | `CONVEX_DEPLOY_KEY` | Result |
 |---|---|---|---|---|
-| Deploy default branch | `main` | `sh scripts/cloudflare-deploy.sh` | prod deploy key | Convex prod `scintillating-gnat-539`, then `https://guildie.club` |
-| Deploy non-production branches | everything else | `sh scripts/preview-deploy.sh` | preview deploy key | a Convex preview named after the branch, then a Worker Preview at `https://<branch>.preview.guildie.club` |
+| Deploy default branch | `main` | `sh apps/web/scripts/cloudflare-deploy.sh` | prod deploy key | Convex prod `scintillating-gnat-539`, then `https://guildie.club` |
+| Deploy non-production branches | everything else | `sh apps/web/scripts/preview-deploy.sh` | preview deploy key | a Convex preview named after the branch, then a Worker Preview at `https://<branch>.preview.guildie.club` |
 
 Both have an empty build command; the deploy scripts build. Each trigger has
 exactly one build variable, `CONVEX_DEPLOY_KEY` (secret), with a different
@@ -16,14 +16,14 @@ branch but `main`.
 
 The branch name becomes one DNS label: lowercased, anything outside
 `[a-z0-9-]` turned into `-`, cut to 40 characters (`feat/Notes` →
-`feat-notes`). See `scripts/preview-name.sh`.
+`feat-notes`). See `apps/web/scripts/preview-name.sh`.
 
 ## How it works
 
 - **Convex URLs are baked into the app at build.** `convex deploy --cmd` sets
   `VITE_CONVEX_URL` and `VITE_CONVEX_SITE_URL` for the build.
 - **The app origin is baked into Convex at deploy.** The deploy scripts write
-  it to `convex/buildSite.ts` just before `convex deploy`, so no deployment
+  it to `apps/web/convex/buildSite.ts` just before `convex deploy`, so no deployment
   needs a `SITE_URL` setting.
 - **The Worker has no runtime settings.** Blizzard calls and syncs run in
   Convex.
@@ -32,7 +32,7 @@ The branch name becomes one DNS label: lowercased, anything outside
   `*.convex.site`.
 - **New Convex previews start from the preview defaults**
   (`npx convex env default list --type preview`): cloud dev's settings plus a
-  signing key pair just for previews, written by `scripts/preview-defaults.sh`.
+  signing key pair just for previews, written by `apps/web/scripts/preview-defaults.sh`.
 - **Previews start empty.** Add a guild in the preview and it syncs from
   Blizzard; the crons keep it current.
 - **Cleanup.** When a pull request closes or a branch is deleted,
@@ -46,7 +46,7 @@ The branch name becomes one DNS label: lowercased, anything outside
 | Thing | Where |
 |---|---|
 | Convex project | `guildie` (id 3403136, team `nate-dunn`) |
-| Convex deployments | cloud dev `merry-fish-229`, prod `scintillating-gnat-539` (`scripts/deployments.sh`) |
+| Convex deployments | cloud dev `merry-fish-229`, prod `scintillating-gnat-539` (`apps/web/scripts/deployments.sh`) |
 | Worker | `guildie` on account "Nate", domains `guildie.club` and `preview.guildie.club` (previews only) |
 | Build token | "guildie build token" (created by the dashboard import; used by both triggers) |
 | Gateways | docs/auth-environments.md |

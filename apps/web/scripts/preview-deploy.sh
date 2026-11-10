@@ -9,6 +9,8 @@
 # (scripts/preview-defaults.sh); its origin is baked in below. Previews start
 # with no guilds; add one in the app and it syncs from Blizzard.
 set -eu
+# Run from apps/web (the Convex project and Worker), wherever this was started.
+cd "$(dirname "$0")/.."
 
 name="$(sh scripts/preview-name.sh)"
 [ "$name" != main ] || { echo "preview-deploy: main deploys production, not a preview" >&2; exit 1; }

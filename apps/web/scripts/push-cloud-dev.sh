@@ -3,7 +3,9 @@
 # (scripts/deployments.sh). `convex dev` points .env.local at the deployment
 # it pushes to; put this checkout's local settings back afterwards.
 set -eu
-. "$(dirname "$0")/deployments.sh"
+# Run from apps/web (the Convex project and Worker), wherever this was started.
+cd "$(dirname "$0")/.."
+. scripts/deployments.sh
 [ -n "$cloud_dev" ] || { echo "push-cloud-dev: set cloud_dev in scripts/deployments.sh" >&2; exit 1; }
 saved="$(mktemp)"
 [ -f .env.local ] && cp .env.local "$saved"

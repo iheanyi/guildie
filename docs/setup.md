@@ -14,9 +14,9 @@ Save the secrets in one password-manager item as you go.
 
 | Value | Kind | Made in | Goes to |
 |---|---|---|---|
-| Dev deployment name | note | Part 1 | `cloud_dev=` in `scripts/deployments.sh` |
-| Prod deployment name | note | Part 1 | `ALLOWED_TARGETS` in `workers/gateway/wrangler.jsonc` (`https://<name>.convex.site`) |
-| Project id | note | Part 1 | `convex_project=` in `scripts/deployments.sh` |
+| Dev deployment name | note | Part 1 | `cloud_dev=` in `apps/web/scripts/deployments.sh` |
+| Prod deployment name | note | Part 1 | `ALLOWED_TARGETS` in `apps/gateway/wrangler.jsonc` (`https://<name>.convex.site`) |
+| Project id | note | Part 1 | `convex_project=` in `apps/web/scripts/deployments.sh` |
 | Battle.net dev client ID + secret | secret | Part 2 | cloud dev `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET` |
 | Battle.net prod client ID + secret | secret | Part 2 | prod `AUTH_BATTLENET_CLIENT_ID`, `AUTH_BATTLENET_CLIENT_SECRET` |
 | Dev routing secret | secret | Part 3 | Worker `guildie-gateway-dev` `ROUTING_SECRET` **and** cloud dev `AUTH_GATEWAY_SECRET` |
@@ -33,7 +33,7 @@ Signing keys are generated straight into Convex; nothing to save.
    `merry-fish-229`) and, after switching the picker to **Production**, the
    prod deployment's name.
 3. Note the project id: `curl -s -H "Authorization: Bearer <team access token>" https://api.convex.dev/v1/teams/<numeric team id>/list_projects`.
-4. Put them in `scripts/deployments.sh` and `workers/gateway/wrangler.jsonc`
+4. Put them in `apps/web/scripts/deployments.sh` and `apps/gateway/wrangler.jsonc`
    (see the table).
 
 **Check:** `npx convex env list --deployment <dev name>` runs without error.
@@ -55,7 +55,7 @@ Copy each Client ID and Client Secret (the secret is shown once).
 
 ## Part 3: Gateways
 
-From `workers/gateway`, with wrangler logged in to your Cloudflare account
+From `apps/gateway`, with wrangler logged in to your Cloudflare account
 (`pnpm wrangler whoami`):
 
 ```sh
@@ -103,7 +103,7 @@ Then push code to cloud dev and write the preview defaults:
 
 ```sh
 pnpm push:cloud-dev
-sh scripts/preview-defaults.sh
+sh apps/web/scripts/preview-defaults.sh
 ```
 
 **Check:** both deployments list exactly `AUTH_PRIVATE_KEY`, `AUTH_JWKS`,
@@ -135,9 +135,9 @@ at its own URL.
    build token.
 2. **Settings → Build** on the `guildie` Worker: set the `main` trigger's
    build command to empty and its deploy command to
-   `sh scripts/cloudflare-deploy.sh`. Add a trigger for all other branches
+   `sh apps/web/scripts/cloudflare-deploy.sh`. Add a trigger for all other branches
    (exclude `main`) with an empty build command and deploy command
-   `sh scripts/preview-deploy.sh`.
+   `sh apps/web/scripts/preview-deploy.sh`.
 3. Make a prod deploy key (Convex prod deployment → Settings → Deploy keys)
    and a preview deploy key (project Settings → Preview deploy keys). Add each
    as secret build variable `CONVEX_DEPLOY_KEY`: the prod key on the `main`

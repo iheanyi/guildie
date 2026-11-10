@@ -12,7 +12,7 @@ It mirrors `@convex-dev/auth/ssr/nextjs` using the package's framework-agnostic
   `beforeLoad` to hand the SSR token to Convex and the client.
 - `provider.tsx` — the client provider (port of the Next.js one, minus its
   `history.replaceState(null)` hack, which would wipe TanStack Router's state).
-- Routes: `src/routes/auth/{signin,refresh,signout}.ts`.
+- Routes: `apps/web/src/routes/auth/{signin,refresh,signout}.ts`.
 
 Workaround: `AuthProvider`/`useAuth` aren't in the package's exports map, so
 `tsconfig.json` maps `#convex-auth-react-internal` to

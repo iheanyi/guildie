@@ -20,14 +20,14 @@ git worktree add ../guildie-roster-notes -b roster-notes
 cd ../guildie-roster-notes && pnpm dev
 ```
 
-On the first run `scripts/dev.sh` installs dependencies and creates the local
-backend. Then `scripts/dev-seed.sh` gives it its settings:
+On the first run `apps/web/scripts/dev.sh` installs dependencies and creates the local
+backend. Then `apps/web/scripts/dev-seed.sh` gives it its settings:
 
-- **Once cloud dev exists** (`cloud_dev` in `scripts/deployments.sh`): the
+- **Once cloud dev exists** (`cloud_dev` in `apps/web/scripts/deployments.sh`): the
   Battle.net dev client, dev gateway, signing keys and guest sign-in, plus the
   `guilds` and `characters` tables. Users and claims are not copied.
 - **Until then:** local signing keys, guest sign-in, placeholder Battle.net
-  keys (`scripts/dev-env.mjs`) and a fake guild.
+  keys (`apps/web/scripts/dev-env.mjs`) and a fake guild.
 
 Every run sets the backend's `SITE_URL` to the checkout's URL. The first push
 waits for the settings and goes through by itself a few seconds later.
@@ -55,7 +55,7 @@ checkout's `.convex/local` to reseed, which also wipes its data.
 
 - Portless's proxy runs on port 1355, shared with Onda, Sportsball and Kino.
   If the browser warns about the certificate, run `portless trust` once.
-- `scripts/dev.sh` writes the checkout's `CONVEX_DEPLOYMENT`, `VITE_CONVEX_*`
+- `apps/web/scripts/dev.sh` writes the checkout's `CONVEX_DEPLOYMENT`, `VITE_CONVEX_*`
   and `VITE_SITE_URL` into `.env.local` before starting anything; other lines
   are kept.
 - A checkout's backend is recognised by its data folder. `pnpm dev` stops one

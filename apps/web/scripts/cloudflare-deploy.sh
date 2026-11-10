@@ -3,6 +3,8 @@
 # trigger): prod Convex, then the Worker on guildie.club. Every other branch
 # runs scripts/preview-deploy.sh. See docs/deploy.md.
 set -eu
+# Run from apps/web (the Convex project and Worker), wherever this was started.
+cd "$(dirname "$0")/.."
 
 branch="${WORKERS_CI_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
 # A plain deploy from any other branch would replace production.

@@ -8,7 +8,9 @@ set -eu
 
 root="$(git rev-parse --show-toplevel)"
 main="$(git worktree list --porcelain | head -1 | cut -d' ' -f2-)"
-cd "$root"
+# The web app lives in apps/web of the monorepo; everything below runs there.
+app="$root/apps/web"
+cd "$app"
 
 if [ "$root" = "$main" ]; then
 	name=guildie
@@ -26,7 +28,7 @@ site=$((cloud + 1))
 export PORTLESS_PORT="${PORTLESS_PORT:-1355}"
 url="https://$name.localhost:$PORTLESS_PORT"
 
-[ -d node_modules ] || pnpm install --frozen-lockfile
+[ -d node_modules ] || (cd "$root" && pnpm install --frozen-lockfile)
 
 # Give .env.local its final values up front. Convex would otherwise write them
 # once its backend is up, which restarts Vite, and the Cloudflare plugin can
@@ -38,7 +40,7 @@ printf 'CONVEX_DEPLOYMENT=anonymous:anonymous-agent\nVITE_CONVEX_URL=http://127.
 if cmp -s .env.tmp.local .env.local; then rm .env.tmp.local; else mv .env.tmp.local .env.local; fi
 
 # This checkout's backends, found by the data folder in their command line.
-backend_pids() { pgrep -f "convex-local-backend .*--local-storage $root/\.convex/local/default/" || true; }
+backend_pids() { pgrep -f "convex-local-backend .*--local-storage $app/\.convex/local/default/" || true; }
 
 # A backend whose parent is gone (pid 1) was left behind by a run that crashed:
 # stop it. One with a live parent is another `pnpm dev` of this checkout.
