@@ -15,6 +15,8 @@ CI checks for it. A release turns `## Unreleased` into that version's section.
 
 ## Unreleased
 
+## 0.3.11
+
 ### New
 
 - **Guildie:** A Personal section in the sidebar. Inventory: all your characters' bags and banks on one page, with a search ("where's my Silk Cloth?" Lich bags 37 · Isai bank 20), a character filter and when each was last read; it replaces the Inventory tab on character pages. Quests: your characters' quests in progress, by character or by zone, each with a Wowhead link and who in your guild is on it too.
