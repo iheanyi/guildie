@@ -118,7 +118,9 @@ for _, scale in ipairs({0.6, 1, 1.25}) do
 end
 GuildieDB.livePixels.corner, GuildieDB.livePixels.x, GuildieDB.livePixels.y = nil, -9999, 9999
 wow.fire("UI_SCALE_CHANGED")
-assert(GuildieDB.livePixels.x > 0 and GuildieDB.livePixels.y < 0, "unsafe saved position is clamped")
+assert(pixelFrame.points[1][4] > 0 and pixelFrame.points[1][5] < 0, "unsafe saved position is clamped on screen")
+assert(GuildieDB.livePixels.x == -9999 and GuildieDB.livePixels.y == 9999,
+    "clamping does not overwrite the saved custom position")
 GetPhysicalScreenSize = nil
 -- The square moves only in the game's Edit Mode, opened by the player.
 -- Guildie never opens it (entering it from addon code taints its setup):
