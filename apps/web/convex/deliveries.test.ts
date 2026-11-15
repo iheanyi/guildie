@@ -60,17 +60,35 @@ test("only exact, authorized, contemporaneous item deliveries match", () => {
 	assert(deliveryMatches(request, { ...event, kind: "mailSent", other: "Receiver-Last" }, sender, now));
 	assert(!deliveryMatches(request, { ...event, kind: "mailSent", other: "Receiver-Last" }, receiver, now));
 });
-test("sender reports never count twice as receipt; partial and ongoing contributions", () => {
-	let state = { ...request, ...deliveryProgress(request, { ...event, kind: "mailSent", quantity: 20 }) };
-	assert.equal(state.status, "claimed");
-	assert.equal(state.receivedQuantity, 0);
-	state = { ...state, ...deliveryProgress(state, event) };
+test("a delivery seen from both sides counts once; partial and ongoing contributions", () => {
+	const todd = { name: "Todd", slug: "todd-bonzalezz" };
+	let state = { ...request, ...deliveryProgress(request, { kind: "mailSent", quantity: 7 }, todd) };
+	assert.equal(state.deliveredQuantity, 7, "the sender's report counts");
+	assert.equal(remainingQuantity(state), 13);
+	// The requester collects the same 7 (the game shows the first name): still 7.
+	state = { ...state, ...deliveryProgress(state, { kind: "mailReceived", quantity: 7 }, { name: "Todd" }) };
+	assert.equal(state.deliveredQuantity, 7);
 	assert.equal(state.receivedQuantity, 7);
-	assert.equal(state.status, "claimed");
-	state = { ...state, ...deliveryProgress(state, { ...event, kind: "tradeReceived", quantity: 13 }) };
-	assert.equal(state.receivedQuantity, 20);
+	assert.equal(state.senders.length, 1);
+	// Someone else trades 13 the requester reports; that finishes it.
+	state = { ...state, ...deliveryProgress(state, { kind: "tradeReceived", quantity: 13 }, { name: "Bung" }) };
+	assert.equal(state.deliveredQuantity, 20);
 	assert.equal(state.status, "done");
 	assert.equal(deliveryProgress({ ...request, ongoing: true, quantity: 0 }, event).status, "claimed");
+});
+test("reports from the two sides in either order, and receipts from before tallies", () => {
+	const todd = { name: "Todd", slug: "todd-bonzalezz" };
+	let state = { ...request, ...deliveryProgress(request, { kind: "mailReceived", quantity: 4 }, { name: "Todd" }) };
+	state = { ...state, ...deliveryProgress(state, { kind: "mailSent", quantity: 4 }, todd) };
+	assert.equal(state.deliveredQuantity, 4);
+	state = { ...state, ...deliveryProgress(state, { kind: "mailSent", quantity: 6 }, todd) };
+	assert.equal(state.deliveredQuantity, 10, "sent more than has arrived");
+	const old = { ...request, receivedQuantity: 5 };
+	assert.equal(remainingQuantity(old), 15);
+	assert.equal(deliveryProgress(old, { kind: "mailSent", quantity: 3 }, todd).deliveredQuantity, 8);
+	// Crafts count what arrives only.
+	const craft = { ...request, kind: "craft" };
+	assert.equal(deliveryProgress(craft, { kind: "mailSent", quantity: 20 }, todd).deliveredQuantity, 0);
 });
 test("delivery payload bounds, old payloads, and timestamps", () => {
 	const c = { guid: "Player-1", name: "Receiver-Last", talents: [], capturedAt: now / 1000 };
@@ -126,14 +144,9 @@ test("reporter's observed name is optional for older payloads and validated when
 		assert(!parseCharacter({ ...c, deliveries: [{ ...raw, reporterName }] }, now).ok);
 });
 
-test("only receipt quantities reduce the remainder, preserving the target and clamping overdelivery", () => {
+test("the remainder keeps the target and clamps overdelivery", () => {
 	for (const method of ["mail", "trade"]) {
-		let state = { ...request, ...deliveryProgress(request, { kind: `${method}Sent`, quantity: 7 }) };
-		assert.equal(remainingQuantity(state), 20);
-		state = { ...state, ...deliveryProgress(state, { kind: `${method}Received`, quantity: 7 }) };
-		assert.equal(remainingQuantity(state), 13);
-		assert.equal(state.quantity, 20);
-		state = { ...state, ...deliveryProgress(state, { kind: `${method}Sent`, quantity: 7 }) };
+		let state = { ...request, ...deliveryProgress(request, { kind: `${method}Received`, quantity: 7 }) };
 		assert.equal(remainingQuantity(state), 13);
 		state = { ...state, ...deliveryProgress(state, { kind: `${method}Received`, quantity: 15 }) };
 		assert.equal(remainingQuantity(state), 0);
@@ -179,7 +192,14 @@ test("rejected reports say why", () => {
 		[[request, event, receiver, now + 31 * 86400000], "older than 30 days"],
 		[[request, event, { ...receiver, slug: "alt" }, now], "not the requester"],
 		[[request, { ...event, other: "Someone" }, receiver, now], "not from the claimant"],
-		[[{ ...request, claim: undefined }, { ...event, kind: "mailSent" }, sender, now], "request not claimed"],
+		[
+			[{ ...request, claim: undefined }, { ...event, kind: "mailSent", other: "Receiver-Last" }, sender, now],
+			undefined,
+		],
+		[
+			[{ ...request, claim: undefined }, { ...event, kind: "mailSent", other: "Someone" }, sender, now],
+			"not to the requester",
+		],
 		[[request, { ...event, kind: "mailSent", other: "Receiver-Last" }, receiver, now], "not the claimant"],
 		[[request, { ...event, kind: "mailSent", other: "Someone" }, sender, now], "not to the requester"],
 	];
@@ -275,4 +295,43 @@ test("mats progress: one transfer seen from both sides counts once", () => {
 		"the crafter's side alone",
 	);
 	assert.deepEqual(sent, [{ itemId: 4306, quantity: 4 }], "adds per reagent");
+});
+
+test("mail that comes back unopened takes the send back, and reopens a request the sends closed", () => {
+	const todd = { name: "Todd", slug: "todd-bonzalezz" };
+	const open = { ...request, status: "open", claim: undefined };
+	let state = { ...open, ...deliveryProgress(open, { kind: "mailSent", quantity: 20 }, todd) };
+	assert.equal(state.status, "done");
+	assert.equal(state.doneByDeliveries, true);
+	// The requester took 4 of it before the rest came back.
+	state = { ...state, ...deliveryProgress(state, { kind: "mailReceived", quantity: 4 }, { name: "Todd" }) };
+	state = { ...state, ...deliveryProgress(state, { kind: "mailReturned", quantity: 16 }, todd) };
+	assert.equal(state.deliveredQuantity, 4);
+	assert.equal(state.sentQuantity, 4);
+	assert.equal(state.status, "open", "reopened");
+	assert.equal(state.doneByDeliveries, undefined);
+	assert.equal(remainingQuantity(state), 16);
+	// More back than was counted (a send from before tallies): never below zero.
+	assert.equal(deliveryProgress(open, { kind: "mailReturned", quantity: 5 }, todd).deliveredQuantity, 0);
+	// Marked done by the requester: a return doesn't reopen it.
+	const marked = { ...open, status: "done" };
+	assert.equal(deliveryProgress(marked, { kind: "mailReturned", quantity: 5 }, todd).status, "done");
+});
+
+test("which returns count", () => {
+	const toddReporter = { ...sender, slug: "todd-bonzalezz", name: "Todd" };
+	const open = { ...request, status: "open", claim: undefined };
+	const back = { ...event, kind: "mailReturned", other: "Receiver-Last" };
+	assert.deepEqual(deliveryOutcome(open, back, toddReporter, now), { use: "returned" });
+	assert.deepEqual(deliveryOutcome({ ...open, status: "done" }, back, toddReporter, now), { use: "returned" });
+	assert.deepEqual(deliveryOutcome({ ...open, status: "cancelled" }, back, toddReporter, now), {
+		rejected: "request closed",
+	});
+	assert.deepEqual(deliveryOutcome(open, { ...back, other: "Someone" }, toddReporter, now), {
+		rejected: "not to the requester",
+	});
+	assert.deepEqual(deliveryOutcome(open, { ...back, itemId: 1 }, toddReporter, now), { rejected: "different item" });
+	assert.deepEqual(deliveryOutcome(open, back, receiver, now), { rejected: "not to the requester" });
+	const c = { guid: "Player-1", name: "Todd", talents: [], capturedAt: now / 1000 };
+	assert(parseCharacter({ ...c, deliveries: [{ ...back, at: now / 1000 }] }, now).ok);
 });
