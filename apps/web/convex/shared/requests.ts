@@ -284,14 +284,23 @@ export function matsLabel(state: MatsState | undefined) {
 	return "Mats not confirmed";
 }
 
-/** Fixed requests (items, and crafted items) count down as receipts arrive; the stored quantity stays the target. */
+/**
+ * Fixed requests count down as deliveries are counted (`deliveredQuantity`,
+ * see deliveryProgress; older requests only have `receivedQuantity`). The
+ * stored quantity stays the target.
+ */
 export function remainingQuantity(request: {
 	kind: string;
 	quantity: number;
 	receivedQuantity?: number;
+	deliveredQuantity?: number;
 	ongoing?: boolean;
 }) {
-	return request.ongoing ? request.quantity : Math.max(0, request.quantity - (request.receivedQuantity ?? 0));
+	return request.ongoing ? request.quantity : Math.max(0, request.quantity - deliveredQuantity(request));
+}
+
+export function deliveredQuantity(request: { receivedQuantity?: number; deliveredQuantity?: number }) {
+	return request.deliveredQuantity ?? request.receivedQuantity ?? 0;
 }
 
 /**
@@ -304,6 +313,7 @@ export function canHelpFromInventory(
 		status: string;
 		quantity: number;
 		receivedQuantity?: number;
+		deliveredQuantity?: number;
 		itemId?: number;
 		recipeId?: number;
 		ongoing?: boolean;
@@ -366,7 +376,6 @@ export type DeliveryRejection =
 	| "not the requester"
 	| "before the claim"
 	| "not from the claimant"
-	| "request not claimed"
 	| "not the claimant"
 	| "not to the requester"
 	| "craft not accepted"
@@ -375,11 +384,12 @@ export type DeliveryRejection =
 
 /**
  * What a report counts toward: the requester receiving what they asked for
- * (`receipt`), the claimant's own report of sending it (`sent`, never
- * progress), or a craft's mats going from the requester to the crafter, as
+ * (`receipt`), a guildmate's own report of sending it to them (`sent`;
+ * counts for item requests, see deliveryProgress), that sender getting their
+ * mail back unopened (`returned`, takes the send back), or a craft's mats going from the requester to the crafter, as
  * either of them saw it (`matsSent`, `matsReceived`; progress is the larger).
  */
-export type DeliveryUse = "receipt" | "sent" | "matsSent" | "matsReceived";
+export type DeliveryUse = "receipt" | "sent" | "returned" | "matsSent" | "matsReceived";
 
 type Reporter = { userId: string; slug: string; name: string; guildId: string };
 
@@ -392,7 +402,9 @@ export function deliveryOutcome(
 	reagents: number[] = [],
 ): { use: DeliveryUse } | { rejected: DeliveryRejection } {
 	const no = (rejected: DeliveryRejection) => ({ rejected });
-	if (!["open", "claimed"].includes(r.status)) return no("request closed");
+	// A return can take back a send that closed the request (deliveryProgress reopens it).
+	const returned = e.kind === "mailReturned";
+	if (!["open", "claimed", ...(returned ? ["done"] : [])].includes(r.status)) return no("request closed");
 	if (r.guildId !== reporter.guildId) return no("other guild");
 	if (e.at < r.createdAt) return no("before the request");
 	if (e.at > now + 600000) return no("in the future");
@@ -402,6 +414,11 @@ export function deliveryOutcome(
 	const isRequester = r.userId === reporter.userId && r.character.slug === reporter.slug;
 	const isClaimant = !!r.claim && r.claim.userId === reporter.userId && r.claim.character.slug === reporter.slug;
 
+	if (returned) {
+		if (r.kind !== "item" || r.itemId !== e.itemId) return no("different item");
+		if (isRequester || !sameCharacter(e.other, r.character)) return no("not to the requester");
+		return { use: "returned" };
+	}
 	if (r.kind === "item") {
 		if (e.kind === "enchantReceived") return no("not an enchant");
 		if (r.itemId !== e.itemId) return no("different item");
@@ -411,10 +428,12 @@ export function deliveryOutcome(
 			if (r.claim && !sameCharacter(e.other, r.claim.character)) return no("not from the claimant");
 			return { use: "receipt" };
 		}
-		if (!r.claim) return no("request not claimed");
-		if (!isClaimant) return no("not the claimant");
-		if (e.at < r.claim.claimedAt) return no("before the claim");
-		if (!sameCharacter(e.other, r.character)) return no("not to the requester");
+		// Requests claimed before claims went away still take only the claimant's report.
+		if (r.claim) {
+			if (!isClaimant) return no("not the claimant");
+			if (e.at < r.claim.claimedAt) return no("before the claim");
+		}
+		if (isRequester || !sameCharacter(e.other, r.character)) return no("not to the requester");
 		return { use: "sent" };
 	}
 
@@ -491,16 +510,63 @@ export function matsProgress(
 }
 
 export const deliveryMatches = (...args: Parameters<typeof deliveryRejection>) => !deliveryRejection(...args);
+/** What each guildmate delivered to a request, as they reported sending it and as the requester reported receiving it. */
+export type SenderTally = { name: string; slug?: string; sent: number; received: number };
+
+const sameSender = (a: { name: string; slug?: string }, b: { name: string; slug?: string }) =>
+	sameCharacter(a.name, b) || sameCharacter(b.name, a) || (!!a.slug && a.slug === b.slug);
+
+/**
+ * Adds a counted report. Item requests count the sender's own report too, so
+ * the count drops when the mail goes out; one delivery seen from both sides
+ * counts once, because each sender counts as the larger of what they sent
+ * and what the requester got from them. Mail that comes back unopened takes
+ * the send back, and reopens a request the sends had closed. Crafts count
+ * receipts only.
+ */
 export function deliveryProgress(
-	r: Pick<DeliveryRequest, "status" | "quantity" | "ongoing" | "receivedQuantity" | "sentQuantity">,
+	r: Pick<DeliveryRequest, "status" | "quantity" | "ongoing" | "receivedQuantity" | "sentQuantity"> & {
+		kind?: string;
+		senders?: SenderTally[];
+		claim?: unknown;
+		doneByDeliveries?: boolean;
+	},
 	e: Pick<DeliveryReport, "kind" | "quantity">,
+	from: { name: string; slug?: string } = { name: "" },
 ) {
-	const receivedQuantity = (r.receivedQuantity ?? 0) + (e.kind.endsWith("Received") ? e.quantity : 0);
-	const sentQuantity = (r.sentQuantity ?? 0) + (e.kind.endsWith("Sent") ? e.quantity : 0);
+	const sent = e.kind.endsWith("Sent") && r.kind !== "craft";
+	const returned = e.kind === "mailReturned";
+	const received = e.kind.endsWith("Received");
+	// Receipts counted before per-sender tallies existed stay counted, from no one in particular.
+	const senders: SenderTally[] = (
+		r.senders ?? (r.receivedQuantity ? [{ name: "", sent: 0, received: r.receivedQuantity }] : [])
+	).map((s) => ({ ...s }));
+	let tally = from.name ? senders.find((s) => sameSender(s, from)) : undefined;
+	if (!tally) {
+		tally = { name: from.name, ...(from.slug ? { slug: from.slug } : {}), sent: 0, received: 0 };
+		senders.push(tally);
+	}
+	if (!tally.slug && from.slug) tally.slug = from.slug;
+	const before = tally.sent;
+	if (received) tally.received += e.quantity;
+	if (sent) tally.sent += e.quantity;
+	if (returned) tally.sent = Math.max(0, tally.sent - e.quantity);
+	const deliveredQuantity = senders.reduce((n, s) => n + Math.max(s.sent, s.received), 0);
+	const full = !r.ongoing && deliveredQuantity >= r.quantity;
+	const status: RequestStatus = full
+		? "done"
+		: r.status === "done" && r.doneByDeliveries
+			? r.claim
+				? "claimed"
+				: "open"
+			: (r.status as RequestStatus);
 	return {
-		receivedQuantity,
-		sentQuantity,
-		status: !r.ongoing && receivedQuantity >= r.quantity ? ("done" as const) : (r.status as RequestStatus),
+		receivedQuantity: (r.receivedQuantity ?? 0) + (received ? e.quantity : 0),
+		sentQuantity: (r.sentQuantity ?? 0) + (sent ? e.quantity : 0) - (returned ? before - tally.sent : 0),
+		senders,
+		deliveredQuantity,
+		status,
+		doneByDeliveries: status === "done" ? (r.status === "done" ? r.doneByDeliveries : true) : undefined,
 	};
 }
 

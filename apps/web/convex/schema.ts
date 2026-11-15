@@ -722,6 +722,13 @@ export default defineSchema({
 		quantity: v.number(),
 		receivedQuantity: v.optional(v.number()),
 		sentQuantity: v.optional(v.number()),
+		/** What counts toward `quantity`: per sender, the larger of what they sent and what arrived from them (shared/requests.ts, deliveryProgress). */
+		deliveredQuantity: v.optional(v.number()),
+		/** Closed because deliveries filled it (not marked done), so a return can reopen it. */
+		doneByDeliveries: v.optional(v.boolean()),
+		senders: v.optional(
+			v.array(v.object({ name: v.string(), slug: v.optional(v.string()), sent: v.number(), received: v.number() })),
+		),
 		note: v.optional(v.string()),
 		/**
 		 * Ongoing ("send me any you have"): items only, never claimed, closes
